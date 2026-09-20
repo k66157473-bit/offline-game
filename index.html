@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -5,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="site_title">飛行機でも遊べるゲーム</title>
 <meta name="description" data-i18n="site_desc" content="ネットが使えない飛行機でも遊べるオフライン対応ゲームです。">
-<meta name="google-site-verification" content="Tl1tFRofhR-fsrAnyrPTElIwM4koTMHllqWg9yGyvMI" />
 <style>
 :root {
   --bg-color: #fce4ec;
@@ -18,10 +18,8 @@
   --font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
   --font-size: 16px;
 
-  /* ★ 文字色自動補正システム */
-  /* ライトモード：白系テキストは背景に同化しないよう「濃く」補正 */
+  /* 文字色自動補正システム */
   --text-white-adaptive: #333333;
-  /* ライトモード：黒系テキストはそのまま濃い色 */
   --text-black-adaptive: #111111;
   --text-color: var(--text-black-adaptive);
 }
@@ -35,10 +33,7 @@ body.dark-mode {
   --accent-light: #f48fb1;
   --dpad-color: #777777;
 
-  /* ★ 文字色自動補正システム */
-  /* ダークモード：白系テキストは白色 */
   --text-white-adaptive: #ffffff;
-  /* ダークモード：黒系テキストは背景に沈まないよう「薄いグレー」に補正 */
   --text-black-adaptive: #dcdcdc;
   --text-color: var(--text-black-adaptive);
 }
@@ -47,7 +42,6 @@ body.dark-mode {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  user-select: auto;
 }
 
 body {
@@ -60,17 +54,52 @@ body {
   flex-direction: column;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
+  user-select: text;
 }
 
-/* アラビア語対応 (RTL) */
+.tab-btn, .btn, .game-select-btn, .dpad, #gameCanvas, .flag-option-btn {
+  user-select: none;
+}
+
 html[dir="rtl"] body {
   direction: rtl;
   text-align: right;
 }
 
-/* コントラスト自動補正用クラス */
 .text-light-adaptive { color: var(--text-white-adaptive) !important; }
 .text-dark-adaptive { color: var(--text-black-adaptive) !important; }
+
+/* 3秒ホワイトアウト用オーバーレイ */
+#whiteoutOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: #ffffff;
+  z-index: 999999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 3s ease-in-out;
+}
+
+/* 事前ダウンロード推奨バナー */
+.pre-download-banner {
+  background: #fff3e0;
+  border-bottom: 2px solid #ffe0b2;
+  color: #e65100;
+  padding: 10px 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  font-weight: bold;
+}
+body.dark-mode .pre-download-banner {
+  background: #3e2723;
+  border-color: #4e342e;
+  color: #ffcc80;
+}
 
 /* --- ヘッダー --- */
 header {
@@ -188,7 +217,7 @@ main {
 
 .tab-content.active { display: block; }
 
-/* --- フッター --- */
+/* --- フッター (1分間に10回往復) --- */
 footer {
   background: var(--panel-bg);
   border-top: 3px dashed var(--accent-light);
@@ -203,7 +232,6 @@ footer {
   font-weight: bold;
   color: var(--accent-pink);
   text-shadow: 2px 2px 0 rgba(248, 187, 208, 0.5);
-  /* 1分間に10回往復 = 1往復6秒 (片道3秒) */
   animation: bounceBackAndForth 6s ease-in-out infinite alternate;
 }
 
@@ -525,6 +553,7 @@ body.dark-mode .config-item { background: rgba(255,255,255,0.03); }
 .btn:hover { opacity: 0.85; }
 .btn-secondary { background: #607d8b; }
 .btn-outline { background: transparent; border: 1px solid var(--accent-pink); color: var(--accent-pink); }
+.btn-danger { background: #d32f2f; color: white; }
 
 /* ショートカットリスト */
 .shortcut-list {
@@ -573,7 +602,14 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 </head>
 <body>
 
+<div id="whiteoutOverlay"></div>
 <div id="mouseStalker">★</div>
+
+<!-- 事前ダウンロード推奨バナー -->
+<div class="pre-download-banner">
+  <span>✈️</span>
+  <span data-i18n="banner_predownload">【飛行機に乗る前に】機内ではネット通信が遮断されます。事前にこのページ（HTMLファイル）をご自身の端末にダウンロード保存しておくことを強く推奨します！</span>
+</div>
 
 <!-- ヘッダー表示ボタン -->
 <button id="headerShowBtn" onclick="toggleHeader(true)" data-i18n="btn_show_header">ヘッダー表示</button>
@@ -583,14 +619,13 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     <canvas id="title3DCanvas"></canvas>
   </div>
   <nav class="tabs">
-    <button class="tab-btn active" onclick="switchTab('gameTab', this)" data-i18n="tab_game">ゲーム</button>
+    <button class="tab-btn active" id="tabBtnGame" onclick="switchTab('gameTab', this)" data-i18n="tab_game">ゲーム</button>
     <button class="tab-btn" onclick="switchTab('howToTab', this)" data-i18n="tab_howto">使い方</button>
     <button class="tab-btn" onclick="toggleHeader(false)" data-i18n="tab_hide_header">ヘッダー非表示</button>
     <button class="tab-btn" onclick="switchTab('settingsTab', this)" data-i18n="tab_settings">設定</button>
     <button class="tab-btn" onclick="switchTab('profileTab', this)" data-i18n="tab_profile">プロフィール</button>
     <button class="tab-btn" onclick="switchTab('historyTab', this)" data-i18n="tab_history">更新履歴</button>
     <button class="tab-btn" onclick="switchTab('dataTab', this)" data-i18n="tab_data">データ</button>
-    <!-- 言語切り替えセレクター (7言語) -->
     <select id="langSelector" class="lang-select-header" onchange="changeLanguage(this.value)">
       <option value="ja">日本語</option>
       <option value="en">English</option>
@@ -724,11 +759,18 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 
   <!-- 4. 設定タブ -->
   <section id="settingsTab" class="tab-content">
-    <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="settings_title">各種設定 & カスタマイズ</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; flex-wrap:wrap; gap:10px;">
+      <h2 style="color: var(--accent-pink); margin:0;" data-i18n="settings_title">各種設定 & カスタマイズ</h2>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" onclick="resetAllConfigToDefault()" data-i18n="btn_reset_config">設定を初期化</button>
+        <button class="btn btn-danger" onclick="startDataDeletionProcess()" data-i18n="btn_delete_all_data">データを削除</button>
+      </div>
+    </div>
+
     <div class="config-grid">
       <div class="config-item">
         <label data-i18n="cfg_game_enable">1. ゲーム機能のON/OFF</label>
-        <input type="checkbox" id="cfgGameEnabled" checked onchange="saveConfig()"> <span data-i18n="val_enable">有効</span>
+        <input type="checkbox" id="cfgGameEnabled" checked onchange="toggleGameFeatureSetting()"> <span data-i18n="val_enable">有効 (OFF時はゲームタブ非表示)</span>
       </div>
       <div class="config-item">
         <label data-i18n="cfg_score_save">2. データタブにスコアを残す</label>
@@ -788,8 +830,12 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         </div>
       </div>
       <div class="config-item">
-        <label data-i18n="cfg_search">10. 検索バー表示</label>
-        <input type="checkbox" id="cfgShowSearch" checked onchange="toggleSearchBarVisibility(); saveConfig();"> <span data-i18n="val_show">表示</span>
+        <label data-i18n="cfg_search_game">10-A. ゲーム検索バー表示</label>
+        <input type="checkbox" id="cfgShowSearchGame" checked onchange="toggleSearchBarVisibility(); saveConfig();"> <span data-i18n="val_show">表示</span>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_search_other">10-B. 更新履歴/プロフ検索バー表示</label>
+        <input type="checkbox" id="cfgShowSearchOther" checked onchange="toggleSearchBarVisibility(); saveConfig();"> <span data-i18n="val_show">表示 (OFF時は履歴バーも非表示)</span>
       </div>
       <div class="config-item">
         <label data-i18n="cfg_header">11. ヘッダー表示</label>
@@ -816,11 +862,13 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     </div>
   </section>
 
-  <!-- 5. プロフィールタブ -->
+  <!-- 5. プロフィールタブ (再編レイアウト：上段左右／下段表示カード) -->
   <section id="profileTab" class="tab-content">
     <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="profile_title">管理者情報 & 自作プロフィール</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
-      <!-- 管理人情報 -->
+    
+    <!-- 上段：左 管理人 / 右 自作プロフ編集 -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px;">
+      <!-- 左：管理人情報 -->
       <div style="background: var(--panel-bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);" id="adminProfileCard">
         <h3 style="color: var(--accent-pink); margin-bottom: 10px;" data-i18n="prof_author_info">作者情報</h3>
         <p><strong>🤖 AI:</strong> <span data-i18n="prof_ai_note">コードの一部はAIを使用して作成しています。</span></p>
@@ -838,9 +886,9 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <button class="btn" style="margin-top: 12px;" onclick="recordAndDownloadKaisetuVideo()" data-i18n="btn_record_video">kaisetu.mp4 として動画録画・保存</button>
       </div>
 
-      <!-- 自作プロフィール -->
+      <!-- 右：自作プロフィールの編集 -->
       <div style="background: var(--panel-bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
-        <h3 style="color: var(--accent-pink); margin-bottom: 10px;" data-i18n="prof_custom_title">自作プロフィール</h3>
+        <h3 style="color: var(--accent-pink); margin-bottom: 10px;" data-i18n="prof_edit_title">自作プロフィールの編集</h3>
         <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
           <label><span data-i18n="my_name">表示名</span>: <input type="text" id="myProfName" value="旅の飛行士" oninput="updateMyProfileLive()"></label>
           <label><span data-i18n="my_birth">生年月</span>: <input type="text" id="myProfBirth" value="2000/01" oninput="updateMyProfileLive()"></label>
@@ -854,17 +902,24 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
           <button class="btn" onclick="saveMyProfile()" data-i18n="btn_save">保存</button>
           <button class="btn btn-secondary" onclick="resetMyProfile()" data-i18n="btn_reset">初期化/リセット</button>
         </div>
+      </div>
+    </div>
 
-        <div style="margin-top: 15px;">
-          <label><strong data-i18n="lbl_export_format">ダウンロード形式:</strong></label>
-          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
-            <button class="btn btn-outline" onclick="exportProfileCard('png')">PNG</button>
-            <button class="btn btn-outline" onclick="exportProfileCard('avif')">AVIF</button>
-            <button class="btn btn-outline" onclick="exportProfileCard('webp')">WebP</button>
-            <button class="btn btn-outline" onclick="exportProfileCard('jpeg')">JPG</button>
-            <button class="btn btn-outline" onclick="exportProfileCard('gif')">GIF</button>
-            <button class="btn btn-outline" onclick="exportProfileCard('html')">HTML</button>
-          </div>
+    <!-- 下段：自作プロフィールの表示 & エクスポート -->
+    <div style="background: var(--panel-bg); padding: 20px; border-radius: 12px; border: 2px solid var(--accent-light);">
+      <h3 style="color: var(--accent-pink); margin-bottom: 12px;" data-i18n="prof_view_title">自作プロフィールのリアルタイム表示</h3>
+      <div id="liveProfileCardView" style="background: white; border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: #333;">
+        <!-- JSでリアルタイム反映 -->
+      </div>
+      <div>
+        <label><strong data-i18n="lbl_export_format">ダウンロード形式:</strong></label>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+          <button class="btn btn-outline" onclick="exportProfileCard('png')">PNG</button>
+          <button class="btn btn-outline" onclick="exportProfileCard('avif')">AVIF</button>
+          <button class="btn btn-outline" onclick="exportProfileCard('webp')">WebP</button>
+          <button class="btn btn-outline" onclick="exportProfileCard('jpeg')">JPG</button>
+          <button class="btn btn-outline" onclick="exportProfileCard('gif')">GIF</button>
+          <button class="btn btn-outline" onclick="exportProfileCard('html')">HTML</button>
         </div>
       </div>
     </div>
@@ -874,7 +929,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
   <section id="historyTab" class="tab-content">
     <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="history_title">更新履歴</h2>
     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; align-items: center; justify-content: space-between;">
-      <div style="display:flex; gap:10px;">
+      <div style="display:flex; gap:10px;" id="historySearchBarWrapper">
         <input type="text" id="historySearchInput" placeholder="絞り込み..." oninput="renderHistoryTable()" class="search-input">
         <select id="historySortSelect" onchange="renderHistoryTable()" class="time-select">
           <option value="newest" data-i18n="opt_newest">最新順</option>
@@ -961,7 +1016,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     <h3 id="modalTitle"></h3>
     <p id="modalBody" class="text-dark-adaptive" style="font-size: 14px; line-height: 1.6; margin: 10px 0;"></p>
     <div id="modalActionArea"></div>
-    <button class="modal-close-btn" onclick="closeModal()" data-i18n="btn_close">閉じる</button>
+    <button class="modal-close-btn" id="modalDefaultCloseBtn" onclick="closeModal()" data-i18n="btn_close">閉じる</button>
   </div>
 </div>
 
@@ -971,22 +1026,24 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
    ========================================================================== */
 const I18N_DICTIONARY = {
   site_title: {
-    ja: "飛行機でも遊べるゲーム",
-    en: "Airplane Playable Games",
-    hira: "ひこうきでも あそべる げーむ",
-    ko: "비행기에서도 즐기는 게임",
-    zh: "飞机上也能玩的游戏",
-    ar: "ألعاب قابلة للعب على متن الطائرة",
-    eo: "Ludoj Ludeblaj en Aviadilo"
+    ja: "飛行機でも遊べるゲーム", en: "Airplane Playable Games", hira: "ひこうきでも あそべる げーむ",
+    ko: "비행기에서도 즐기는 게임", zh: "飞机上也能玩的游戏", ar: "ألعاب قابلة للعب على متن الطائرة", eo: "Ludoj Ludeblaj en Aviadilo"
   },
   site_desc: {
-    ja: "ネットが使えない飛行機でも遊べるオフライン対応ゲームです。",
-    en: "Offline compatible games playable on airplanes without internet.",
+    ja: "ネットが使えない飛行機でも遊べるオフライン対応ゲームです。", en: "Offline compatible games playable on airplanes without internet.",
     hira: "ねっとが つかえない ひこうきでも あそべる おふらいん たいおう げーむです。",
     ko: "인터넷이 되지 않는 비행기에서도 즐길 수 있는 완전 오프라인 게임입니다.",
     zh: "在没有网络的飞机上也能玩的完全离线游戏。",
-    ar: "ألعاب متوافقة مع وضع عدم الاتصال للعب في الطائرة دون إنترنت.",
-    eo: "Tute eksterretaj ludoj ludeblaj en aviadiloj sen interreto."
+    ar: "ألعاب متوافقة مع وضع عدم الاتصال للعب في الطائرة دون إنترنت.", eo: "Tute eksterretaj ludoj ludeblaj en aviadiloj sen interreto."
+  },
+  banner_predownload: {
+    ja: "【飛行機に乗る前に】機内ではネット通信が遮断されます。事前にこのページ（HTMLファイル）をご自身の端末にダウンロード保存しておくことを強く推奨します！",
+    en: "[Before Boarding] Internet will be disconnected mid-flight. We strongly recommend downloading and saving this HTML file onto your device beforehand!",
+    hira: "【ひこうきに のるまえに】きないでは ねっとが つかえません。まえもって このぺーじ（HTMLふぁいる）を ほぞんしておくのを おすすめします！",
+    ko: "[탑승 전 안내] 기내에서는 인터넷이 차단됩니다. 사전에 이 HTML 파일을 기기에 미리 다운로드해 두시는 것을 적극 권장합니다!",
+    zh: "【登机前提醒】机内网络将完全切断。强烈建议您在登机前将本HTML文件下载保存至本机！",
+    ar: "【قبل الصعود للطائرة】ستنقطع خدمة الإنترنت أثناء الرحلة. نوصي بشدة بتنزيل ملف HTML هذا وحفظه على جهازك مسبقًا!",
+    eo: "[Antaŭ Enŝipiĝo] Interreto estos malkonektita dumfluge. Ni forte rekomendas elŝuti kaj konservi ĉi tiun HTML-dosieron en via aparato anticipe!"
   },
   btn_show_header: { ja: "ヘッダー表示", en: "Show Header", hira: "へっだー ひょうじ", ko: "헤더 표시", zh: "显示顶栏", ar: "إظهار الرأس", eo: "Montri Kapon" },
   tab_game: { ja: "ゲーム", en: "Games", hira: "げーむ", ko: "게임", zh: "游戏", ar: "الألعاب", eo: "Ludoj" },
@@ -1033,7 +1090,6 @@ const I18N_DICTIONARY = {
     ar: "يتم حفظ السجلات تلقائيًا وتصديرها بصيغ متعددة مع ميزة النسخ الاحتياطي الكامل.",
     eo: "Poentaroj estas aŭtomate registritaj en Datumoj kaj elporteblaj en multaj formatoj."
   },
-
   howto_stick_desc: {
     ja: "クリックまたは十字キー「▲」でジャンプ。3回激突で終了。設定でバーの高さや本数をカスタマイズ可能です。",
     en: "Click or press D-Pad '▲' to jump. 3 collisions = Game Over. Max height and pole counts are customizable.",
@@ -1081,8 +1137,10 @@ const I18N_DICTIONARY = {
   },
 
   settings_title: { ja: "各種設定 & カスタマイズ", en: "Settings & Customization", hira: "せってい", ko: "각종 설정", zh: "各项设置", ar: "الإعدادات والتخصيص", eo: "Agordoj" },
+  btn_reset_config: { ja: "設定を初期化", en: "Reset Settings", hira: "せっていを もどす", ko: "설정 초기화", zh: "重置设置", ar: "إعادة ضبط الإعدادات", eo: "Restarigi Agordojn" },
+  btn_delete_all_data: { ja: "データを削除", en: "Delete All Data", hira: "でーたを けす", ko: "데이터 삭제", zh: "清除全部数据", ar: "حذف جميع البيانات", eo: "Forigi Ĉiujn Datumojn" },
   cfg_game_enable: { ja: "1. ゲーム機能のON/OFF", en: "1. Game Feature ON/OFF", hira: "1. げーむの おん・おふ", ko: "1. 게임 기능 켜기/끄기", zh: "1. 游戏功能 开/关", ar: "1. تشغيل/إيقاف الألعاب", eo: "1. Luda Funkcio Ŝaltita/Malŝaltita" },
-  val_enable: { ja: "有効", en: "Enabled", hira: "ゆうこう", ko: "활성화", zh: "启用", ar: "مفعل", eo: "Ŝaltita" },
+  val_enable: { ja: "有効 (OFF時はゲームタブ非表示)", en: "Enabled (Hides Game tab if OFF)", hira: "ゆうこう", ko: "활성화 (OFF 시 게임 탭 숨김)", zh: "启用 (OFF时隐藏游戏标签页)", ar: "مفعل (يخفي تبويب اللعبة إن عُطّل)", eo: "Ŝaltita (Kaŝas ludon se malŝaltita)" },
   cfg_score_save: { ja: "2. データタブにスコアを残す", en: "2. Save Scores to Data Tab", hira: "2. すこあを のこす", ko: "2. 스코어 기록하기", zh: "2. 记录游戏得分", ar: "2. حفظ النتائج", eo: "2. Konservi Poentojn" },
   val_record: { ja: "記録する", en: "Record", hira: "きろくする", ko: "기록함", zh: "记录", ar: "تسجيل", eo: "Registri" },
   cfg_indexeddb: { ja: "3. IndexedDBを使用", en: "3. Use IndexedDB", hira: "3. でーたべーすを つかう", ko: "3. IndexedDB 사용", zh: "3. 使用IndexedDB", ar: "3. استخدام IndexedDB", eo: "3. Uzi IndexedDB" },
@@ -1098,10 +1156,11 @@ const I18N_DICTIONARY = {
   val_gothic: { ja: "ゴシック体", en: "Sans-Serif (Gothic)", hira: "ごしっく", ko: "고딕체", zh: "黑体/无衬线", ar: "بدون ترويسة", eo: "Sens-serifo" },
   val_mincho: { ja: "明朝体", en: "Serif (Mincho)", hira: "みんちょう", ko: "명조체", zh: "宋体/明朝体", ar: "بترويسة", eo: "Serifo" },
   cfg_size: { ja: "9. 文字サイズ", en: "9. Font Size", hira: "9. もじの おおきさ", ko: "9. 글자 크기", zh: "9. 文字大小", ar: "9. حجم الخط", eo: "9. Tipara Grando" },
-  cfg_search: { ja: "10. 検索バー表示", en: "10. Search Bar Visibility", hira: "10. けんさくばー", ko: "10. 검색창 표시", zh: "10. 显示搜索框", ar: "10. شريط البحث", eo: "10. Serĉbreto" },
+  cfg_search_game: { ja: "10-A. ゲーム検索バー表示", en: "10-A. Game Search Bar", hira: "10-A. げーむ けんさくばー", ko: "10-A. 게임 검색창", zh: "10-A. 游戏搜索栏", ar: "10-A. شريط بحث الألعاب", eo: "10-A. Luda Serĉbreto" },
+  cfg_search_other: { ja: "10-B. 更新履歴/プロフ検索バー表示", en: "10-B. History/Profile Search Bar", hira: "10-B. りれき けんさくばー", ko: "10-B. 기록/프로필 검색창", zh: "10-B. 历史/档案搜索栏", ar: "10-B. شريط بحث السجل/الملف", eo: "10-B. Historio/Profilo Serĉbreto" },
   val_show: { ja: "表示", en: "Show", hira: "ひょうじ", ko: "표시", zh: "显示", ar: "إظهار", eo: "Montri" },
   cfg_header: { ja: "11. ヘッダー表示", en: "11. Header Visibility", hira: "11. へっだー", ko: "11. 헤더 표시", zh: "显示顶栏", ar: "11. إظهار الرأس", eo: "Montri Kapon" },
-  cfg_theme: { ja: "12. テーマ設定", en: "12. Theme Mode", hira: "12. てーま", ko: "12. 테마 설정", zh: "12. 主题设定", ar: "12. نمط المظهر", eo: "12. Etoso" },
+  cfg_theme: { ja: "12. テーマ設定", en: "12. Theme Mode", hira: "12. てーま", ko: "12. 테마 설정", zh: "12. 主题设定", ar: "12. نمط المظهر", eo: "Etoso" },
   val_light: { ja: "ライトモード", en: "Light Mode", hira: "らいと", ko: "라이트 모드", zh: "浅色模式", ar: "الوضع الفاتح", eo: "Luma Reĝimo" },
   val_dark: { ja: "ダークモード", en: "Dark Mode", hira: "だーく", ko: "다크 모드", zh: "深色模式", ar: "الوضع الداكن", eo: "Malhela Reĝimo" },
   val_device: { ja: "端末設定に従う", en: "Follow Device", hira: "たんまつに あわせる", ko: "기기 설정 따름", zh: "跟随系统", ar: "حسب إعدادات الجهاز", eo: "Sekvi Aparaton" },
@@ -1142,7 +1201,8 @@ const I18N_DICTIONARY = {
   prof_timer_h: { ja: "サイト開設(2026/09/18)からの歩み", en: "Time Since Opening (2026/09/18)", hira: "さいとが できてからの じかん", ko: "사이트 개설(2026/09/18) 이후 시간", zh: "自开站(2026/09/18)以来的历程", ar: "الوقت المنقضي منذ إطلاق الموقع (2026/09/18)", eo: "Tempo ekde Lanĉo (2026/09/18)" },
   btn_record_video: { ja: "kaisetu.mp4 として動画録画・保存", en: "Record & Save as kaisetu.mp4", hira: "どうがで ほぞん", ko: "kaisetu.mp4 비디오로 녹화/저장", zh: "录制并保存为 kaisetu.mp4", ar: "تسجيل وحفظ كفيديو kaisetu.mp4", eo: "Registri kaj Konservi kiel kaisetu.mp4" },
 
-  prof_custom_title: { ja: "自作プロフィール", en: "Custom Profile", hira: "じぶんの ぷろふぃーる", ko: "나만의 프로필", zh: "自定义个人名片", ar: "الملف الشخصي المخصص", eo: "Propra Profilo" },
+  prof_edit_title: { ja: "自作プロフィールの編集", en: "Edit Custom Profile", hira: "ぷろふぃーるの へんしゅう", ko: "커스텀 프로필 편집", zh: "编辑自定义档案", ar: "تعديل الملف الشخصي", eo: "Redakti Propran Profilon" },
+  prof_view_title: { ja: "自作プロフィールのリアルタイム表示", en: "Live Custom Profile Card", hira: "ぷろふぃーるの ひょうじ", ko: "커스텀 프로필 실시간 보기", zh: "自定义档案实时卡片", ar: "عرض الملف الشخصي المباشر", eo: "Realtempa Propra Karto" },
   my_name: { ja: "表示名", en: "Name", hira: "なまえ", ko: "이름", zh: "显示昵称", ar: "الاسم", eo: "Nomo" },
   my_birth: { ja: "生年月", en: "Birth", hira: "たんじょうび", ko: "생년월", zh: "出生年月", ar: "الميلاد", eo: "Naskiĝo" },
   my_gender: { ja: "性別", en: "Gender", hira: "せいべつ", ko: "성별", zh: "性别", ar: "الجنس", eo: "Sekso" },
@@ -1183,13 +1243,8 @@ const I18N_DICTIONARY = {
 };
 
 const AUTHOR_NAMES = {
-  ja: "青井ソラマメ",
-  en: "Aoi Soramame",
-  hira: "あおい そらまめ",
-  ko: "아오이 소라마메",
-  zh: "青井空豆 (Aoi Soramame)",
-  ar: "أوي سورامامي (Aoi Soramame)",
-  eo: "Aoi Soramame"
+  ja: "青井ソラマメ", en: "Aoi Soramame", hira: "あおい そらまめ",
+  ko: "아오이 소라마메", zh: "青井空豆 (Aoi Soramame)", ar: "أوي سورامامي (Aoi Soramame)", eo: "Aoi Soramame"
 };
 
 const KOUSHIN_DATA = [
@@ -1296,7 +1351,7 @@ const availableActions = [
   { id: 'sound', name: { ja: '効果音テスト', en: 'Sound Test', hira: 'おと', ko: '효과음 테스트', zh: '音效测试', ar: 'اختبار الصوت', eo: 'Son-Testo' } }
 ];
 
-// 全データを漏らさず保存
+// 設定値・UI状態を全保存
 function saveAllConfig() {
   const config = {
     activeTab: currentActiveTab,
@@ -1316,7 +1371,8 @@ function saveAllConfig() {
     fontFamily: document.getElementById('cfgFontFamily').value,
     fontSizeNum: document.getElementById('cfgFontSizeNum').value,
     fontSizeUnit: document.getElementById('cfgFontSizeUnit').value,
-    showSearch: document.getElementById('cfgShowSearch').checked,
+    showSearchGame: document.getElementById('cfgShowSearchGame').checked,
+    showSearchOther: document.getElementById('cfgShowSearchOther').checked,
     showHeader: document.getElementById('cfgShowHeader').checked,
     colorTheme: document.getElementById('cfgColorTheme').value,
     stickMaxHeight: document.getElementById('stickMaxHeight').value,
@@ -1339,6 +1395,60 @@ function saveConfig() {
   saveAllConfig();
 }
 
+// ゲーム機能ON/OFF時のタブ表示切り替え
+function toggleGameFeatureSetting() {
+  const isEnabled = document.getElementById('cfgGameEnabled').checked;
+  const tabBtn = document.getElementById('tabBtnGame');
+  if (tabBtn) tabBtn.style.display = isEnabled ? 'inline-block' : 'none';
+
+  if (!isEnabled && currentActiveTab === 'gameTab') {
+    switchTab('howToTab');
+  }
+  saveAllConfig();
+}
+
+// 設定を初期化（デフォルト復元）
+function resetAllConfigToDefault() {
+  document.getElementById('cfgGameEnabled').checked = true;
+  document.getElementById('cfgSaveScore').checked = true;
+  document.getElementById('cfgUseIndexedDB').checked = true;
+  document.getElementById('cfgMouseStalkerType').value = '★';
+  document.getElementById('cfgStalkerCustomText').value = '';
+  localStorage.removeItem('airplane_game_stalker_img');
+  document.getElementById('cfgGcSimulation').checked = true;
+  document.getElementById('cfgBgColor').value = '#fce4ec';
+  document.getElementById('cfgBgColorText').value = '#fce4ec';
+  document.getElementById('cfgTextColor').value = '#333333';
+  document.getElementById('cfgTextColorText').value = '#333333';
+  document.getElementById('cfgFontFamily').value = 'gothic';
+  document.getElementById('cfgFontSizeNum').value = '16';
+  document.getElementById('cfgFontSizeUnit').value = 'px';
+  document.getElementById('cfgShowSearchGame').checked = true;
+  document.getElementById('cfgShowSearchOther').checked = true;
+  document.getElementById('cfgShowHeader').checked = true;
+  document.getElementById('cfgColorTheme').value = 'light';
+  document.getElementById('stickMaxHeight').value = '200';
+  document.getElementById('stickMaxPillars').value = '5';
+
+  shortcutData = [
+    { key: 'Space', action: 'jump' },
+    { key: 'KeyP', action: 'pause' }
+  ];
+
+  applyColors();
+  applyFontSettings();
+  applyColorTheme('light');
+  toggleSearchBarVisibility();
+  toggleHeader(true);
+  toggleGameFeatureSetting();
+  updateMouseStalker();
+  renderShortcuts();
+  saveAllConfig();
+
+  showModal(t('btn_reset_config'), '設定を初期値に戻しました。');
+}
+
+// 言語変更（タイトルバー＆メタタグも多言語同期）
 function changeLanguage(lang) {
   currentLang = lang;
   document.getElementById('langSelector').value = lang;
@@ -1346,8 +1456,6 @@ function changeLanguage(lang) {
   document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
 
   document.title = t('site_title');
-
-  // ★ 2. (推奨) メタタグの説明文も多言語化に同期
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute('content', t('site_desc'));
 
@@ -1364,6 +1472,7 @@ function changeLanguage(lang) {
   updateGameInstructionText();
   renderHistoryTable();
   renderShortcuts();
+  updateMyProfileLive();
   saveAllConfig();
 }
 
@@ -1429,6 +1538,67 @@ function saveScoreRecord(gameName, timeLimit, score) {
     } catch (e) {}
   }
   renderScoreTable();
+}
+
+/* ==========================================================================
+   データ削除処理 (5回連続 YES? or NO ＆ 3秒ホワイトアウト)
+   ========================================================================== */
+let deletionStep = 0;
+
+function startDataDeletionProcess() {
+  deletionStep = 1;
+  showDeletionModal();
+}
+
+function showDeletionModal() {
+  const modal = document.getElementById('genericModal');
+  document.getElementById('modalTitle').textContent = `⚠️ データ削除の確認 (${deletionStep}/5)`;
+  document.getElementById('modalBody').innerHTML = `
+    本当にすべてのデータを初期化して削除しますか？<br>
+    この操作は取り消せません。<br>
+    <strong>YES? or NO</strong>
+  `;
+  document.getElementById('modalDefaultCloseBtn').style.display = 'none';
+
+  document.getElementById('modalActionArea').innerHTML = `
+    <div style="display:flex; justify-content:center; gap:15px; margin-top:15px;">
+      <button class="btn btn-danger" onclick="handleDeletionAnswer(true)">YES</button>
+      <button class="btn btn-secondary" onclick="handleDeletionAnswer(false)">NO</button>
+    </div>
+  `;
+  modal.style.display = 'flex';
+}
+
+function handleDeletionAnswer(isYes) {
+  if (!isYes) {
+    // NOを押したら即座に中断・終了
+    closeModal();
+    document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
+    deletionStep = 0;
+    return;
+  }
+
+  if (deletionStep < 5) {
+    deletionStep++;
+    showDeletionModal();
+  } else {
+    // 5回連続YES達成 ➔ 3秒ホワイトアウト演出後に初期化リロード
+    closeModal();
+    document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
+    deletionStep = 0;
+
+    const overlay = document.getElementById('whiteoutOverlay');
+    overlay.style.opacity = '1';
+    overlay.style.pointerEvents = 'all';
+
+    setTimeout(async () => {
+      localStorage.clear();
+      if (window.indexedDB) {
+        try { indexedDB.deleteDatabase('AirplaneGamesDB_v2'); } catch(e){}
+      }
+      location.reload();
+    }, 3000);
+  }
 }
 
 /* ==========================================================================
@@ -1576,6 +1746,10 @@ draw3DTitle();
    タブ切り替え & モーダル
    ========================================================================== */
 function switchTab(tabId, btnElement) {
+  if (tabId === 'gameTab' && !document.getElementById('cfgGameEnabled').checked) {
+    tabId = 'howToTab';
+  }
+
   currentActiveTab = tabId;
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -1593,6 +1767,7 @@ function switchTab(tabId, btnElement) {
   if (tabId === 'historyTab') renderHistoryTable();
   if (tabId === 'dataTab') renderScoreTable();
   if (tabId === 'howToTab') startHowToAnimation();
+  if (tabId === 'profileTab') updateMyProfileLive();
 
   saveAllConfig();
 }
@@ -1617,6 +1792,7 @@ function showModal(title, message, actionHtml = '') {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML = message;
   document.getElementById('modalActionArea').innerHTML = actionHtml;
+  document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
   document.getElementById('genericModal').style.display = 'flex';
 }
 function closeModal() {
@@ -2418,8 +2594,15 @@ function applyFontSettings() {
   document.documentElement.style.setProperty('--font-size', `${sizeNum}${sizeUnit}`);
 }
 
+// 検索バーの表示切り替え（ゲーム／更新履歴・プロフを完全分離）
 function toggleSearchBarVisibility() {
-  document.getElementById('gameSearchInput').style.display = document.getElementById('cfgShowSearch').checked ? 'inline-block' : 'none';
+  const showGame = document.getElementById('cfgShowSearchGame').checked;
+  const showOther = document.getElementById('cfgShowSearchOther').checked;
+
+  document.getElementById('gameSearchInput').style.display = showGame ? 'inline-block' : 'none';
+  
+  const historyBar = document.getElementById('historySearchBarWrapper');
+  if (historyBar) historyBar.style.display = showOther ? 'flex' : 'none';
 }
 
 function applyColorTheme(theme) {
@@ -2444,7 +2627,7 @@ function toggleIndexedDBSetting() {
 }
 
 /* ==========================================================================
-   5. プロフィール & 経過時間 & 動画録画
+   5. プロフィール & 経過時間 & 動画録画 & 自作プロフリアルタイム表示
    ========================================================================== */
 const SITE_OPEN_DATE = new Date('2026-09-18T00:00:00');
 
@@ -2519,7 +2702,26 @@ function updateMyProfileLive() {
     quote: document.getElementById('myProfQuote').value,
     message: document.getElementById('myProfMessage').value
   };
+
+  // 下段のリアルタイム表示カードを更新
+  const view = document.getElementById('liveProfileCardView');
+  if (view) {
+    const p = memoryStore.myProfile;
+    view.innerHTML = `
+      <h3 style="color:var(--accent-pink); margin-bottom:8px;">${escapeHtml(p.name)}</h3>
+      <p><strong>${t('my_birth')}:</strong> ${escapeHtml(p.birth)} | <strong>${t('my_gender')}:</strong> ${escapeHtml(p.gender)} | <strong>${t('my_origin')}:</strong> ${escapeHtml(p.location)}</p>
+      <p><strong>${t('my_hobby')}:</strong> ${escapeHtml(p.hobby)}</p>
+      <p><strong>${t('my_quote')}:</strong> ${escapeHtml(p.quote)}</p>
+      <p><strong>${t('my_msg')}:</strong> ${escapeHtml(p.message)}</p>
+    `;
+  }
   saveAllConfig();
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[tag] || tag));
 }
 
 function saveMyProfile() {
@@ -2582,7 +2784,7 @@ function exportProfileCard(format) {
 }
 
 /* ==========================================================================
-   6. 更新履歴システム
+   6. 更新履歴システム (日付ソート厳密化：最新順／古い順)
    ========================================================================== */
 let historyPage = 1;
 
@@ -2595,9 +2797,12 @@ function renderHistoryTable() {
     return item.date.toLowerCase().includes(query) || text.toLowerCase().includes(query);
   });
 
+  // 日付のミリ秒比較による完全なソート
   list.sort((a, b) => {
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-    return sort === 'newest' ? (b.id - a.id) : (a.id - b.id);
+    const timeA = new Date(a.date.replace(/\//g, '-')).getTime() || 0;
+    const timeB = new Date(b.date.replace(/\//g, '-')).getTime() || 0;
+    return sort === 'newest' ? (timeB - timeA) : (timeA - timeB);
   });
 
   const perPage = 10;
@@ -2643,7 +2848,32 @@ function downloadHistoryTxt() {
 
 function copyAllHistory() {
   let content = KOUSHIN_DATA.map(k => `[${k.date}] ${k.desc[currentLang] || k.desc.ja}`).join('\n');
-  navigator.clipboard.writeText(content).then(() => showModal('Copied', 'All history copied!'));
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(content).then(() => {
+      showModal('Copied', 'All history copied!');
+    }).catch(() => {
+      fallbackCopy(content);
+    });
+  } else {
+    fallbackCopy(content);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showModal('Copied', 'All history copied!');
+  } catch (err) {
+    showModal('Copy Error', '手動で選択してコピーしてください。');
+  }
+  document.body.removeChild(ta);
 }
 
 function createSimpleZip(files) {
@@ -2725,7 +2955,7 @@ function downloadHistoryZip() {
 }
 
 /* ==========================================================================
-   7. データタブ & バックアップ / 復元 (.itsme, .indexeddb, backup.zip)
+   7. データタブ & バックアップ / 復元 (.itsme 厳密対応)
    ========================================================================== */
 let scorePage = 1;
 function renderScoreTable() {
@@ -2816,7 +3046,7 @@ function exportScoreTable(format) {
   }, mime);
 }
 
-// .itsme への完全エクスポート（開いているタブとゲームも保存）
+// .itsme 拡張子での完全エクスポート
 function exportDataFile(type) {
   const fullBackupData = {
     activeTab: currentActiveTab,
@@ -2841,7 +3071,8 @@ function exportDataFile(type) {
       fontFamily: document.getElementById('cfgFontFamily').value,
       fontSizeNum: document.getElementById('cfgFontSizeNum').value,
       fontSizeUnit: document.getElementById('cfgFontSizeUnit').value,
-      showSearch: document.getElementById('cfgShowSearch').checked,
+      showSearchGame: document.getElementById('cfgShowSearchGame').checked,
+      showSearchOther: document.getElementById('cfgShowSearchOther').checked,
       showHeader: document.getElementById('cfgShowHeader').checked,
       colorTheme: document.getElementById('cfgColorTheme').value,
       stickMaxHeight: document.getElementById('stickMaxHeight').value,
@@ -2859,10 +3090,10 @@ function exportDataFile(type) {
   const jsonStr = JSON.stringify(payload, null, 2);
 
   if (type === 'itsme') {
-    downloadBlob(new Blob([jsonStr], { type: 'application/json' }), 'data.itsme');
+    downloadBlob(new Blob([jsonStr], { type: 'application/json' }), 'backup.itsme'); // ★拡張子 .itsme
   } else if (type === 'indexeddb') {
     const idbPayload = { app: "AirplaneGames", store: "indexeddb", version: CURRENT_DATA_VERSION, scores: memoryStore.scores };
-    downloadBlob(new Blob([JSON.stringify(idbPayload, null, 2)], { type: 'application/json' }), 'data.indexeddb');
+    downloadBlob(new Blob([JSON.stringify(idbPayload, null, 2)], { type: 'application/json' }), 'backup.indexeddb');
   } else if (type === 'zip') {
     const files = [
       { name: 'backup.itsme', content: jsonStr },
@@ -2872,7 +3103,6 @@ function exportDataFile(type) {
   }
 }
 
-// 復元処理（例外なく全データを復元）
 function handleRestoreFile(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -2904,7 +3134,6 @@ function handleRestoreFile(e) {
         { key: 'KeyP', action: 'pause' }
       ];
 
-      // スコア復元
       memoryStore.scores = restored.scores;
       if (dbInstance && document.getElementById('cfgUseIndexedDB').checked) {
         try {
@@ -2915,7 +3144,6 @@ function handleRestoreFile(e) {
         } catch (err) {}
       }
 
-      // プロフィール復元
       memoryStore.myProfile = restored.myProfile;
       document.getElementById('myProfName').value = restored.myProfile.name || '';
       document.getElementById('myProfBirth').value = restored.myProfile.birth || '';
@@ -2925,11 +3153,9 @@ function handleRestoreFile(e) {
       document.getElementById('myProfQuote').value = restored.myProfile.quote || '';
       document.getElementById('myProfMessage').value = restored.myProfile.message || '';
 
-      // ショートカット復元
       shortcutData = restored.shortcuts;
       renderShortcuts();
 
-      // 設定復元
       if (restored.config) {
         const c = restored.config;
         if (c.gameEnabled !== undefined) document.getElementById('cfgGameEnabled').checked = c.gameEnabled;
@@ -2949,7 +3175,8 @@ function handleRestoreFile(e) {
         if (c.fontFamily) document.getElementById('cfgFontFamily').value = c.fontFamily;
         if (c.fontSizeNum) document.getElementById('cfgFontSizeNum').value = c.fontSizeNum;
         if (c.fontSizeUnit) document.getElementById('cfgFontSizeUnit').value = c.fontSizeUnit;
-        if (c.showSearch !== undefined) document.getElementById('cfgShowSearch').checked = c.showSearch;
+        if (c.showSearchGame !== undefined) document.getElementById('cfgShowSearchGame').checked = c.showSearchGame;
+        if (c.showSearchOther !== undefined) document.getElementById('cfgShowSearchOther').checked = c.showSearchOther;
         if (c.showHeader !== undefined) document.getElementById('cfgShowHeader').checked = c.showHeader;
         if (c.colorTheme) document.getElementById('cfgColorTheme').value = c.colorTheme;
         if (c.stickMaxHeight) document.getElementById('stickMaxHeight').value = c.stickMaxHeight;
@@ -2963,19 +3190,18 @@ function handleRestoreFile(e) {
         }
       }
 
-      // ピン留め復元
       if (restored.pinnedHistoryIds) {
         KOUSHIN_DATA.forEach(k => {
           k.pinned = restored.pinnedHistoryIds.includes(k.id);
         });
       }
 
-      // 言語復元
       if (restored.language) {
         changeLanguage(restored.language);
       }
 
-      // 開いていたゲームとタブの復元
+      toggleGameFeatureSetting();
+
       if (restored.selectedGame) {
         const targetGameBtn = document.querySelector(`.game-select-btn[data-game="${restored.selectedGame}"]`);
         selectGame(restored.selectedGame, targetGameBtn);
@@ -2984,13 +3210,13 @@ function handleRestoreFile(e) {
         switchTab(restored.activeTab);
       }
 
-      // スタイル反映 & LocalStorage保存同期
       applyColors();
       applyFontSettings();
       applyColorTheme(document.getElementById('cfgColorTheme').value);
       toggleSearchBarVisibility();
       toggleHeader(document.getElementById('cfgShowHeader').checked);
       updateMouseStalker();
+      updateMyProfileLive();
       saveAllConfig();
 
       renderScoreTable();
@@ -3041,14 +3267,12 @@ function downloadBlob(blob, filename) {
 window.addEventListener('load', async () => {
   resizeGameCanvas();
 
-  // 1. 保存された設定の一括取得
   const savedConfigStr = localStorage.getItem('airplane_game_config');
   let config = null;
   if (savedConfigStr) {
     try { config = JSON.parse(savedConfigStr); } catch (e) {}
   }
 
-  // 2. フォーム復元
   if (config) {
     if (config.gameEnabled !== undefined) document.getElementById('cfgGameEnabled').checked = config.gameEnabled;
     if (config.saveScore !== undefined) document.getElementById('cfgSaveScore').checked = config.saveScore;
@@ -3063,42 +3287,38 @@ window.addEventListener('load', async () => {
     if (config.fontFamily) document.getElementById('cfgFontFamily').value = config.fontFamily;
     if (config.fontSizeNum) document.getElementById('cfgFontSizeNum').value = config.fontSizeNum;
     if (config.fontSizeUnit) document.getElementById('cfgFontSizeUnit').value = config.fontSizeUnit;
-    if (config.showSearch !== undefined) document.getElementById('cfgShowSearch').checked = config.showSearch;
+    if (config.showSearchGame !== undefined) document.getElementById('cfgShowSearchGame').checked = config.showSearchGame;
+    if (config.showSearchOther !== undefined) document.getElementById('cfgShowSearchOther').checked = config.showSearchOther;
     if (config.showHeader !== undefined) document.getElementById('cfgShowHeader').checked = config.showHeader;
     if (config.colorTheme) document.getElementById('cfgColorTheme').value = config.colorTheme;
     if (config.stickMaxHeight) document.getElementById('stickMaxHeight').value = config.stickMaxHeight;
     if (config.stickMaxPillars) document.getElementById('stickMaxPillars').value = config.stickMaxPillars;
   }
 
-  // 3. IndexedDB初期化 & スコア復元
   await initIndexedDB();
   await loadScoresFromIndexedDB();
 
-  // 4. 言語復元
   const savedLang = (config && config.lang) ? config.lang : (localStorage.getItem('airplane_game_lang') || 'ja');
   changeLanguage(savedLang);
 
-  // 5. スタイル・表示反映
   applyColors();
   applyFontSettings();
   applyColorTheme(document.getElementById('cfgColorTheme').value);
   toggleSearchBarVisibility();
   toggleHeader(document.getElementById('cfgShowHeader').checked);
+  toggleGameFeatureSetting();
 
-  // 6. マウスストーカー復元
   if (config && config.mouseStalkerType === 'image' && config.stalkerImageData) {
     mouseStalker.innerHTML = `<img src="${config.stalkerImageData}" style="width:24px; height:24px; object-fit:contain;">`;
   }
   updateMouseStalker();
 
-  // 7. ショートカットキー復元
   const savedShortcuts = localStorage.getItem('airplane_game_shortcuts');
   if (savedShortcuts) {
     try { shortcutData = JSON.parse(savedShortcuts); } catch (e) {}
   }
   renderShortcuts();
 
-  // 8. 自作プロフィール復元
   const savedProf = localStorage.getItem('airplane_game_my_profile');
   if (savedProf) {
     try {
@@ -3112,8 +3332,8 @@ window.addEventListener('load', async () => {
       document.getElementById('myProfMessage').value = memoryStore.myProfile.message || '';
     } catch (e) {}
   }
+  updateMyProfileLive();
 
-  // 9. 更新履歴ピン留め復元
   const savedPinnedIds = localStorage.getItem('airplane_game_pinned_ids');
   if (savedPinnedIds) {
     try {
@@ -3122,12 +3342,10 @@ window.addEventListener('load', async () => {
     } catch (e) {}
   }
 
-  // 10. ゲーム・テーブル初期化
   initGameScene();
   renderHistoryTable();
   renderScoreTable();
 
-  // 11. リロード直前に開いていた「タブ」と「ゲーム」を完全復元
   if (config) {
     if (config.selectedGame) {
       const gBtn = document.querySelector(`.game-select-btn[data-game="${config.selectedGame}"]`);
