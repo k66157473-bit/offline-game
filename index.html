@@ -13,13 +13,9 @@
 <link rel="icon" type="image/png" href="icon-offgame.png">
 
 <!-- ★ iOS (iPhone / iPad) 向け最適化パラメータ -->
-<!-- ホーム画面から開いたときにブラウザの枠を消して全画面アプリ化する -->
 <meta name="apple-mobile-web-app-capable" content="yes">
-<!-- 上部の時計や電波アイコンの背景色（default / black / black-translucent） -->
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<!-- ホーム画面に追加される時のデフォルトアプリ名 -->
 <meta name="apple-mobile-web-app-title" content="飛行機でも遊べるゲーム">
-<!-- iPhone用アプリアイコン -->
 <link rel="apple-touch-icon" href="icon-offgame.png">
 <style>
 :root {
@@ -53,7 +49,7 @@ body.dark-mode {
   --text-color: var(--text-black-adaptive);
 }
 
-/* ★ 1. 機内消灯モード（超低輝度・有機EL漆黒・低刺激アンバー） */
+/* ★ 1. 機内消灯モード */
 body.night-flight-mode {
   --bg-color: #000000 !important;
   --panel-bg: #0a0a0a !important;
@@ -70,7 +66,7 @@ body.night-flight-mode #gameCanvas {
   filter: brightness(0.55) contrast(1.1);
 }
 
-/* ★ 2. 乗り物酔い防止モード（アニメーション完全停止） */
+/* ★ 2. 乗り物酔い防止モード */
 body.reduced-motion-mode .running-text {
   animation: none !important;
   transform: none !important;
@@ -255,7 +251,7 @@ main {
 
 .tab-content.active { display: block; }
 
-/* --- フッター (1分間に10回往復) --- */
+/* --- フッター --- */
 footer {
   background: var(--panel-bg);
   border-top: 3px dashed var(--accent-light);
@@ -337,10 +333,12 @@ body.dark-mode .search-input, body.dark-mode select, body.dark-mode input {
   margin-bottom: 15px;
 }
 
+/* ★ 修正: スマホでのスワイプ誤スクロールを防止 */
 #gameCanvas {
   display: block;
   width: 100%;
   height: 420px;
+  touch-action: none;
 }
 
 .game-hud-score {
@@ -355,6 +353,7 @@ body.dark-mode .search-input, body.dark-mode select, body.dark-mode input {
   font-size: 18px;
   font-weight: bold;
   border: 1px solid #00ffcc;
+  z-index: 5;
 }
 
 .game-hud-timer {
@@ -368,9 +367,9 @@ body.dark-mode .search-input, body.dark-mode select, body.dark-mode input {
   font-family: monospace;
   font-size: 18px;
   font-weight: bold;
+  z-index: 5;
 }
 
-/* フライトタイマーHUD (常時表示) */
 .flight-hud-clock {
   position: absolute;
   bottom: 15px;
@@ -383,9 +382,10 @@ body.dark-mode .search-input, body.dark-mode select, body.dark-mode input {
   font-size: 13px;
   border: 1px solid #0288d1;
   pointer-events: none;
+  z-index: 5;
 }
 
-/* 十字ボタン & 2Pコントロール */
+/* コントローラ */
 .controller-wrapper {
   display: flex;
   flex-direction: column;
@@ -447,7 +447,7 @@ body.dark-mode .dpad { background: #333; }
 .dpad-right { top: 52px; right: 10px; width: 46px; height: 46px; }
 .dpad-center { top: 52px; left: 52px; width: 46px; height: 46px; background: #333; border-radius: 0; box-shadow: none; cursor: default; }
 
-/* 2P対戦用 コントローラーUI */
+/* 2P対戦用 UI */
 #vsControllerWrap {
   display: none;
   width: 100%;
@@ -486,6 +486,7 @@ body.dark-mode .dpad { background: #333; }
   border-radius: 12px;
   padding: 15px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+  z-index: 10;
 }
 
 .flag-options-grid {
@@ -694,7 +695,11 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 <div id="whiteoutOverlay"></div>
 <div id="mouseStalker">★</div>
 
-
+<!-- 事前ダウンロード推奨バナー -->
+<div class="pre-download-banner">
+  <span>✈️</span>
+  <span data-i18n="banner_predownload">【飛行機に乗る前に】機内ではネット通信が遮断されます。事前にこのページ（HTMLファイル）をご自身の端末にダウンロード保存しておくことを強く推奨します！</span>
+</div>
 
 <!-- ヘッダー表示ボタン -->
 <button id="headerShowBtn" onclick="toggleHeader(true)" data-i18n="btn_show_header">ヘッダー表示</button>
@@ -751,7 +756,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       </div>
     </div>
 
-    <!-- ゲーム選択ボタン (★ 2P対戦を追加) -->
+    <!-- ゲーム選択ボタン -->
     <div class="game-selector-container" id="gameSelectorContainer">
       <button class="game-select-btn active" data-game="stick" onclick="selectGame('stick', this)" data-i18n="game_stick">棒とビ</button>
       <button class="game-select-btn" data-game="block" onclick="selectGame('block', this)" data-i18n="game_block">ブロック消し</button>
@@ -845,7 +850,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     </div>
   </section>
 
-  <!-- 4. 設定タブ (★ 12個の追加設定を完全実装) -->
+  <!-- 4. 設定タブ -->
   <section id="settingsTab" class="tab-content">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; flex-wrap:wrap; gap:10px;">
       <h2 style="color: var(--accent-pink); margin:0;" data-i18n="settings_title">各種設定 & カスタマイズ</h2>
@@ -856,7 +861,6 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     </div>
 
     <div class="config-grid">
-      <!-- 既存基本設定 -->
       <div class="config-item">
         <label data-i18n="cfg_game_enable">1. ゲーム機能のON/OFF</label>
         <input type="checkbox" id="cfgGameEnabled" checked onchange="toggleGameFeatureSetting()"> <span data-i18n="val_enable">有効 (OFF時はゲームタブ非表示)</span>
@@ -939,7 +943,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         </select>
       </div>
 
-      <!-- ★ 1. 機内消灯モード & 2. 乗り物酔い防止 -->
+      <!-- 機内特化設定 -->
       <div class="config-item">
         <label data-i18n="cfg_night_flight">🌙 機内消灯モード (超低輝度・漆黒)</label>
         <input type="checkbox" id="cfgNightFlight" onchange="applyNightFlightMode(); saveConfig();"> <span data-i18n="val_enable_night">有効 (周囲に眩しくないアンバー発光)</span>
@@ -948,8 +952,6 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <label data-i18n="cfg_motion_sick">🤢 乗り物酔い防止 (アニメーション停止)</label>
         <input type="checkbox" id="cfgReducedMotion" onchange="applyReducedMotion(); saveConfig();"> <span data-i18n="val_enable_motion">有効 (揺れる星空や往復アニメを静止)</span>
       </div>
-
-      <!-- ★ 3. バッテリー節約 & 4. 音量マスター -->
       <div class="config-item">
         <label data-i18n="cfg_battery_saver">🔋 バッテリー節約モード (30fps制限)</label>
         <input type="checkbox" id="cfgBatterySaver" onchange="saveConfig();"> <span data-i18n="val_enable_battery">有効 (低消費電力・長時間フライト向け)</span>
@@ -961,8 +963,6 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
           <input type="checkbox" id="cfgMuteAudio" onchange="updateMasterVolume(); saveConfig();"> <span data-i18n="val_mute">ミュート</span>
         </div>
       </div>
-
-      <!-- ★ 5. コントローラー配置 & 6. 触覚バイブレーション -->
       <div class="config-item">
         <label data-i18n="cfg_controller_layout">🎮 コントローラー配置 & サイズ</label>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -985,8 +985,6 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <label data-i18n="cfg_vibration">📳 触覚フィードバック (バイブレーション)</label>
         <input type="checkbox" id="cfgVibrate" checked onchange="saveConfig();"> <span data-i18n="val_enable_vibrate">有効 (ボタンや衝突時に振動)</span>
       </div>
-
-      <!-- ★ 7. ゲームスピード倍率 & 8. 無敵練習モード -->
       <div class="config-item">
         <label data-i18n="cfg_gamespeed">⚡ ゲームスピード倍率</label>
         <select id="cfgGameSpeed" onchange="saveConfig();">
@@ -1000,8 +998,6 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <label data-i18n="cfg_invincible">🛡️ 無敵・練習モード (棒とビ)</label>
         <input type="checkbox" id="cfgInvincible" onchange="saveConfig();"> <span data-i18n="val_enable_invincible">有効 (衝突してもアウトにならず継続)</span>
       </div>
-
-      <!-- ★ 9. こんにゃく素材変更 & 10. 国旗地域フィルター -->
       <div class="config-item">
         <label data-i18n="cfg_konjac_skin">🔪 こんにゃく素材 & 包丁スキン</label>
         <div style="display:flex; gap:6px;">
@@ -1031,8 +1027,6 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
           <option value="oceania">オセアニア</option>
         </select>
       </div>
-
-      <!-- ★ 11. フライトタイマー & 12. 時差時計 -->
       <div class="config-item">
         <label data-i18n="cfg_flight_timer">⏱️ フライトタイマー (到着カウントダウン)</label>
         <div style="display:flex; gap:6px; align-items:center;">
@@ -1220,9 +1214,10 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 const I18N_DICTIONARY = {
   site_title: { ja: "飛行機でも遊べるゲーム", en: "Airplane Playable Games", hira: "ひこうきでも あそべる げーむ", ko: "비행기에서도 즐기는 게임", zh: "飞机上也能玩的游戏", ar: "ألعاب قابلة للعب على متن الطائرة", eo: "Ludoj Ludeblaj en Aviadilo" },
   site_desc: { ja: "ネットが使えない飛行機でも遊べるオフライン対応ゲームです。", en: "Offline compatible games playable on airplanes without internet.", hira: "ねっとが つかえない ひこうきでも あそべる おふらいん たいおう げーむです。", ko: "인터넷이 되지 않는 비행기에서도 즐길 수 있는 완전 오프라인 게임입니다.", zh: "在没有网络的飞机上也能玩的完全离线游戏。", ar: "ألعاب متوافقة مع وضع عدم الاتصال للعب في الطائرة دون إنترنت.", eo: "Tute eksterretaj ludoj ludeblaj en aviadiloj sen interreto." },
+  banner_predownload: { ja: "【飛行機に乗る前に】機内ではネット通信が遮断されます。事前にこのページ（HTMLファイル）をご自身の端末にダウンロード保存しておくことを強く推奨します！", en: "[Before Boarding] Internet will be disconnected mid-flight. We strongly recommend downloading and saving this HTML file onto your device beforehand!", hira: "【ひこうきに のるまえに】きないでは ねっとが つかえません。まえもって このぺーじ（HTMLふぁいる）を ほぞんしておくのを おすすめします！", ko: "[탑승 전 안내] 기내에서는 인터넷이 차단됩니다. 사전에 이 HTML 파일을 기기에 미리 다운로드해 두시는 것을 적극 권장합니다!", zh: "【登机前提醒】机内网络将完全切断。强烈建议您在登机前将本HTML文件下载保存至本机！", ar: "【قبل الصعود للطائرة】ستنقطع خدمة الإنترنت أثناء الرحلة. نوصي بشدة بتنزيل ملف HTML هذا وحفظه على جهازك مسبقًا!", eo: "[Antaŭ Enŝipiĝo] Interreto estos malkonektita dumfluge. Ni forte rekomendas elŝuti kaj konservi ĉi tiun HTML-dosieron en via aparato anticipe!" },
   btn_show_header: { ja: "ヘッダー表示", en: "Show Header", hira: "へっだー ひょうじ", ko: "헤더 표시", zh: "显示顶栏", ar: "إظهار الرأس", eo: "Montri Kapon" },
   tab_game: { ja: "ゲーム", en: "Games", hira: "げーむ", ko: "게임", zh: "游戏", ar: "الألعاب", eo: "Ludoj" },
-  tab_howto: { ja: "使い方", en: "How to Play", hira: "つかいかた", ko: "이용방법", zh: "玩法说明", ar: "كيفية اللعب", eo: "Kiel Ludi" },
+  tab_howto: { ja: "使い方", en: "How to Play", hira: "つかいかた", ko: "이用方法", zh: "玩法说明", ar: "كيفية اللعب", eo: "Kiel Ludi" },
   tab_hide_header: { ja: "ヘッダー非表示", en: "Hide Header", hira: "へっだー ひひょうじ", ko: "헤더 숨기기", zh: "隐藏顶栏", ar: "إخفاء الرأس", eo: "Kaŝi Kapon" },
   tab_settings: { ja: "設定", en: "Settings", hira: "せってい", ko: "설정", zh: "设置", ar: "الإعدادات", eo: "Agordoj" },
   tab_profile: { ja: "プロフィール", en: "Profile", hira: "ぷろふぃーる", ko: "프로필", zh: "个人档案", ar: "الملف الشخصي", eo: "Profilo" },
@@ -1271,7 +1266,7 @@ const I18N_DICTIONARY = {
   opt_image: { ja: "画像アップロード", en: "Upload Image", hira: "がぞう", ko: "이미지 업로드", zh: "上传图片", ar: "رفع صورة", eo: "Alŝuti Bildon" },
   cfg_memory: { ja: "5. 不要なメモリ削除", en: "5. Clean Unused Memory", hira: "5. めもり そうじ", ko: "5. 불필요한 메모리 정리", zh: "5. 清理无用内存", ar: "5. تنظيف الذاكرة الزائدة", eo: "5. Forigi Senutilan Memoron" },
   val_memory_note: { ja: "ON (即時解放し軽量化)", en: "ON (Faster)", hira: "おん", ko: "ON (가볍게 유지)", zh: "开启 (保持轻快)", ar: "تشغيل (خفيف وسريع)", eo: "Ŝaltita (Rapida)" },
-  cfg_colors: { ja: "6. 背景色 & 7. 文字色", en: "6. Background & 7. Text Color", hira: "6. はいけい と 7. もじのいろ", ko: "6. 배경색 & 7. 글자색", zh: "6. 背景色与 7. 文字颜色", ar: "6. لون الخلفية و 7. لون النص", eo: "6. Fona & 7. Teksta Koloro" },
+  cfg_colors: { ja: "6. 背景色 & 7. 文字色", en: "6. Background & 7. Text Color", hira: "6. はいけい と 7. もじのいろ", ko: "6. 背景色与 7. 文字颜色", zh: "6. 背景色与 7. 文字颜色", ar: "6. لون الخلفية و 7. لون النص", eo: "6. Fona & 7. Teksta Koloro" },
   val_bg: { ja: "背景:", en: "BG:", hira: "はいけい:", ko: "배경:", zh: "背景:", ar: "الخلفية:", eo: "Fono:" },
   val_text: { ja: "文字:", en: "Text:", hira: "もじ:", ko: "글자:", zh: "文字:", ar: "النص:", eo: "Teksto:" },
   cfg_font: { ja: "8. フォント設定", en: "8. Font Style", hira: "8. ふぉんと", ko: "8. 폰트 설정", zh: "8. 字体样式", ar: "8. نمط الخط", eo: "8. Tiparo" },
@@ -1287,7 +1282,6 @@ const I18N_DICTIONARY = {
   val_dark: { ja: "ダークモード", en: "Dark Mode", hira: "だーく", ko: "다크 모드", zh: "深色模式", ar: "الوضع الداكن", eo: "Malhela Reĝimo" },
   val_device: { ja: "端末設定に従う", en: "Follow Device", hira: "たんまつに あわせる", ko: "기기 설정 따름", zh: "跟随系统", ar: "حسب إعدادات الجهاز", eo: "Sekvi Aparaton" },
   
-  /* 追加設定辞書 */
   cfg_night_flight: { ja: "🌙 機内消灯モード (超低輝度・漆黒)", en: "🌙 Night Flight Mode (Ultra Low Brightness)", hira: "🌙 よるの ひこうき もーど", ko: "🌙 기내 소등 모드 (초저조도)", zh: "🌙 机内关灯模式 (超低亮度)", ar: "🌙 وضع الطيران الليلي", eo: "🌙 Nokta Flugreĝimo" },
   val_enable_night: { ja: "有効 (周囲に眩しくないアンバー発光)", en: "Enabled (Subdued amber glow)", hira: "ゆうこう", ko: "활성화 (눈부심 방지)", zh: "启用 (柔和琥珀光)", ar: "مفعل (ضوء كهرماني هادئ)", eo: "Ŝaltita (Milda sukcena lumo)" },
   cfg_motion_sick: { ja: "🤢 乗り物酔い防止 (アニメーション停止)", en: "🤢 Anti-Motion Sickness (Stop Motion)", hira: "🤢 よいどめ もーど", ko: "🤢 멀미 방지 (애니메이션 중지)", zh: "🤢 防晕机模式 (停止动画)", ar: "🤢 منع دوار الحركة (إيقاف الحركة)", eo: "🤢 Kontraŭ Mov-Malsano" },
@@ -1454,7 +1448,6 @@ const KOUSHIN_DATA = [
   }
 ];
 
-
 let currentLang = 'ja';
 function t(key) {
   if (I18N_DICTIONARY[key] && I18N_DICTIONARY[key][currentLang]) {
@@ -1491,7 +1484,6 @@ const availableActions = [
   { id: 'sound', name: { ja: '効果音テスト', en: 'Sound Test', hira: 'おと', ko: '효과음 테스트', zh: '音效测试', ar: 'اختبار الصوت', eo: 'Son-Testo' } }
 ];
 
-// 全データ保存 (追加された全12設定も完全保存)
 function saveAllConfig() {
   const config = {
     activeTab: currentActiveTab,
@@ -1518,7 +1510,6 @@ function saveAllConfig() {
     stickMaxHeight: document.getElementById('stickMaxHeight').value,
     stickMaxPillars: document.getElementById('stickMaxPillars').value,
 
-    /* ★ 追加全設定 */
     nightFlight: document.getElementById('cfgNightFlight').checked,
     reducedMotion: document.getElementById('cfgReducedMotion').checked,
     batterySaver: document.getElementById('cfgBatterySaver').checked,
@@ -1948,7 +1939,7 @@ function draw3DTitle() {
 draw3DTitle();
 
 /* ==========================================================================
-   タブ切り替え & モーダル
+   タブ切り替え & モーダル (★ 画面復帰時の自動リサイズ修正)
    ========================================================================== */
 function switchTab(tabId, btnElement) {
   if (tabId === 'gameTab' && !document.getElementById('cfgGameEnabled').checked) {
@@ -1967,6 +1958,14 @@ function switchTab(tabId, btnElement) {
   } else {
     const matchedBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
     if (matchedBtn) matchedBtn.classList.add('active');
+  }
+
+  // ★ 修正: ゲームタブ表示時にキャンバスが真っ黒になるのを防止するため安全にリサイズ＆再描画
+  if (tabId === 'gameTab') {
+    setTimeout(() => {
+      resizeGameCanvas();
+      drawFrame();
+    }, 20);
   }
 
   if (tabId === 'historyTab') renderHistoryTable();
@@ -2076,7 +2075,6 @@ function recordKey(inputElement, index) {
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' && !e.target.readOnly) return;
 
-  // 2P対戦用キーバインド
   if (currentGame === 'vs' && isGameRunning) {
     if (e.code === 'KeyW' || e.code === 'KeyA') triggerVsJump(1);
     if (e.code === 'ArrowUp' || e.code === 'KeyL') triggerVsJump(2);
@@ -2092,7 +2090,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 /* ==========================================================================
-   ゲームエンジン本体 (全5種 + 2P対戦モード)
+   ゲームエンジン本体 (全5種 + 2P対戦モード) ★ 真っ黒バグ解消＆安定化
    ========================================================================== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -2103,18 +2101,26 @@ let currentScore = 0;
 let stars = [];
 let lastFrameTime = 0;
 
+// ★ 修正: 横幅0で真っ黒になる現象を完全に防止する安全なリサイズ
 function resizeGameCanvas() {
   const wrap = canvas.parentElement;
-  canvas.width = wrap.clientWidth * window.devicePixelRatio;
+  const safeWidth = (wrap && wrap.clientWidth > 50) ? wrap.clientWidth : (window.innerWidth ? Math.min(1160, window.innerWidth - 40) : 600);
+  canvas.width = safeWidth * window.devicePixelRatio;
   canvas.height = 420 * window.devicePixelRatio;
   initStars();
+  if (currentGame === 'blackboard' && !blackboardCanvas) {
+    initBlackboardGame();
+  }
 }
-window.addEventListener('resize', resizeGameCanvas);
+window.addEventListener('resize', () => {
+  resizeGameCanvas();
+  drawFrame();
+});
 
 function initStars() {
   stars = [];
-  const w = canvas.width / window.devicePixelRatio;
-  const h = canvas.height / window.devicePixelRatio;
+  const w = Math.max(300, canvas.width / window.devicePixelRatio);
+  const h = 420;
   const count = document.getElementById('cfgBatterySaver')?.checked ? 15 : 80;
   for (let i = 0; i < count; i++) {
     stars.push({
@@ -2132,7 +2138,7 @@ function renderStars() {
   const h = canvas.height / window.devicePixelRatio;
   ctx.fillStyle = '#fffae0';
   for (let s of stars) {
-    if (!isReduced) {
+    if (!isReduced && isGameRunning) {
       s.y += s.speed;
       if (s.y > h) { s.y = 0; s.x = Math.random() * w; }
     }
@@ -2167,7 +2173,6 @@ function selectGame(gameKey, btn) {
   }
 
   document.getElementById('stickGameSettings').style.display = (gameKey === 'stick') ? 'flex' : 'none';
-  document.getElementById('flagQuizOverlay').style.display = 'none';
 
   // 2P対戦UIの切り替え
   const isVs = (gameKey === 'vs');
@@ -2175,6 +2180,7 @@ function selectGame(gameKey, btn) {
   document.getElementById('vsControllerWrap').style.display = isVs ? 'flex' : 'none';
 
   updateGameInstructionText();
+  resizeGameCanvas();
   initGameScene();
   saveAllConfig();
 }
@@ -2311,9 +2317,25 @@ function renderStickGame() {
   ctx.fillText(isInv ? `MODE: INVINCIBLE (無限)` : `MISS: ${stickMissCount} / 3`, 20, 75);
 }
 
-// 2. ブロック消し
+// 2. ブロック消し (★ 待機中も画面が真っ黒にならないよう初期ブロック生成)
 let blocks3D = [];
-function initBlockGame() { blocks3D = []; }
+function initBlockGame() {
+  blocks3D = [];
+  const w = canvas.width / window.devicePixelRatio || 600;
+  // 開始前でも見栄えがするよう数個配置
+  const shapes = ['cube', 'pyramid', 'sphere'];
+  for (let i = 0; i < 5; i++) {
+    blocks3D.push({
+      x: (w / 6) * (i + 1),
+      y: 80 + (i % 2) * 50,
+      size: 40,
+      speed: 1.5,
+      shape: shapes[i % 3],
+      color: `hsl(${i * 65}, 80%, 65%)`,
+      rot: 0.2 * i
+    });
+  }
+}
 
 function updateBlockGame() {
   const spd = getGameSpeed();
@@ -2365,24 +2387,37 @@ function renderBlockGame() {
     }
     ctx.restore();
   }
+
+  if (!isGameRunning) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('「開始」ボタンを押してスタート！', (canvas.width / window.devicePixelRatio) / 2, 280);
+    ctx.textAlign = 'start';
+  }
 }
 
-// 3. こんにゃく切り (★ 素材・包丁スキン対応)
+// 3. こんにゃく切り (★ スマホ幅自動対応＆包丁スキン反映)
 let konjacSlices = [];
 let konjacDots = [];
 
 function initKonjacGame() {
-  konjacSlices = [{ x: 60, width: 450 }];
+  const w = canvas.width / window.devicePixelRatio || 600;
+  const konjacWidth = Math.max(220, Math.min(480, w - 80));
+  konjacSlices = [{ x: 40, width: konjacWidth }];
   konjacDots = [];
   for (let i = 0; i < 200; i++) {
-    konjacDots.push({ x: Math.random() * 450, y: Math.random() * 120 });
+    konjacDots.push({ x: Math.random() * konjacWidth, y: Math.random() * 120 });
   }
 }
 
 function renderKonjacGame() {
+  const w = canvas.width / window.devicePixelRatio;
   const centerY = (canvas.height / window.devicePixelRatio) / 2 - 40;
+
+  // まな板
   ctx.fillStyle = '#d7ccc8';
-  ctx.fillRect(30, centerY + 100, canvas.width / window.devicePixelRatio - 60, 40);
+  ctx.fillRect(20, centerY + 100, w - 40, 40);
 
   const mat = document.getElementById('cfgKonjacMaterial')?.value || 'gray';
   const matStyles = {
@@ -2407,14 +2442,20 @@ function renderKonjacGame() {
     if (c.dots) {
       ctx.fillStyle = c.dots;
       for (let d of konjacDots) {
-        if (d.x >= s.x - 60 && d.x <= s.x - 60 + s.width) {
+        if (d.x >= s.x - 40 && d.x <= s.x - 40 + s.width) {
           ctx.beginPath();
-          ctx.arc(s.x + (d.x - (s.x - 60)), centerY + d.y * 0.65 + 10, 1.5, 0, Math.PI*2);
+          ctx.arc(s.x + (d.x - (s.x - 40)), centerY + d.y * 0.65 + 10, 1.5, 0, Math.PI*2);
           ctx.fill();
         }
       }
     }
   }
+
+  // 包丁スキンの案内表示
+  const knife = document.getElementById('cfgKonjacKnife')?.value || 'standard';
+  ctx.fillStyle = (knife === 'laser') ? '#00e5ff' : ((knife === 'katana') ? '#ffeb3b' : '#ffffff');
+  ctx.font = 'bold 13px monospace';
+  ctx.fillText(`KNIFE SKIN: ${knife.toUpperCase()}`, 20, 75);
 }
 
 function sliceKonjacAt(x) {
@@ -2438,8 +2479,8 @@ let bbCtx = null;
 let eraserPos = { x: -100, y: -100 };
 
 function initBlackboardGame() {
-  const w = Math.floor(canvas.width / window.devicePixelRatio);
-  const h = Math.floor(canvas.height / window.devicePixelRatio);
+  const w = Math.max(300, Math.floor(canvas.width / window.devicePixelRatio) || 600);
+  const h = 420;
   blackboardCanvas = document.createElement('canvas');
   blackboardCanvas.width = w;
   blackboardCanvas.height = h;
@@ -2499,7 +2540,7 @@ function renderBlackboardGame() {
   }
 }
 
-// 5. 国旗クイズ (★ 地域フィルター対応)
+// 5. 国旗クイズ (★ 待機中も真っ黒にならず画面内に美しい案内を描画)
 const FLAG_DATABASE = [
   { region: 'asia', name: { ja: '日本', en: 'Japan', hira: 'にほん', ko: '일본', zh: '日本', ar: 'اليابان', eo: 'Japanio' }, flag: '🇯🇵' },
   { region: 'americas', name: { ja: 'アメリカ', en: 'USA', hira: 'あめりか', ko: '미국', zh: '美国', ar: 'الولايات المتحدة', eo: 'Usono' }, flag: '🇺🇸' },
@@ -2563,7 +2604,28 @@ function answerFlagQuestion(ans) {
   nextFlagQuestion();
 }
 
-// ★ 6. 2P画面分割サバイバル対戦モード
+function renderFlagGame() {
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+  
+  // 地球・星空のモチーフ描画
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = '80px sans-serif';
+  ctx.fillText('🌍', w / 2, h / 2 - 20);
+
+  if (!isGameRunning) {
+    ctx.fillStyle = '#ff80ab';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText('【国旗クイズ】', w / 2, h / 2 + 60);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('右上の「開始」を押してクイズスタート！', w / 2, h / 2 + 95);
+  }
+  ctx.restore();
+}
+
+// 6. 2P画面分割対戦モード (★ 待機中も1P/2Pキャラクターを描画)
 let vsP1 = { y: 300, vy: 0, jumping: false, alive: true, score: 0 };
 let vsP2 = { y: 300, vy: 0, jumping: false, alive: true, score: 0 };
 let vsPillars = [];
@@ -2592,20 +2654,17 @@ function updateVsGame() {
   const spd = getGameSpeed();
   const ground = (canvas.height / window.devicePixelRatio) - 70;
 
-  // 1P 物理
   if (vsP1.alive) {
     vsP1.vy += 0.55 * spd;
     vsP1.y += vsP1.vy;
     if (vsP1.y > ground) { vsP1.y = ground; vsP1.vy = 0; vsP1.jumping = false; }
   }
-  // 2P 物理
   if (vsP2.alive) {
     vsP2.vy += 0.55 * spd;
     vsP2.y += vsP2.vy;
     if (vsP2.y > ground) { vsP2.y = ground; vsP2.vy = 0; vsP2.jumping = false; }
   }
 
-  // 障害物生成
   if (vsPillars.length === 0 || vsPillars[vsPillars.length - 1].x < (canvas.width / window.devicePixelRatio) - 180) {
     const h = Math.random() * 120 + 60;
     vsPillars.push({
@@ -2625,13 +2684,11 @@ function updateVsGame() {
     p.x -= 3.8 * spd;
     const pTop = ground + 45 - p.height;
 
-    // 1P 判定
     if (vsP1.alive && p1X + 20 > p.x && p1X < p.x + p.width && vsP1.y + 45 > pTop) {
       vsP1.alive = false;
       playClickSound();
       triggerHaptic([50, 50, 50]);
     }
-    // 2P 判定
     if (vsP2.alive && p2X + 20 > p.x && p2X < p.x + p.width && vsP2.y + 45 > pTop) {
       vsP2.alive = false;
       playClickSound();
@@ -2644,7 +2701,6 @@ function updateVsGame() {
     if (p.x + p.width < -50) vsPillars.splice(i, 1);
   }
 
-  // 勝敗判定
   if (!vsP1.alive && !vsP2.alive) {
     showModal('VS FINISH!', '両者脱落！引き分け！');
     stopGame();
@@ -2661,11 +2717,17 @@ function renderVsGame() {
   const w = canvas.width / window.devicePixelRatio;
   const ground = (canvas.height / window.devicePixelRatio) - 25;
 
-  // 地面
   ctx.fillStyle = '#37474f';
   ctx.fillRect(0, ground, w, 100);
 
-  // 障害物描画
+  // 画面中央の分割ライン（見やすさ向上）
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.setLineDash([6, 6]);
+  ctx.beginPath();
+  ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, ground);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
   for (let p of vsPillars) {
     ctx.fillStyle = '#ff9800';
     ctx.fillRect(p.x, ground - p.height, p.width, p.height);
@@ -2709,7 +2771,6 @@ function renderVsGame() {
     ctx.restore();
   }
 
-  // HUD
   ctx.font = 'bold 16px monospace';
   ctx.fillStyle = '#2196f3';
   ctx.fillText(`1P(青): ${vsP1.score} ${vsP1.alive ? '生存' : '脱落'}`, 20, 75);
@@ -2791,12 +2852,12 @@ function stopGame() {
     getTimeLimit(),
     currentGame === 'flag' ? (currentScore - flagMissScore) : (currentGame === 'vs' ? Math.max(vsP1.score, vsP2.score) : currentScore)
   );
+  drawFrame();
 }
 
 function loop(timestamp = 0) {
   if (!isGameRunning) return;
 
-  // バッテリー節約 30fps制限
   const isBatterySaver = document.getElementById('cfgBatterySaver')?.checked;
   if (isBatterySaver && timestamp - lastFrameTime < 32) {
     requestAnimationFrame(loop);
@@ -2812,17 +2873,22 @@ function loop(timestamp = 0) {
   requestAnimationFrame(loop);
 }
 
+// ★ 全ゲームの安全な描画
 function drawFrame() {
   ctx.save();
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+
   ctx.fillStyle = '#121212';
-  ctx.fillRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+  ctx.fillRect(0, 0, w, h);
 
   renderStars();
   if (currentGame === 'stick') renderStickGame();
   else if (currentGame === 'block') renderBlockGame();
   else if (currentGame === 'konjac') renderKonjacGame();
   else if (currentGame === 'blackboard') renderBlackboardGame();
+  else if (currentGame === 'flag') renderFlagGame();
   else if (currentGame === 'vs') renderVsGame();
   ctx.restore();
 }
@@ -2849,7 +2915,6 @@ function handleCanvasPointer(e) {
   const y = (e.clientY - rect.top);
 
   if (currentGame === 'vs') {
-    // 画面の左右半分タップで1P / 2Pジャンプ
     if (x < rect.width / 2) triggerVsJump(1);
     else triggerVsJump(2);
     return;
@@ -2913,7 +2978,7 @@ function startHowToAnimation() {
 }
 
 /* ==========================================================================
-   4. 設定機能群 (★ 新規12設定ハンドラー)
+   4. 設定機能群
    ========================================================================== */
 const mouseStalker = document.getElementById('mouseStalker');
 window.addEventListener('mousemove', (e) => {
@@ -3007,19 +3072,16 @@ function toggleIndexedDBSetting() {
   saveAllConfig();
 }
 
-// 1. 機内消灯モード
 function applyNightFlightMode() {
   const enabled = document.getElementById('cfgNightFlight').checked;
   document.body.classList.toggle('night-flight-mode', enabled);
 }
 
-// 2. 乗り物酔い防止
 function applyReducedMotion() {
   const enabled = document.getElementById('cfgReducedMotion').checked;
   document.body.classList.toggle('reduced-motion-mode', enabled);
 }
 
-// 5. コントローラー配置 & サイズ
 function applyDpadSettings() {
   const pos = document.getElementById('cfgDpadPosition').value;
   const size = document.getElementById('cfgDpadSize').value;
@@ -3033,7 +3095,6 @@ function applyDpadSettings() {
   dpad.style.opacity = opacity;
 }
 
-// 11. フライトタイマー機能
 let flightRemainingSeconds = 6.5 * 3600;
 let flightTimerInterval = null;
 
@@ -3063,7 +3124,6 @@ function updateFlightTimerDisplay() {
   if (el) el.textContent = str;
 }
 
-// 12. 世界時計・時差
 function updateWorldClock() {
   const diff = parseInt(document.getElementById('cfgTimezoneDiff')?.value || '-7', 10);
   const now = new Date();
@@ -3238,7 +3298,7 @@ function exportProfileCard(format) {
 }
 
 /* ==========================================================================
-   6. 更新履歴システム (日付完全ソート)
+   6. 更新履歴システム
    ========================================================================== */
 let historyPage = 1;
 
@@ -3405,7 +3465,7 @@ function downloadHistoryZip() {
 }
 
 /* ==========================================================================
-   7. データタブ & バックアップ / 復元 (.itsme 厳密対応)
+   7. データタブ & バックアップ / 復元
    ========================================================================== */
 let scorePage = 1;
 function renderScoreTable() {
@@ -3753,7 +3813,7 @@ function downloadBlob(blob, filename) {
 }
 
 /* ==========================================================================
-   リロード直前セーフティネット (フォーカス外れ前の急なF5も100%保護)
+   リロード直前セーフティネット
    ========================================================================== */
 window.addEventListener('beforeunload', () => {
   if (typeof updateMyProfileLive === 'function') updateMyProfileLive();
@@ -3761,11 +3821,9 @@ window.addEventListener('beforeunload', () => {
 });
 
 /* ==========================================================================
-   初期ロード処理 (リロード時にも例外なく全復元)
+   初期ロード処理 (★ 表示順序と初期描画の最適化)
    ========================================================================== */
 window.addEventListener('load', async () => {
-  resizeGameCanvas();
-
   const savedConfigStr = localStorage.getItem('airplane_game_config');
   let config = null;
   if (savedConfigStr) {
@@ -3812,11 +3870,9 @@ window.addEventListener('load', async () => {
     if (config.timezoneDiff) document.getElementById('cfgTimezoneDiff').value = config.timezoneDiff;
   }
 
-
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
       .then((reg) => {
-        // 更新チェック（オンライン時に変更を検知）
         reg.onupdatefound = () => {
           const installingWorker = reg.installing;
           installingWorker.onstatechange = () => {
@@ -3828,6 +3884,7 @@ window.addEventListener('load', async () => {
       })
       .catch((err) => console.log('SW登録失敗:', err));
   }
+
   await initIndexedDB();
   await loadScoresFromIndexedDB();
 
@@ -3880,19 +3937,23 @@ window.addEventListener('load', async () => {
     } catch (e) {}
   }
 
-  initGameScene();
-  renderHistoryTable();
-  renderScoreTable();
+  // ★ まずDOM確定後にキャンバスを安全にリサイズ＆シーン初期化
+  setTimeout(() => {
+    resizeGameCanvas();
+    initGameScene();
+    renderHistoryTable();
+    renderScoreTable();
 
-  if (config) {
-    if (config.selectedGame) {
-      const gBtn = document.querySelector(`.game-select-btn[data-game="${config.selectedGame}"]`);
-      selectGame(config.selectedGame, gBtn);
+    if (config) {
+      if (config.selectedGame) {
+        const gBtn = document.querySelector(`.game-select-btn[data-game="${config.selectedGame}"]`);
+        selectGame(config.selectedGame, gBtn);
+      }
+      if (config.activeTab) {
+        switchTab(config.activeTab);
+      }
     }
-    if (config.activeTab) {
-      switchTab(config.activeTab);
-    }
-  }
+  }, 50);
 });
 </script>
 </body>

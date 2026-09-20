@@ -1,4 +1,5 @@
-const CACHE_NAME = 'airplane-games-v1.0.0';
+
+const CACHE_NAME = 'airplane-games-v1.0.1';
 
 // キャッシュ対象のファイル一覧
 const ASSETS_TO_CACHE = [
