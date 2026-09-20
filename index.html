@@ -792,7 +792,9 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     <div id="stickGameSettings" style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px; flex-wrap:wrap;">
       <label><span data-i18n="lbl_stick_maxh">棒の高さ上限</span>: <input type="number" id="stickMaxHeight" value="200" min="50" max="350" style="width:70px;" onchange="saveAllConfig()"></label>
       <label><span data-i18n="lbl_stick_maxp">棒の出現上限</span>: <input type="number" id="stickMaxPillars" value="5" min="2" max="10" style="width:50px;" onchange="saveAllConfig()"></label>
+  <label>🦘 飛ぶ力(上限98): <input type="number" id="cfgJumpForce" value="12" min="1" max="98" style="width:55px;" oninput="if(this.value>98)this.value=98; saveAllConfig()"></label>
     </div>
+  </div>
 
     <!-- ゲームキャンバス -->
     <div class="game-viewport-wrap">
@@ -1396,6 +1398,9 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+{ pinned: false, date: '2026/09/21 08:50',
+    desc: { ja: 'ブロック消しに6種の特殊ブロック(💣⭐🧊🌈🧀🦄)追加＆飛ぶ力設定(上限98)を実装', en: 'Added 6 special blocks (💣⭐🧊🌈🧀🦄) & customizable jump force up to 98', hira: 'ぶろっくけしに とくしゅぶろっくを ついか＆とぶちから(98まで)を せっていできるようにしました', ko: '블록 깨기에 6종의 특수 블록 추가 및 점프력 설정(최대 98) 구현', zh: '方块消除新增6种特殊方块(💣⭐🧊🌈🧀🦄)并支持自定义跳跃力(上限98)', ar: 'إضافة 6 كتل خاصة في لعبة تكسير الكتل وخيار قوة القفز (بحد أقصى 98)', eo: 'Aldonis 6 specialajn blokojn (💣⭐🧊🌈🧀🦄) kaj agordon de salta forto (ĝis 98)' }
+  },
 { pinned: false, date: '2026/09/21 7:58',
  desc: {
       ja: 'スマホでこんにゃく素材と包丁スキンを選ぶプリセットが画面から一部はみ出ていたのを修正しました',
@@ -2300,7 +2305,6 @@ function renderStickGame() {
 }
 
 // 2. ブロック消し (★ 待機中も画面が真っ黒にならないよう初期ブロック生成)
-let blocks3D = [];
 function initBlockGame() {
   blocks3D = [];
   const w = canvas.width / window.devicePixelRatio || 600;
@@ -2319,19 +2323,64 @@ function initBlockGame() {
   }
 }
 
+
+// 2. ブロック消し
+let blocks3D = [];
+// ★ 特殊効果タイマー & パーティクル管理
+let blockSlowUntil = 0;       // 🧊 スロー
+let milkDropUntil = 0;        // 🧀 牛乳12秒
+let yumekawaUntil = 0;        // 🦄 ゆめかわ8秒
+let milkParticles = [];
+
+function initBlockGame() {
+  blocks3D = [];
+  const w = canvas.width / window.devicePixelRatio || 600;
+  const shapes = ['cube', 'pyramid', 'sphere'];
+  for (let i = 0; i < 5; i++) {
+    blocks3D.push({
+      x: (w / 6) * (i + 1),
+      y: 80 + (i % 2) * 50,
+      size: 40,
+      speed: 1.5,
+      shape: shapes[i % 3],
+      color: `hsl(${i * 65}, 80%, 65%)`,
+      rot: 0.2 * i,
+      type: 'normal',
+      icon: ''
+    });
+  }
+}
+
+// ブロック生成 & 更新（★ 特殊ブロック機能付き）
 function updateBlockGame() {
-  const spd = getGameSpeed();
+  const spd = getGameSpeed() * (Date.now() < blockSlowUntil ? 0.35 : 1.0); // 🧊 スロー適用
+  const now = Date.now();
+
   if (Math.random() < 0.05 * spd && blocks3D.length < 15) {
     const shapes = ['cube', 'pyramid', 'sphere'];
     const w = canvas.width / window.devicePixelRatio;
+
+    // 特殊ブロックの抽選
+    const rand = Math.random();
+    let specialType = 'normal';
+    let icon = '';
+    if (rand < 0.07) { specialType = 'bomb'; icon = '💣'; }
+    else if (rand < 0.14) { specialType = 'bonus'; icon = '⭐'; }
+    else if (rand < 0.20) { specialType = 'slow'; icon = '🧊'; }
+    else if (rand < 0.25) { specialType = 'rainbow'; icon = '🌈'; }
+    else if (rand < 0.30) { specialType = 'cheese'; icon = '🧀'; }
+    else if (rand < 0.35) { specialType = 'unicorn'; icon = '🦄'; }
+
     blocks3D.push({
       x: Math.random() * (w - 60) + 20,
       y: -50,
-      size: Math.random() * 30 + 30,
+      size: specialType !== 'normal' ? 44 : Math.random() * 30 + 30,
       speed: (Math.random() * 2 + 1.5) * spd,
       shape: shapes[Math.floor(Math.random() * shapes.length)],
-      color: `hsl(${Math.random() * 360}, 80%, 65%)`,
-      rot: Math.random() * Math.PI
+      color: specialType === 'normal' ? `hsl(${Math.random() * 360}, 80%, 65%)` : '#ffffff',
+      rot: Math.random() * Math.PI,
+      type: specialType,
+      icon: icon
     });
   }
 
@@ -2342,30 +2391,76 @@ function updateBlockGame() {
     b.rot += 0.02 * spd;
     if (b.y > h + 50) blocks3D.splice(i, 1);
   }
+
+  // 🧀 牛乳液体パーティクル生成（12秒間）
+  if (now < milkDropUntil) {
+    const w = canvas.width / window.devicePixelRatio;
+    for (let j = 0; j < 3; j++) {
+      milkParticles.push({ x: Math.random() * w, y: -10, vy: Math.random() * 4 + 5, r: Math.random() * 3 + 2 });
+    }
+  }
+  for (let k = milkParticles.length - 1; k >= 0; k--) {
+    const mp = milkParticles[k];
+    mp.y += mp.vy;
+    if (mp.y > h + 10) milkParticles.splice(k, 1);
+  }
 }
 
+// ブロック描画（★ ゆめかわ背景＆牛乳演出付き）
 function renderBlockGame() {
+  const now = Date.now();
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+
+  // 🦄 8秒間ゆめかわ背景に変身
+  if (now < yumekawaUntil) {
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, 'rgba(255, 192, 203, 0.45)');
+    grad.addColorStop(0.5, 'rgba(230, 190, 255, 0.45)');
+    grad.addColorStop(1, 'rgba(180, 235, 255, 0.45)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  // 🧀 牛乳の雫を描画
+  if (milkParticles.length > 0) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    for (let mp of milkParticles) {
+      ctx.beginPath();
+      ctx.arc(mp.x, mp.y, mp.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   for (let b of blocks3D) {
     ctx.save();
     ctx.translate(b.x, b.y);
     ctx.rotate(b.rot);
+
+    ctx.fillStyle = b.color;
     if (b.shape === 'cube') {
-      ctx.fillStyle = b.color;
       ctx.fillRect(-b.size/2, -b.size/2, b.size, b.size);
       ctx.fillStyle = 'rgba(255,255,255,0.4)';
       ctx.fillRect(-b.size/2, -b.size/2, b.size, b.size/3);
     } else if (b.shape === 'pyramid') {
-      ctx.fillStyle = b.color;
       ctx.beginPath();
       ctx.moveTo(0, -b.size/2);
       ctx.lineTo(b.size/2, b.size/2);
       ctx.lineTo(-b.size/2, b.size/2);
       ctx.fill();
     } else {
-      ctx.fillStyle = b.color;
       ctx.beginPath();
       ctx.arc(0, 0, b.size/2, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // 特殊ブロックの絵文字アイコン表示
+    if (b.icon) {
+      ctx.rotate(-b.rot);
+      ctx.font = '22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(b.icon, 0, 0);
     }
     ctx.restore();
   }
@@ -2883,13 +2978,19 @@ function triggerDpad(dir) {
     setTimeout(() => dpadBtn.classList.remove('pressed'), 100);
   }
 
-  if (currentGame === 'stick' && (dir === 'up' || dir === 'center')) {
+// 飛ぶ力（上限98）を取得する関数
+function getJumpForce() {
+  const val = parseFloat(document.getElementById('cfgJumpForce')?.value || '12');
+  return Math.min(98, Math.max(1, isNaN(val) ? 12 : val));
+}
+
+ if (currentGame === 'stick') {
     if (!stickMan.jumping) {
-      stickMan.vy = -12 * Math.min(1.2, getGameSpeed());
+      stickMan.vy = -getJumpForce() * Math.min(1.2, getGameSpeed());
       stickMan.jumping = true;
+      playClickSound();
     }
   }
-}
 
 function handleCanvasPointer(e) {
   const rect = canvas.getBoundingClientRect();
@@ -2902,20 +3003,64 @@ function handleCanvasPointer(e) {
     return;
   }
 
+
+function getJumpForce() {
+  const val = parseFloat(document.getElementById('cfgJumpForce')?.value || '12');
+  return Math.min(98, Math.max(1, isNaN(val) ? 12 : val));
+}
+
+
   if (currentGame === 'stick') {
     if (!stickMan.jumping) {
       stickMan.vy = -12 * Math.min(1.2, getGameSpeed());
       stickMan.jumping = true;
       playClickSound();
     }
-  } else if (currentGame === 'block') {
+    } else if (currentGame === 'block') {
     for (let i = blocks3D.length - 1; i >= 0; i--) {
       const b = blocks3D[i];
       if (Math.hypot(b.x - x, b.y - y) < b.size) {
+        const type = b.type;
         blocks3D.splice(i, 1);
-        currentScore += 10;
-        updateScoreDisplay();
         playBlockPopSound();
+
+        // ★ 各特殊ブロックの効果発動！
+        if (type === 'bomb') {
+          // 💣 爆発：周囲120pxもまとめて吹き飛ばす
+          triggerHaptic([30, 50, 30]);
+          for (let j = blocks3D.length - 1; j >= 0; j--) {
+            if (Math.hypot(blocks3D[j].x - b.x, blocks3D[j].y - b.y) < 120) {
+              blocks3D.splice(j, 1);
+              currentScore += 10;
+            }
+          }
+          currentScore += 20;
+        } else if (type === 'bonus') {
+          // ⭐ ボーナス：一気に +100点
+          triggerHaptic(40);
+          currentScore += 100;
+        } else if (type === 'slow') {
+          // 🧊 スロー：5秒間ゆっくり落下
+          blockSlowUntil = Date.now() + 5000;
+          currentScore += 15;
+        } else if (type === 'rainbow') {
+          // 🌈 レインボー：画面内の全ブロックを一掃！
+          triggerHaptic([50, 50, 80]);
+          currentScore += blocks3D.length * 15 + 50;
+          blocks3D = [];
+        } else if (type === 'cheese') {
+          // 🧀 チーズ：牛乳が12秒間ザーザー降る
+          milkDropUntil = Date.now() + 12000;
+          currentScore += 25;
+        } else if (type === 'unicorn') {
+          // 🦄 ユニコーン：8秒間ゆめかわ色に変身
+          yumekawaUntil = Date.now() + 8000;
+          currentScore += 30;
+        } else {
+          currentScore += 10;
+        }
+
+        updateScoreDisplay();
         break;
       }
     }
