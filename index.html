@@ -3342,6 +3342,9 @@ function renderHistoryTable() {
   }
 }
 
+// テーブル描画内のピン留めボタン呼び出し
+<td><button class="btn btn-outline" style="padding:2px 8px; font-size:11px;" onclick="toggleHistoryPin('${item.date}')">${item.pinned ? '★' : '☆'}</button></td>
+
 // ピン留め切り替え関数
 function toggleHistoryPin(date) {
   const target = KOUSHIN_DATA.find(k => k.date === date);
