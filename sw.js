@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'airplane-games-v1.0.3';
+const CACHE_NAME = 'airplane-games-v1.0.4';
 
 // キャッシュ対象のファイル一覧
 const ASSETS_TO_CACHE = [
@@ -34,20 +34,18 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 3. 通信時：キャッシュを最優先で使用（オフラインでも100%開く）
+// 通信処理：スマホ起動時の404を絶対に防ぐフォールバック付き
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      // キャッシュにあれば即座にキャッシュを返す（ネット不要・恐竜絶対出ない）
       if (cachedResponse) {
         return cachedResponse;
       }
-      // キャッシュにない新規ファイルのみオンライン通信で取得
-      return fetch(event.request).then((networkResponse) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
+      return fetch(event.request).catch(() => {
+        // オフラインや404になりそうな画面アクセス時は、キャッシュ済みのメインHTMLを強制返却
+        if (event.request.mode === 'navigate') {
+          return caches.match('./') || caches.match('./index.html');
+        }
       });
     })
   );
