@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -36,6 +35,29 @@ body.dark-mode {
   --text-white-adaptive: #ffffff;
   --text-black-adaptive: #dcdcdc;
   --text-color: var(--text-black-adaptive);
+}
+
+/* ★ 1. 機内消灯モード（超低輝度・有機EL漆黒・低刺激アンバー） */
+body.night-flight-mode {
+  --bg-color: #000000 !important;
+  --panel-bg: #0a0a0a !important;
+  --border-color: #332200 !important;
+  --header-bg: linear-gradient(135deg, #2b1800, #422000) !important;
+  --accent-pink: #ff9800 !important;
+  --accent-light: #ffb74d !important;
+  --dpad-color: #333333 !important;
+  --text-white-adaptive: #ffb74d !important;
+  --text-black-adaptive: #ff9800 !important;
+  --text-color: #ffb74d !important;
+}
+body.night-flight-mode #gameCanvas {
+  filter: brightness(0.55) contrast(1.1);
+}
+
+/* ★ 2. 乗り物酔い防止モード（アニメーション完全停止） */
+body.reduced-motion-mode .running-text {
+  animation: none !important;
+  transform: none !important;
 }
 
 * {
@@ -332,14 +354,34 @@ body.dark-mode .search-input, body.dark-mode select, body.dark-mode input {
   font-weight: bold;
 }
 
-/* 十字ボタン */
+/* フライトタイマーHUD (常時表示) */
+.flight-hud-clock {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #81d4fa;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  border: 1px solid #0288d1;
+  pointer-events: none;
+}
+
+/* 十字ボタン & 2Pコントロール */
 .controller-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: 10px;
   gap: 15px;
+  transition: all 0.3s ease;
 }
+
+.controller-wrapper.align-left { align-items: flex-start; }
+.controller-wrapper.align-center { align-items: center; }
+.controller-wrapper.align-right { align-items: flex-end; }
 
 .instruction-text {
   font-size: 14px;
@@ -355,8 +397,13 @@ body.dark-mode .search-input, body.dark-mode select, body.dark-mode input {
   background: rgba(0,0,0,0.08);
   border-radius: 50%;
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: transform 0.2s, opacity 0.2s;
 }
 body.dark-mode .dpad { background: #333; }
+
+.dpad.size-small { transform: scale(0.8); }
+.dpad.size-medium { transform: scale(1.0); }
+.dpad.size-large { transform: scale(1.2); }
 
 .dpad-btn {
   position: absolute;
@@ -383,6 +430,32 @@ body.dark-mode .dpad { background: #333; }
 .dpad-left { top: 52px; left: 10px; width: 46px; height: 46px; }
 .dpad-right { top: 52px; right: 10px; width: 46px; height: 46px; }
 .dpad-center { top: 52px; left: 52px; width: 46px; height: 46px; background: #333; border-radius: 0; box-shadow: none; cursor: default; }
+
+/* 2P対戦用 コントローラーUI */
+#vsControllerWrap {
+  display: none;
+  width: 100%;
+  max-width: 600px;
+  margin-top: 10px;
+  gap: 20px;
+  justify-content: space-between;
+}
+.vs-player-panel {
+  flex: 1;
+  background: rgba(0,0,0,0.04);
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  border: 2px solid #ccc;
+}
+.vs-jump-btn {
+  width: 100%;
+  padding: 18px 0;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 12px;
+  margin-top: 10px;
+}
 
 /* 国旗クイズ オーバーレイ */
 #flagQuizOverlay {
@@ -643,7 +716,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
   <section id="gameTab" class="tab-content active">
     <div class="game-controls-bar">
       <input type="text" id="gameSearchInput" class="search-input" data-i18n-ph="ph_search_game" placeholder="ゲームを検索..." oninput="filterGames()">
-      <div style="display: flex; gap: 10px; align-items: center;">
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
         <label data-i18n="lbl_timelimit">制限時間: </label>
         <select id="timeLimitSelect" class="time-select" onchange="onTimeLimitChange()">
           <option value="15">15s</option>
@@ -666,17 +739,18 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       </div>
     </div>
 
-    <!-- ゲーム選択ボタン -->
+    <!-- ゲーム選択ボタン (★ 2P対戦を追加) -->
     <div class="game-selector-container" id="gameSelectorContainer">
       <button class="game-select-btn active" data-game="stick" onclick="selectGame('stick', this)" data-i18n="game_stick">棒とビ</button>
       <button class="game-select-btn" data-game="block" onclick="selectGame('block', this)" data-i18n="game_block">ブロック消し</button>
       <button class="game-select-btn" data-game="konjac" onclick="selectGame('konjac', this)" data-i18n="game_konjac">こんにゃく切り</button>
       <button class="game-select-btn" data-game="blackboard" onclick="selectGame('blackboard', this)" data-i18n="game_blackboard">黒板をお掃除しよう</button>
       <button class="game-select-btn" data-game="flag" onclick="selectGame('flag', this)" data-i18n="game_flag">国旗クイズ</button>
+      <button class="game-select-btn" data-game="vs" onclick="selectGame('vs', this)" style="border-color:#ff9800; color:#e65100;" data-i18n="game_vs">⚔️ 2P分割対戦</button>
     </div>
 
     <!-- 棒とビ用 詳細設定 -->
-    <div id="stickGameSettings" style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px;">
+    <div id="stickGameSettings" style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px; flex-wrap:wrap;">
       <label><span data-i18n="lbl_stick_maxh">棒の高さ上限</span>: <input type="number" id="stickMaxHeight" value="200" min="50" max="350" style="width:70px;" onchange="saveAllConfig()"></label>
       <label><span data-i18n="lbl_stick_maxp">棒の出現上限</span>: <input type="number" id="stickMaxPillars" value="5" min="2" max="10" style="width:50px;" onchange="saveAllConfig()"></label>
     </div>
@@ -686,6 +760,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       <canvas id="gameCanvas"></canvas>
       <div class="game-hud-timer" id="gameHudTimer">TIME: --</div>
       <div class="game-hud-score" id="gameHudScore">SCORE: 0</div>
+      <div class="flight-hud-clock" id="flightHudClock">FLIGHT: 00:00:00</div>
 
       <div id="flagQuizOverlay">
         <div id="flagEmojiDisplay" style="font-size: 72px; text-align: center; margin-bottom: 10px;">🇯🇵</div>
@@ -694,20 +769,35 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     </div>
 
     <!-- コントローラ & 説明 -->
-    <div class="controller-wrapper">
+    <div class="controller-wrapper" id="mainControllerWrapper">
       <div class="instruction-text text-dark-adaptive" id="gameInstructionText"></div>
 
-      <div class="dpad">
+      <!-- 1P通常用 十字キー -->
+      <div class="dpad" id="standardDpad">
         <button class="dpad-btn dpad-up" onmousedown="triggerDpad('up')" ontouchstart="triggerDpad('up')">▲</button>
         <button class="dpad-btn dpad-left" onmousedown="triggerDpad('left')" ontouchstart="triggerDpad('left')">◀</button>
         <div class="dpad-center"></div>
         <button class="dpad-btn dpad-right" onmousedown="triggerDpad('right')" ontouchstart="triggerDpad('right')">▶</button>
         <button class="dpad-btn dpad-down" onmousedown="triggerDpad('down')" ontouchstart="triggerDpad('down')">▼</button>
       </div>
+
+      <!-- 2P対戦用 分割コントロールUI -->
+      <div id="vsControllerWrap">
+        <div class="vs-player-panel" style="border-color:#2196f3;">
+          <h4 style="color:#1976d2;">1P (青)</h4>
+          <p style="font-size:12px; color:#666;">画面左タップ / Wキー / Aキー</p>
+          <button class="btn vs-jump-btn" style="background:#2196f3;" onmousedown="triggerVsJump(1)" ontouchstart="triggerVsJump(1)">1P ジャンプ！</button>
+        </div>
+        <div class="vs-player-panel" style="border-color:#f44336;">
+          <h4 style="color:#d32f2f;">2P (赤)</h4>
+          <p style="font-size:12px; color:#666;">画面右タップ / ↑キー / Lキー</p>
+          <button class="btn vs-jump-btn" style="background:#f44336;" onmousedown="triggerVsJump(2)" ontouchstart="triggerVsJump(2)">2P ジャンプ！</button>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- 2. 使い方タブ (増設＆完全多言語版) -->
+  <!-- 2. 使い方タブ -->
   <section id="howToTab" class="tab-content">
     <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="howto_title">サイトの使い方 & ゲーム詳細解説</h2>
     <div style="display: flex; flex-direction: column; gap: 15px; line-height: 1.6;">
@@ -723,28 +813,14 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       </article>
 
       <article class="config-item">
-        <h3 style="color:var(--accent-pink); margin-bottom:6px;" data-i18n="howto_h2">2. 5つのゲームルールと攻略のコツ</h3>
+        <h3 style="color:var(--accent-pink); margin-bottom:6px;" data-i18n="howto_h2">2. ゲームルールと攻略のコツ</h3>
         <ul style="padding-inline-start: 20px;" class="text-dark-adaptive">
-          <li style="margin-bottom: 6px;">
-            <strong data-i18n="game_stick">棒とビ</strong>: 
-            <span data-i18n="howto_stick_desc">クリックまたは十字キー「▲」でジャンプ。3回激突で終了。設定でバーの高さや本数をカスタマイズ可能です。</span>
-          </li>
-          <li style="margin-bottom: 6px;">
-            <strong data-i18n="game_block">ブロック消し</strong>: 
-            <span data-i18n="howto_block_desc">星空から落下する立体キューブ・角錐・球体をタップして消去。連続タップでハイスコアを狙えます。</span>
-          </li>
-          <li style="margin-bottom: 6px;">
-            <strong data-i18n="game_konjac">こんにゃく切り</strong>: 
-            <span data-i18n="howto_konjac_desc">制限時間∞。クリックやスワイプで包丁を入れ、超極細切りも可能。Web Audio APIによるリアルな切断音をお楽しみください。</span>
-          </li>
-          <li style="margin-bottom: 6px;">
-            <strong data-i18n="game_blackboard">黒板をお掃除しよう</strong>: 
-            <span data-i18n="howto_blackboard_desc">制限時間∞。チョークの落書きをミニ黒板消しで消去します。すべて綺麗に消してリフレッシュできます。</span>
-          </li>
-          <li style="margin-bottom: 6px;">
-            <strong data-i18n="game_flag">国旗クイズ</strong>: 
-            <span data-i18n="howto_flag_desc">190カ国の国旗から出題。正解で加算、誤答で減点。地理の知識を楽しく学べます。</span>
-          </li>
+          <li style="margin-bottom: 6px;"><strong data-i18n="game_stick">棒とビ</strong>: <span data-i18n="howto_stick_desc">クリックまたは十字キー「▲」でジャンプ。3回激突で終了。設定でバーの高さや本数をカスタマイズ可能です。</span></li>
+          <li style="margin-bottom: 6px;"><strong data-i18n="game_block">ブロック消し</strong>: <span data-i18n="howto_block_desc">星空から落下する立体キューブ・角錐・球体をタップして消去。連続タップでハイスコアを狙えます。</span></li>
+          <li style="margin-bottom: 6px;"><strong data-i18n="game_konjac">こんにゃく切り</strong>: <span data-i18n="howto_konjac_desc">制限時間∞。クリックやスワイプで包丁を入れ、超極細切りも可能。Web Audio APIによるリアルな切断音をお楽しみください。</span></li>
+          <li style="margin-bottom: 6px;"><strong data-i18n="game_blackboard">黒板をお掃除しよう</strong>: <span data-i18n="howto_blackboard_desc">制限時間∞。チョークの落書きをミニ黒板消しで消去します。すべて綺麗に消してリフレッシュできます。</span></li>
+          <li style="margin-bottom: 6px;"><strong data-i18n="game_flag">国旗クイズ</strong>: <span data-i18n="howto_flag_desc">190カ国の国旗から出題。正解で加算、誤答で減点。地理の知識を楽しく学べます。</span></li>
+          <li style="margin-bottom: 6px;"><strong data-i18n="game_vs">2P分割対戦</strong>: <span data-i18n="howto_vs_desc">1台の端末で隣の人と対戦！画面の左右をタップして障害物を飛び越え、最後まで生き残った方の勝利！</span></li>
         </ul>
       </article>
 
@@ -757,7 +833,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     </div>
   </section>
 
-  <!-- 4. 設定タブ -->
+  <!-- 4. 設定タブ (★ 12個の追加設定を完全実装) -->
   <section id="settingsTab" class="tab-content">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; flex-wrap:wrap; gap:10px;">
       <h2 style="color: var(--accent-pink); margin:0;" data-i18n="settings_title">各種設定 & カスタマイズ</h2>
@@ -768,6 +844,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     </div>
 
     <div class="config-grid">
+      <!-- 既存基本設定 -->
       <div class="config-item">
         <label data-i18n="cfg_game_enable">1. ゲーム機能のON/OFF</label>
         <input type="checkbox" id="cfgGameEnabled" checked onchange="toggleGameFeatureSetting()"> <span data-i18n="val_enable">有効 (OFF時はゲームタブ非表示)</span>
@@ -835,7 +912,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       </div>
       <div class="config-item">
         <label data-i18n="cfg_search_other">10-B. 更新履歴/プロフ検索バー表示</label>
-        <input type="checkbox" id="cfgShowSearchOther" checked onchange="toggleSearchBarVisibility(); saveConfig();"> <span data-i18n="val_show">表示 (OFF時は履歴バーも非表示)</span>
+        <input type="checkbox" id="cfgShowSearchOther" checked onchange="toggleSearchBarVisibility(); saveConfig();"> <span data-i18n="val_show">表示</span>
       </div>
       <div class="config-item">
         <label data-i18n="cfg_header">11. ヘッダー表示</label>
@@ -850,6 +927,116 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         </select>
       </div>
 
+      <!-- ★ 1. 機内消灯モード & 2. 乗り物酔い防止 -->
+      <div class="config-item">
+        <label data-i18n="cfg_night_flight">🌙 機内消灯モード (超低輝度・漆黒)</label>
+        <input type="checkbox" id="cfgNightFlight" onchange="applyNightFlightMode(); saveConfig();"> <span data-i18n="val_enable_night">有効 (周囲に眩しくないアンバー発光)</span>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_motion_sick">🤢 乗り物酔い防止 (アニメーション停止)</label>
+        <input type="checkbox" id="cfgReducedMotion" onchange="applyReducedMotion(); saveConfig();"> <span data-i18n="val_enable_motion">有効 (揺れる星空や往復アニメを静止)</span>
+      </div>
+
+      <!-- ★ 3. バッテリー節約 & 4. 音量マスター -->
+      <div class="config-item">
+        <label data-i18n="cfg_battery_saver">🔋 バッテリー節約モード (30fps制限)</label>
+        <input type="checkbox" id="cfgBatterySaver" onchange="saveConfig();"> <span data-i18n="val_enable_battery">有効 (低消費電力・長時間フライト向け)</span>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_audio_master">🔊 マスター音量 & 完全消音</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="range" id="cfgMasterVolume" min="0" max="1" step="0.05" value="0.7" oninput="updateMasterVolume(); saveConfig();" style="flex:1;">
+          <input type="checkbox" id="cfgMuteAudio" onchange="updateMasterVolume(); saveConfig();"> <span data-i18n="val_mute">ミュート</span>
+        </div>
+      </div>
+
+      <!-- ★ 5. コントローラー配置 & 6. 触覚バイブレーション -->
+      <div class="config-item">
+        <label data-i18n="cfg_controller_layout">🎮 コントローラー配置 & サイズ</label>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <select id="cfgDpadPosition" onchange="applyDpadSettings(); saveConfig();">
+            <option value="center">中央</option>
+            <option value="left">左寄せ (左手操作)</option>
+            <option value="right">右寄せ (右手操作)</option>
+          </select>
+          <select id="cfgDpadSize" onchange="applyDpadSettings(); saveConfig();">
+            <option value="small">小</option>
+            <option value="medium" selected>中</option>
+            <option value="large">大</option>
+          </select>
+          <label style="font-size:12px; margin:0; display:flex; align-items:center; gap:4px;">
+            不透明度: <input type="range" id="cfgDpadOpacity" min="0.2" max="1" step="0.1" value="1" oninput="applyDpadSettings(); saveConfig();" style="width:70px;">
+          </label>
+        </div>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_vibration">📳 触覚フィードバック (バイブレーション)</label>
+        <input type="checkbox" id="cfgVibrate" checked onchange="saveConfig();"> <span data-i18n="val_enable_vibrate">有効 (ボタンや衝突時に振動)</span>
+      </div>
+
+      <!-- ★ 7. ゲームスピード倍率 & 8. 無敵練習モード -->
+      <div class="config-item">
+        <label data-i18n="cfg_gamespeed">⚡ ゲームスピード倍率</label>
+        <select id="cfgGameSpeed" onchange="saveConfig();">
+          <option value="0.5">0.5倍速 (スロー/練習用)</option>
+          <option value="1.0" selected>1.0倍速 (通常)</option>
+          <option value="1.5">1.5倍速 (高速)</option>
+          <option value="2.0">2.0倍速 (激ムズ・ターボ)</option>
+        </select>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_invincible">🛡️ 無敵・練習モード (棒とビ)</label>
+        <input type="checkbox" id="cfgInvincible" onchange="saveConfig();"> <span data-i18n="val_enable_invincible">有効 (衝突してもアウトにならず継続)</span>
+      </div>
+
+      <!-- ★ 9. こんにゃく素材変更 & 10. 国旗地域フィルター -->
+      <div class="config-item">
+        <label data-i18n="cfg_konjac_skin">🔪 こんにゃく素材 & 包丁スキン</label>
+        <div style="display:flex; gap:6px;">
+          <select id="cfgKonjacMaterial" onchange="saveConfig();" style="flex:1;">
+            <option value="gray" selected>普通 (グレー・粒入り)</option>
+            <option value="white">白こんにゃく</option>
+            <option value="matcha">抹茶こんにゃく</option>
+            <option value="yokan">羊羹 (ようかん)</option>
+            <option value="tofu">木綿豆腐</option>
+            <option value="cheese">チェダーチーズ</option>
+          </select>
+          <select id="cfgKonjacKnife" onchange="saveConfig();" style="flex:1;">
+            <option value="standard" selected>普通の包丁</option>
+            <option value="laser">レーザーブレード</option>
+            <option value="katana">日本刀</option>
+          </select>
+        </div>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_flag_region">🚩 国旗クイズ 出題地域フィルター</label>
+        <select id="cfgFlagRegion" onchange="saveConfig();">
+          <option value="all" selected>全世界 (190カ国)</option>
+          <option value="asia">アジア</option>
+          <option value="europe">ヨーロッパ</option>
+          <option value="americas">南北アメリカ</option>
+          <option value="africa">アフリカ</option>
+          <option value="oceania">オセアニア</option>
+        </select>
+      </div>
+
+      <!-- ★ 11. フライトタイマー & 12. 時差時計 -->
+      <div class="config-item">
+        <label data-i18n="cfg_flight_timer">⏱️ フライトタイマー (到着カウントダウン)</label>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input type="number" id="cfgFlightHours" placeholder="時間" min="0" max="24" value="6" style="width:65px;" onchange="initFlightTimer(); saveConfig();"> 時間
+          <input type="number" id="cfgFlightMinutes" placeholder="分" min="0" max="59" value="30" style="width:65px;" onchange="initFlightTimer(); saveConfig();"> 分
+          <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="resetFlightTimer()" data-i18n="btn_timer_reset">リセット</button>
+        </div>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_world_clock">🌍 現地時差時計</label>
+        <div style="font-size:12px; line-height:1.5;">
+          現地時差: <input type="number" id="cfgTimezoneDiff" value="-7" min="-14" max="14" style="width:60px;" onchange="updateWorldClock(); saveConfig();"> 時間<br>
+          <div id="worldClockDisplay" style="font-family:monospace; margin-top:4px; font-weight:bold; color:var(--accent-pink);">日本: --:-- | 現地: --:--</div>
+        </div>
+      </div>
+
       <!-- 13. ショートカットキー無制限追加 -->
       <div class="config-item" style="grid-column: 1 / -1;">
         <label data-i18n="cfg_shortcuts">13. ショートカットキー無制限設定</label>
@@ -862,13 +1049,11 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     </div>
   </section>
 
-  <!-- 5. プロフィールタブ (再編レイアウト：上段左右／下段表示カード) -->
+  <!-- 5. プロフィールタブ -->
   <section id="profileTab" class="tab-content">
     <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="profile_title">管理者情報 & 自作プロフィール</h2>
     
-    <!-- 上段：左 管理人 / 右 自作プロフ編集 -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px;">
-      <!-- 左：管理人情報 -->
       <div style="background: var(--panel-bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);" id="adminProfileCard">
         <h3 style="color: var(--accent-pink); margin-bottom: 10px;" data-i18n="prof_author_info">作者情報</h3>
         <p><strong>🤖 AI:</strong> <span data-i18n="prof_ai_note">コードの一部はAIを使用して作成しています。</span></p>
@@ -886,7 +1071,6 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <button class="btn" style="margin-top: 12px;" onclick="recordAndDownloadKaisetuVideo()" data-i18n="btn_record_video">kaisetu.mp4 として動画録画・保存</button>
       </div>
 
-      <!-- 右：自作プロフィールの編集 -->
       <div style="background: var(--panel-bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
         <h3 style="color: var(--accent-pink); margin-bottom: 10px;" data-i18n="prof_edit_title">自作プロフィールの編集</h3>
         <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
@@ -905,12 +1089,9 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       </div>
     </div>
 
-    <!-- 下段：自作プロフィールの表示 & エクスポート -->
     <div style="background: var(--panel-bg); padding: 20px; border-radius: 12px; border: 2px solid var(--accent-light);">
       <h3 style="color: var(--accent-pink); margin-bottom: 12px;" data-i18n="prof_view_title">自作プロフィールのリアルタイム表示</h3>
-      <div id="liveProfileCardView" style="background: white; border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: #333;">
-        <!-- JSでリアルタイム反映 -->
-      </div>
+      <div id="liveProfileCardView" style="background: white; border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: #333;"></div>
       <div>
         <label><strong data-i18n="lbl_export_format">ダウンロード形式:</strong></label>
         <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
@@ -1025,26 +1206,9 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
    多言語辞書システム (7言語完全対応)
    ========================================================================== */
 const I18N_DICTIONARY = {
-  site_title: {
-    ja: "飛行機でも遊べるゲーム", en: "Airplane Playable Games", hira: "ひこうきでも あそべる げーむ",
-    ko: "비행기에서도 즐기는 게임", zh: "飞机上也能玩的游戏", ar: "ألعاب قابلة للعب على متن الطائرة", eo: "Ludoj Ludeblaj en Aviadilo"
-  },
-  site_desc: {
-    ja: "ネットが使えない飛行機でも遊べるオフライン対応ゲームです。", en: "Offline compatible games playable on airplanes without internet.",
-    hira: "ねっとが つかえない ひこうきでも あそべる おふらいん たいおう げーむです。",
-    ko: "인터넷이 되지 않는 비행기에서도 즐길 수 있는 완전 오프라인 게임입니다.",
-    zh: "在没有网络的飞机上也能玩的完全离线游戏。",
-    ar: "ألعاب متوافقة مع وضع عدم الاتصال للعب في الطائرة دون إنترنت.", eo: "Tute eksterretaj ludoj ludeblaj en aviadiloj sen interreto."
-  },
-  banner_predownload: {
-    ja: "【飛行機に乗る前に】機内ではネット通信が遮断されます。事前にこのページ（HTMLファイル）をご自身の端末にダウンロード保存しておくことを強く推奨します！",
-    en: "[Before Boarding] Internet will be disconnected mid-flight. We strongly recommend downloading and saving this HTML file onto your device beforehand!",
-    hira: "【ひこうきに のるまえに】きないでは ねっとが つかえません。まえもって このぺーじ（HTMLふぁいる）を ほぞんしておくのを おすすめします！",
-    ko: "[탑승 전 안내] 기내에서는 인터넷이 차단됩니다. 사전에 이 HTML 파일을 기기에 미리 다운로드해 두시는 것을 적극 권장합니다!",
-    zh: "【登机前提醒】机内网络将完全切断。强烈建议您在登机前将本HTML文件下载保存至本机！",
-    ar: "【قبل الصعود للطائرة】ستنقطع خدمة الإنترنت أثناء الرحلة. نوصي بشدة بتنزيل ملف HTML هذا وحفظه على جهازك مسبقًا!",
-    eo: "[Antaŭ Enŝipiĝo] Interreto estos malkonektita dumfluge. Ni forte rekomendas elŝuti kaj konservi ĉi tiun HTML-dosieron en via aparato anticipe!"
-  },
+  site_title: { ja: "飛行機でも遊べるゲーム", en: "Airplane Playable Games", hira: "ひこうきでも あそべる げーむ", ko: "비행기에서도 즐기는 게임", zh: "飞机上也能玩的游戏", ar: "ألعاب قابلة للعب على متن الطائرة", eo: "Ludoj Ludeblaj en Aviadilo" },
+  site_desc: { ja: "ネットが使えない飛行機でも遊べるオフライン対応ゲームです。", en: "Offline compatible games playable on airplanes without internet.", hira: "ねっとが つかえない ひこうきでも あそべる おふらいん たいおう げーむです。", ko: "인터넷이 되지 않는 비행기에서도 즐길 수 있는 완전 오프라인 게임입니다.", zh: "在没有网络的飞机上也能玩的完全离线游戏。", ar: "ألعاب متوافقة مع وضع عدم الاتصال للعب في الطائرة دون إنترنت.", eo: "Tute eksterretaj ludoj ludeblaj en aviadiloj sen interreto." },
+  banner_predownload: { ja: "【飛行機に乗る前に】機内ではネット通信が遮断されます。事前にこのページ（HTMLファイル）をご自身の端末にダウンロード保存しておくことを強く推奨します！", en: "[Before Boarding] Internet will be disconnected mid-flight. We strongly recommend downloading and saving this HTML file onto your device beforehand!", hira: "【ひこうきに のるまえに】きないでは ねっとが つかえません。まえもって このぺーじ（HTMLふぁいる）を ほぞんしておくのを おすすめします！", ko: "[탑승 전 안내] 기내에서는 인터넷이 차단됩니다. 사전에 이 HTML 파일을 기기에 미리 다운로드해 두시는 것을 적극 권장합니다!", zh: "【登机前提醒】机内网络将完全切断。强烈建议您在登机前将本HTML文件下载保存至本机！", ar: "【قبل الصعود للطائرة】ستنقطع خدمة الإنترنت أثناء الرحلة. نوصي بشدة بتنزيل ملف HTML هذا وحفظه على جهازك مسبقًا!", eo: "[Antaŭ Enŝipiĝo] Interreto estos malkonektita dumfluge. Ni forte rekomendas elŝuti kaj konservi ĉi tiun HTML-dosieron en via aparato anticipe!" },
   btn_show_header: { ja: "ヘッダー表示", en: "Show Header", hira: "へっだー ひょうじ", ko: "헤더 표시", zh: "显示顶栏", ar: "إظهار الرأس", eo: "Montri Kapon" },
   tab_game: { ja: "ゲーム", en: "Games", hira: "げーむ", ko: "게임", zh: "游戏", ar: "الألعاب", eo: "Ludoj" },
   tab_howto: { ja: "使い方", en: "How to Play", hira: "つかいかた", ko: "이용방법", zh: "玩法说明", ar: "كيفية اللعب", eo: "Kiel Ludi" },
@@ -1059,6 +1223,7 @@ const I18N_DICTIONARY = {
   game_konjac: { ja: "こんにゃく切り", en: "Konjac Slicer", hira: "こんにゃく きり", ko: "곤약 자르기", zh: "切魔芋", ar: "تقطيع الكونجاك", eo: "Konjak-Tranĉo" },
   game_blackboard: { ja: "黒板をお掃除しよう", en: "Clean Chalkboard", hira: "こくばん おそうじ", ko: "칠판 청소하기", zh: "黑板清理大作战", ar: "تنظيف السبورة", eo: "Purigi Tabulon" },
   game_flag: { ja: "国旗クイズ", en: "Flag Quiz", hira: "こっき くいず", ko: "국기 퀴즈", zh: "国旗问答", ar: "اختبار الأعلام", eo: "Flaga Kviz" },
+  game_vs: { ja: "⚔️ 2P分割対戦", en: "⚔️ 2P Split Battle", hira: "⚔️ 2にんで たいせん", ko: "⚔️ 2인 화면분할 대전", zh: "⚔️ 双人分屏对战", ar: "⚔️ معركة ثنائية مقسمة", eo: "⚔️ 2-Ludanta Batalo" },
 
   ph_search_game: { ja: "ゲームを検索...", en: "Search game...", hira: "げーむを けんさく...", ko: "게임 검색...", zh: "搜索游戏...", ar: "البحث عن لعبة...", eo: "Serĉi ludon..." },
   lbl_timelimit: { ja: "制限時間: ", en: "Time Limit: ", hira: "じかん: ", ko: "제한시간: ", zh: "时间限制: ", ar: "الوقت المحدد: ", eo: "Templimo: " },
@@ -1070,71 +1235,17 @@ const I18N_DICTIONARY = {
 
   howto_title: { ja: "サイトの使い方 & ゲーム詳細解説", en: "How to Use & Game Guide", hira: "つかいかた と げーむの せつめい", ko: "이용 방법 & 게임 가이드", zh: "使用方法及游戏指南", ar: "دليل الاستخدام والألعاب", eo: "Kiel Uzi kaj Luda Gvidilo" },
   howto_h1: { ja: "1. 完全オフライン & 機内での楽しみ方", en: "1. Fully Offline & In-flight Gaming", hira: "1. おふらいん と ひこうきでの あそびかた", ko: "1. 완전 오프라인 및 기내 이용법", zh: "1. 完全离线与机内畅玩", ar: "1. العمل دون إنترنت على متن الطائرة", eo: "1. Tute Eksterrete en Aviadilo" },
-  howto_p1: {
-    ja: "本サイトは外部サーバ通信を一切行わない完全スタンドアロン型Webアプリです。機内モードやWi-Fiがない上空でも、ブラウザを開くだけで全ゲーム・全エクスポート・バックアップ機能が軽快に動作します。",
-    en: "This site runs completely standalone without any external server communications. Enjoy games, exports, and backup features smoothly in airplane mode mid-flight!",
-    hira: "このさいとは ねっとをつかわないで うごきます。ひこうきのなかでも ぜんぶのげーむが たのしくあそべます！",
-    ko: "본 사이트는 외부 통신을 전혀 하지 않는 완전 독립형 웹 애플리케이션입니다. 비행기 안에서도 모든 게임과 기능을 자유롭게 사용할 수 있습니다.",
-    zh: "本网站完全独立运行，无需联网。在飞行模式下也可尽享所有游戏与保存备份功能。",
-    ar: "هذا الموقع يعمل بالكامل دون الحاجة لأي اتصال بالإنترنت، مما يجعله مثاليًا للطيران.",
-    eo: "Ĉi tiu retejo funkcias tute sendepende sen interreto eĉ dum flugado."
-  },
-  howto_h2: { ja: "2. 5つのゲームルールと攻略のコツ", en: "2. Rules & Tips for 5 Games", hira: "2. 5つの げーむの あそびかた", ko: "2. 5가지 게임의 룰과 공략", zh: "2. 5款游戏的规则与技巧", ar: "2. قواعد ونظرة عامة على الألعاب الخمس", eo: "2. Reguloj por la 5 Ludoj" },
+  howto_p1: { ja: "本サイトは外部サーバ通信を一切行わない完全スタンドアロン型Webアプリです。機内モードやWi-Fiがない上空でも、ブラウザを開くだけで全ゲーム・全エクスポート・バックアップ機能が軽快に動作します。", en: "This site runs completely standalone without any external server communications. Enjoy games, exports, and backup features smoothly in airplane mode mid-flight!", hira: "このさいとは ねっとをつかわないで うごきます。ひこうきのなかでも ぜんぶのげーむが たのしくあそべます！", ko: "본 사이트는 외부 통신을 전혀 하지 않는 완전 독립형 웹 애플리케이션입니다. 비행기 안에서도 모든 게임과 기능을 자유롭게 사용할 수 있습니다.", zh: "本网站完全独立运行，无需联网。在飞行模式下也可尽享所有游戏与保存备份功能。", ar: "هذا الموقع يعمل بالكامل دون الحاجة لأي اتصال بالإنترنت، مما يجعله مثاليًا للطيران.", eo: "Ĉi tiu retejo funkcias tute sendepende sen interreto eĉ dum flugado." },
+  howto_h2: { ja: "2. ゲームルールと攻略のコツ", en: "2. Rules & Tips for Games", hira: "2. げーむの あそびかた", ko: "2. 게임 룰과 공략", zh: "2. 游戏规则与技巧", ar: "2. قواعد الألعاب", eo: "2. Reguloj por Ludoj" },
   howto_h3: { ja: "3. スコア保存・画像書き出し・バックアップ", en: "3. Score Saving, Exports & Backups", hira: "3. すこあほぞん と ばっくあっぷ", ko: "3. 스코어 저장, 내보내기 및 백업", zh: "3. 分数记录与备份导出", ar: "3. حفظ النتائج والنسخ الاحتياطي", eo: "3. Konservado de Poentoj kaj Savkopio" },
-  howto_p3: {
-    ja: "遊んだ記録は自動で「データ」タブに蓄積されます。表はPNG/JPEG/AVIF/WebP/HTML/GIF形式で保存可能。背景色と文字色の同化防止フィルターが施されています。.itsmeや.indexeddb、ZIP形式で全データを一括バックアップ・復元できます。",
-    en: "Scores are logged automatically in the Data tab. Export table to PNG/JPEG/AVIF/WebP/HTML/GIF without contrast issues. Backup whole data as .itsme, .indexeddb, or ZIP.",
-    hira: "すこあは じどうで きろくされます。しゃしんや ほぞんふぁいるで ほぞんや ふくげんが できます。",
-    ko: "플레이 기록은 데이터 탭에 자동 보관됩니다. 다양한 포맷(PNG/JPEG/AVIF/WebP/HTML/GIF)으로 내보낼 수 있으며, 백업/복원을 지원합니다.",
-    zh: "游玩记录会自动存入数据标签页。支持导出多种格式，并具备完备的备份与还原系统。",
-    ar: "يتم حفظ السجلات تلقائيًا وتصديرها بصيغ متعددة مع ميزة النسخ الاحتياطي الكامل.",
-    eo: "Poentaroj estas aŭtomate registritaj en Datumoj kaj elporteblaj en multaj formatoj."
-  },
-  howto_stick_desc: {
-    ja: "クリックまたは十字キー「▲」でジャンプ。3回激突で終了。設定でバーの高さや本数をカスタマイズ可能です。",
-    en: "Click or press D-Pad '▲' to jump. 3 collisions = Game Over. Max height and pole counts are customizable.",
-    hira: "くりっく か じゅうじきー「▲」で じゃんぷ。3かい ぶつかったら おわり。たかさや ほんすうも かえられるよ。",
-    ko: "클릭 또는 십자키 '▲'로 점프합니다. 3번 충돌 시 종료됩니다. 설정에서 높이와 개수 제한을 조절할 수 있습니다.",
-    zh: "点击或按十字键【▲】跳跃。碰撞3次即结束。可在设置中自定义柱子的高度和出现数量上限。",
-    ar: "انقر أو اضغط على زر الاتجاهات '▲' للقفز. الاصطدام 3 مرات ينهي اللعبة. يمكن تخصيص الارتفاع وعدد الأعمدة.",
-    eo: "Alklaku aŭ premu kruc-klavon '▲' por salti. 3 kolizioj = Fino. Maksimuma alto kaj nombro estas agordeblaj."
-  },
-  howto_block_desc: {
-    ja: "星空から落下する立体キューブ・角錐・球体をタップして消去。連続タップでハイスコアを狙えます。",
-    en: "Tap falling 3D cubes, pyramids, and spheres to clear them. Chain taps quickly for a high score!",
-    hira: "おちてくる 3Dぶろっくを たっちして けそう。れんぞくで けすと たかい すこあに なるよ。",
-    ko: "밤하늘에서 떨어지는 3D 큐브, 각뿔, 구체를 탭하여 제거합니다. 연속 탭으로 높은 점수를 노려보세요.",
-    zh: "点击消除从星空飘落的各种立体立方体、锥体与球体。手速越快得分越高。",
-    ar: "المس المكعبات والأهرامات والكرات ثلاثية الأبعاد المتساقطة لإزالتها. النقر السريع يحقق نقاطًا أعلى.",
-    eo: "Frapetu falantajn 3D-kubojn, piramidojn kaj sferojn por forigi ilin. Rapida forigo donas altan poentaron."
-  },
-  howto_konjac_desc: {
-    ja: "制限時間∞。クリックやスワイプで包丁を入れ、超極細切りも可能。Web Audio APIによるリアルな切断音をお楽しみください。",
-    en: "Infinite time limit. Drag or tap to slice into ultra-thin pieces. Enjoy realistic cutting sounds generated via Web Audio API.",
-    hira: "じかんは むげん。くりっくや すわいぷで ざくざく きれるよ。ほんものみたいな おとが なるよ。",
-    ko: "제한시간 무제한(∞). 클릭이나 스와이프로 썰며, 초극세 썰기도 가능합니다. Web Audio API로 구현된 리얼한 사운드를 즐겨보세요.",
-    zh: "时间无限制(∞)。轻扫或点击挥刀，可切出超细切片。享受通过Web Audio API生成的真实切割音效。",
-    ar: "الوقت غير محدود(∞). اسحب أو انقر للتقطيع لشرائح دقيقة جدًا. استمتع بأصوات التقطيع الواقعية عبر Web Audio API.",
-    eo: "Senlima tempo (∞). Trenu aŭ frapetu por tranĉi eĉ tre maldikajn pecojn. Ĝuu realismajn tranĉsonojn per Web Audio API."
-  },
-  howto_blackboard_desc: {
-    ja: "制限時間∞。チョークの落書きをミニ黒板消しで消去します。すべて綺麗に消してリフレッシュできます。",
-    en: "Infinite time limit. Erase messy chalk graffiti using the mini eraser. Clear it all away to feel refreshed!",
-    hira: "じかんは むげん。ちょーくの らくがきを こくばんけしで けそう。ぴかぴかに してね。",
-    ko: "제한시간 무제한(∞). 낙서된 분필을 미니 칠판 지우개로 깨끗이 지워보세요. 모두 지우면 상쾌해집니다.",
-    zh: "时间无限制(∞)。使用真实迷你黑板擦清除杂乱的粉笔涂鸦。全部擦拭干净令人身心愉悦。",
-    ar: "الوقت غير محدود(∞). امسح رسومات الطباشير العشوائية بممحاة السبورة الصغيرة لتنظيفها بالكامل.",
-    eo: "Senlima tempo (∞). Forviŝu kretajn desegnojn per la miniatura tabulviŝilo por tute refreŝiĝi."
-  },
-  howto_flag_desc: {
-    ja: "190カ国の国旗から出題。正解で加算、誤答で減点。地理の知識を楽しく学べます。",
-    en: "Quizzes from 190 flags. Correct answers add points, misses deduct points. Fun way to master world geography!",
-    hira: "せかいの こっきから もんだいが でるよ。せいかいで ぷらす、まちがえると まいなす。たのしく おぼえよう。",
-    ko: "190개국 국기가 출제됩니다. 정답 시 가산, 오답 시 감점됩니다. 지리 상식을 즐겁게 배워보세요.",
-    zh: "涵盖190个国家的国旗问答。答对加分，答错扣分。在趣味游戏中轻松掌握世界地理。",
-    ar: "اختبارات من 190 علمًا لدول العالم. الإجابة الصحيحة تمنحك نقاطًا والخطأ يخصم منك. طريقة ممتعة لتعلّم الجغرافيا.",
-    eo: "Kvizoj el 190 naciaj flagoj. Ĝustaj respondoj aldonas poentojn, eraroj subtrahas. Amuza maniero lerni geografion."
-  },
+  howto_p3: { ja: "遊んだ記録は自動で「データ」タブに蓄積されます。表はPNG/JPEG/AVIF/WebP/HTML/GIF形式で保存可能。背景色と文字色の同化防止フィルターが施されています。.itsmeや.indexeddb、ZIP形式で全データを一括バックアップ・復元できます。", en: "Scores are logged automatically in the Data tab. Export table to PNG/JPEG/AVIF/WebP/HTML/GIF without contrast issues. Backup whole data as .itsme, .indexeddb, or ZIP.", hira: "すこあは じどうで きろくされます。しゃしんや ほぞんふぁいるで ほぞんや ふくげんが できます。", ko: "플레이 기록은 데이터 탭에 자동 보관됩니다. 다양한 포맷(PNG/JPEG/AVIF/WebP/HTML/GIF)으로 내보낼 수 있으며, 백업/복원을 지원합니다.", zh: "游玩记录会自动存入数据标签页。支持导出多种格式，并具备完备的备份与还原系统。", ar: "يتم حفظ السجلات تلقائيًا وتصديرها بصيغ متعددة مع ميزة النسخ الاحتياطي الكامل.", eo: "Poentaroj estas aŭtomate registritaj en Datumoj kaj elporteblaj en multaj formatoj." },
+
+  howto_stick_desc: { ja: "クリックまたは十字キー「▲」でジャンプ。3回激突で終了。設定でバーの高さや本数をカスタマイズ可能です。", en: "Click or press D-Pad '▲' to jump. 3 collisions = Game Over. Max height and pole counts are customizable.", hira: "くりっく か じゅうじきー「▲」で じゃんぷ。3かい ぶつかったら おわり。たかさや ほんすうも かえられるよ。", ko: "클릭 또는 십자키 '▲'로 점프합니다. 3번 충돌 시 종료됩니다. 설정에서 높이와 개수 제한을 조절할 수 있습니다.", zh: "点击或按十字键【▲】跳跃。碰撞3次即结束。可在设置中自定义柱子的高度和出现数量上限。", ar: "انقر أو اضغط على زر الاتجاهات '▲' للقفز. الاصطدام 3 مرات ينهي اللعبة. يمكن تخصيص الارتفاع وعدد الأعمدة.", eo: "Alklaku aŭ premu kruc-klavon '▲' por salti. 3 kolizioj = Fino. Maksimuma alto kaj nombro estas agordeblaj." },
+  howto_block_desc: { ja: "星空から落下する立体キューブ・角錐・球体をタップして消去。連続タップでハイスコアを狙えます。", en: "Tap falling 3D cubes, pyramids, and spheres to clear them. Chain taps quickly for a high score!", hira: "おちてくる 3Dぶろっくを たっちして けそう。れんぞくで けすと たかい すこあに なるよ。", ko: "밤하늘에서 떨어지는 3D 큐브, 각뿔, 구체를 탭하여 제거합니다. 연속 탭으로 높은 점수를 노려보세요.", zh: "点击消除从星空飘落的各种立体立方体、锥体与球体。手速越快得分越高。", ar: "المس المكعبات والأهرامات والكرات ثلاثية الأبعاد المتساقطة لإزالتها. النقر السريع يحقق نقاطًا أعلى.", eo: "Frapetu falantajn 3D-kubojn, piramidojn kaj sferojn por forigi ilin. Rapida forigo donas altan poentaron." },
+  howto_konjac_desc: { ja: "制限時間∞。クリックやスワイプで包丁を入れ、超極細切りも可能。Web Audio APIによるリアルな切断音をお楽しみください。", en: "Infinite time limit. Drag or tap to slice into ultra-thin pieces. Enjoy realistic cutting sounds generated via Web Audio API.", hira: "じかんは むげん。くりっくや すわいぷで ざくざく きれるよ。ほんものみたいな おとが なるよ。", ko: "제한시간 무제한(∞). 클릭이나 스와이프로 썰며, 초극세 썰기도 가능합니다. Web Audio API로 구현된 리얼한 사운드를 즐겨보세요.", zh: "时间无限制(∞)。轻扫或点击挥刀，可切出超细切片。享受通过Web Audio API生成的真实切割音效。", ar: "الوقت غير محدود(∞). اسحب أو انقر للتقطيع لشرائح دقيقة جدًا. استمتع بأصوات التقطيع الواقعية عبر Web Audio API.", eo: "Senlima tempo (∞). Trenu aŭ frapetu por tranĉi eĉ tre maldikajn pecojn. Ĝuu realismajn tranĉsonojn per Web Audio API." },
+  howto_blackboard_desc: { ja: "制限時間∞。チョークの落書きをミニ黒板消しで消去します。すべて綺麗に消してリフレッシュできます。", en: "Infinite time limit. Erase messy chalk graffiti using the mini eraser. Clear it all away to feel refreshed!", hira: "じかんは むげん。ちょーくの らくがきを こくばんけしで けそう。ぴかぴかに してね。", ko: "제한시간 무제한(∞). 낙서된 분필을 미니 칠판 지우개로 깨끗이 지워보세요. 모두 지우면 상쾌해집니다.", zh: "时间无限制(∞)。使用真实迷你黑板擦清除杂乱的粉笔涂鸦。全部擦拭干净令人身心愉悦。", ar: "الوقت غير محدود(∞). امسح رسومات الطباشير العشوائية بممحاة السبورة الصغيرة لتنظيفها بالكامل.", eo: "Senlima tempo (∞). Forviŝu kretajn desegnojn per la miniatura tabulviŝilo por tute refreŝiĝi." },
+  howto_flag_desc: { ja: "190カ国の国旗から出題。正解で加算、誤答で減点。地理の知識を楽しく学べます。", en: "Quizzes from 190 flags. Correct answers add points, misses deduct points. Fun way to master world geography!", hira: "せかいの こっきから もんだいが でるよ。せいかいで ぷらす、まちがえると まいなす。たのしく おぼえよう。", ko: "190개국 국기가 출제됩니다. 정답 시 가산, 오답 시 감점됩니다. 지리 상식을 즐겁게 배워보세요.", zh: "涵盖190个国家的国旗问答。答对加分，答错扣分。在趣味游戏中轻松掌握世界地理。", ar: "اختبارات من 190 علمًا لدول العالم. الإجابة الصحيحة تمنحك نقاطًا والخطأ يخصم منك. طريقة ممتعة لتعلّم الجغرافيا.", eo: "Kvizoj el 190 naciaj flagoj. Ĝustaj respondoj aldonas poentojn, eraroj subtrahas. Amuza maniero lerni geografion." },
+  howto_vs_desc: { ja: "1台の端末で隣の人と対戦！画面の左右をタップして障害物を飛び越え、最後まで生き残った方の勝利！", en: "Local 2-Player battle on 1 device! Tap left/right to jump over obstacles. Last survivor wins!", hira: "1つの がめんで ふたりで たいせん！さいごまで のこったほうが かち！", ko: "기기 하나로 2인 대전! 화면 좌우를 탭하여 장애물을 넘고 마지막까지 생존한 쪽이 승리!", zh: "同机双人对战！点击屏幕左右侧跳过障碍，最后生还者获胜！", ar: "معركة ثنائية على جهاز واحد! انقر على اليمين واليسار للقفز. الفائز هو من يصمد للنهاية!", eo: "Loka 2-ludanta batalo sur unu aparato! Frapetu maldekstre/dekstre por salti. Lasta pluvivanto venkas!" },
 
   settings_title: { ja: "各種設定 & カスタマイズ", en: "Settings & Customization", hira: "せってい", ko: "각종 설정", zh: "各项设置", ar: "الإعدادات والتخصيص", eo: "Agordoj" },
   btn_reset_config: { ja: "設定を初期化", en: "Reset Settings", hira: "せっていを もどす", ko: "설정 초기화", zh: "重置设置", ar: "إعادة ضبط الإعدادات", eo: "Restarigi Agordojn" },
@@ -1160,20 +1271,34 @@ const I18N_DICTIONARY = {
   cfg_search_other: { ja: "10-B. 更新履歴/プロフ検索バー表示", en: "10-B. History/Profile Search Bar", hira: "10-B. りれき けんさくばー", ko: "10-B. 기록/프로필 검색창", zh: "10-B. 历史/档案搜索栏", ar: "10-B. شريط بحث السجل/الملف", eo: "10-B. Historio/Profilo Serĉbreto" },
   val_show: { ja: "表示", en: "Show", hira: "ひょうじ", ko: "표시", zh: "显示", ar: "إظهار", eo: "Montri" },
   cfg_header: { ja: "11. ヘッダー表示", en: "11. Header Visibility", hira: "11. へっだー", ko: "11. 헤더 표시", zh: "显示顶栏", ar: "11. إظهار الرأس", eo: "Montri Kapon" },
-  cfg_theme: { ja: "12. テーマ設定", en: "12. Theme Mode", hira: "12. てーま", ko: "12. 테마 설정", zh: "12. 主题设定", ar: "12. نمط المظهر", eo: "Etoso" },
+  cfg_theme: { ja: "12. テーマ設定", en: "12. Theme Mode", hira: "12. てーま", ko: "12. 테마 설정", zh: "主题设定", ar: "12. نمط المظهر", eo: "Etoso" },
   val_light: { ja: "ライトモード", en: "Light Mode", hira: "らいと", ko: "라이트 모드", zh: "浅色模式", ar: "الوضع الفاتح", eo: "Luma Reĝimo" },
   val_dark: { ja: "ダークモード", en: "Dark Mode", hira: "だーく", ko: "다크 모드", zh: "深色模式", ar: "الوضع الداكن", eo: "Malhela Reĝimo" },
   val_device: { ja: "端末設定に従う", en: "Follow Device", hira: "たんまつに あわせる", ko: "기기 설정 따름", zh: "跟随系统", ar: "حسب إعدادات الجهاز", eo: "Sekvi Aparaton" },
+  
+  /* 追加設定辞書 */
+  cfg_night_flight: { ja: "🌙 機内消灯モード (超低輝度・漆黒)", en: "🌙 Night Flight Mode (Ultra Low Brightness)", hira: "🌙 よるの ひこうき もーど", ko: "🌙 기내 소등 모드 (초저조도)", zh: "🌙 机内关灯模式 (超低亮度)", ar: "🌙 وضع الطيران الليلي", eo: "🌙 Nokta Flugreĝimo" },
+  val_enable_night: { ja: "有効 (周囲に眩しくないアンバー発光)", en: "Enabled (Subdued amber glow)", hira: "ゆうこう", ko: "활성화 (눈부심 방지)", zh: "启用 (柔和琥珀光)", ar: "مفعل (ضوء كهرماني هادئ)", eo: "Ŝaltita (Milda sukcena lumo)" },
+  cfg_motion_sick: { ja: "🤢 乗り物酔い防止 (アニメーション停止)", en: "🤢 Anti-Motion Sickness (Stop Motion)", hira: "🤢 よいどめ もーど", ko: "🤢 멀미 방지 (애니메이션 중지)", zh: "🤢 防晕机模式 (停止动画)", ar: "🤢 منع دوار الحركة (إيقاف الحركة)", eo: "🤢 Kontraŭ Mov-Malsano" },
+  val_enable_motion: { ja: "有効 (揺れる星空や往復アニメを静止)", en: "Enabled (Freezes background animations)", hira: "ゆうこう", ko: "활성화 (별빛/배너 정지)", zh: "启用 (静止背景动画)", ar: "مفعل (تجميد الحركة)", eo: "Ŝaltita (Haltigas movon)" },
+  cfg_battery_saver: { ja: "🔋 バッテリー節約モード (30fps制限)", en: "🔋 Battery Saver Mode (30fps Limit)", hira: "🔋 ばってりー せつやく", ko: "🔋 배터리 절약 모드 (30fps)", zh: "🔋 省电模式 (30fps限制)", ar: "🔋 وضع توفير البطارية (30fps)", eo: "🔋 Bateria Ŝparreĝimo (30fps)" },
+  val_enable_battery: { ja: "有効 (低消費電力・長時間フライト向け)", en: "Enabled (Low power usage)", hira: "ゆうこう", ko: "활성화 (전력 절감)", zh: "启用 (降低功耗)", ar: "مفعل (استهلاك منخفض)", eo: "Ŝaltita (Malalta energio)" },
+  cfg_audio_master: { ja: "🔊 マスター音量 & 完全消音", en: "🔊 Master Volume & Mute", hira: "🔊 おとのおおきさ", ko: "🔊 마스터 볼륨 & 음소거", zh: "🔊 主音量与静音", ar: "🔊 الصوت الرئيسي وكتم الصوت", eo: "🔊 Ĉefa Laŭteco kaj Silentigo" },
+  val_mute: { ja: "ミュート", en: "Mute", hira: "みゅーと", ko: "음소거", zh: "静音", ar: "كتم", eo: "Silenta" },
+  cfg_controller_layout: { ja: "🎮 コントローラー配置 & サイズ", en: "🎮 Controller Layout & Size", hira: "🎮 ぼたんの ばしょ・おおきさ", ko: "🎮 컨트롤러 위치 & 크기", zh: "🎮 控制器布局与大小", ar: "🎮 موضع وحجم وحدة التحكم", eo: "🎮 Regila Aranĝo kaj Grando" },
+  cfg_vibration: { ja: "📳 触覚フィードバック (バイブレーション)", en: "📳 Haptic Vibration Feedback", hira: "📳 ぶるぶる しんどう", ko: "📳 햅틱 진동 피드백", zh: "📳 触觉震动反馈", ar: "📳 الاهتزاز التفاعلي", eo: "📳 Vibra Reago" },
+  val_enable_vibrate: { ja: "有効 (ボタンや衝突時に振動)", en: "Enabled (Vibrates on hits/buttons)", hira: "ゆうこう", ko: "활성화", zh: "启用 (碰撞/点击时震动)", ar: "مفعل", eo: "Ŝaltita" },
+  cfg_gamespeed: { ja: "⚡ ゲームスピード倍率", en: "⚡ Game Speed Multiplier", hira: "⚡ すぴーど", ko: "⚡ 게임 속도 배율", zh: "⚡ 游戏速度倍率", ar: "⚡ سرعة اللعبة", eo: "⚡ Luda Rapido" },
+  cfg_invincible: { ja: "🛡️ 無敵・練習モード (棒とビ)", en: "🛡️ Invincible / Practice Mode", hira: "🛡️ むてき もーど", ko: "🛡️ 무적 / 연습 모드", zh: "🛡️ 无敌 / 练习模式", ar: "🛡️ وضع التدريب واللا يقهر", eo: "🛡️ Senvenka / Ekzerca Reĝimo" },
+  val_enable_invincible: { ja: "有効 (衝突してもアウトにならず継続)", en: "Enabled (Infinite lives)", hira: "ゆうこう", ko: "활성화 (무한 생명)", zh: "启用 (无限生命)", ar: "مفعل", eo: "Ŝaltita" },
+  cfg_konjac_skin: { ja: "🔪 こんにゃく素材 & 包丁スキン", en: "🔪 Konjac Material & Knife Skin", hira: "🔪 こんにゃくの しゅるい・ほうちょう", ko: "🔪 곤약 재질 & 칼 스킨", zh: "🔪 魔芋材质与刀刃皮肤", ar: "🔪 شكل الكونجاك ومظهر السكين", eo: "🔪 Konjaka Materialo kaj Tranĉilo" },
+  cfg_flag_region: { ja: "🚩 国旗クイズ 出題地域フィルター", en: "🚩 Flag Quiz Region Filter", hira: "🚩 こっきの ちいき", ko: "🚩 국기 퀴즈 출제 지역", zh: "🚩 国旗问答地区筛选", ar: "🚩 تصفية مناطق اختبار الأعلام", eo: "🚩 Flaga Regiona Filtrilo" },
+  cfg_flight_timer: { ja: "⏱️ フライトタイマー (到着カウントダウン)", en: "⏱️ Flight Timer (Arrival Countdown)", hira: "⏱️ ひこうき たいまー", ko: "⏱️ 비행 타이머 (도착 카운트다운)", zh: "⏱️ 飞行计时器 (到达倒计时)", ar: "⏱️ مؤقت الرحلة (العد التنازلي للوصول)", eo: "⏱️ Flug-Horloĝo" },
+  btn_timer_reset: { ja: "リセット", en: "Reset", hira: "りせっと", ko: "재설정", zh: "重置", ar: "إعادة ضبط", eo: "Restarigi" },
+  cfg_world_clock: { ja: "🌍 現地時差時計", en: "🌍 Destination World Clock", hira: "🌍 じさ とけい", ko: "🌍 목적지 시차 시계", zh: "🌍 目的地时差时钟", ar: "🌍 ساعة فارق التوقيت", eo: "🌍 Celfluga Horloĝo" },
+
   cfg_shortcuts: { ja: "13. ショートカットキー無制限設定", en: "13. Unlimited Shortcut Keys", hira: "13. しょーとかっときー", ko: "13. 단축키 무제한 설정", zh: "13. 快捷键无限制设定", ar: "13. اختصارات لوحة المفاتيح غير المحدودة", eo: "13. Senlimaj Klavkombinoj" },
-  cfg_shortcuts_note: {
-    ja: "キー枠をクリックして任意のキーを押してください。何個でもアクションを追加・変更できます。",
-    en: "Click the key box and press any key. Add as many shortcuts as you like!",
-    hira: "わくを おして すきな きーをおしてね。いくつでも つくれるよ。",
-    ko: "키 상자를 클릭하고 원하는 키를 누르세요. 원하는 만큼 단축키를 추가할 수 있습니다.",
-    zh: "点击按键框并按下任意键盘键。可以无限制添加和修改快捷键。",
-    ar: "انقر فوق المربع واضغط على أي مفتاح لتعيينه. يمكنك إضافة اختصارات بلا حدود.",
-    eo: "Alklaku la klavujon kaj premu iun ajn klavon por ligi agon."
-  },
+  cfg_shortcuts_note: { ja: "キー枠をクリックして任意のキーを押してください。何個でもアクションを追加・変更できます。", en: "Click the key box and press any key. Add as many shortcuts as you like!", hira: "わくを おして すきな きーをおしてね。いくつでも つくれるよ。", ko: "키 상자를 클릭하고 원하는 키를 누르세요. 원하는 만큼 단축키를 추가할 수 있습니다.", zh: "点击按键框并按下任意键盘键。可以无限制添加和修改快捷键。", ar: "انقر فوق المربع واضغط على أي مفتاح لتعيينه. يمكنك إضافة اختصارات بلا حدود.", eo: "Alklaku la klavujon kaj premu iun ajn klavon por ligi agon." },
   btn_add_shortcut: { ja: "+ ショートカットを追加", en: "+ Add Shortcut", hira: "+ しょーとかっとを ついか", ko: "+ 단축키 추가", zh: "+ 添加快捷键", ar: "+ إضافة اختصار", eo: "+ Aldoni Klavkombinon" },
 
   profile_title: { ja: "管理者情報 & 自作プロフィール", en: "Author & Custom Profile", hira: "さくしゃ と ぷろふぃーる", ko: "제작자 및 커스텀 프로필", zh: "作者信息与自定义个人档案", ar: "معلومات المؤلف والملف المخصص", eo: "Aŭtoro kaj Propra Profilo" },
@@ -1187,15 +1312,7 @@ const I18N_DICTIONARY = {
   prof_hobby_lbl: { ja: "趣味", en: "Hobbies", hira: "しゅみ", ko: "취미", zh: "爱好", ar: "الهوايات", eo: "Ŝatokupoj" },
   prof_hobby_val: { ja: "サイト更新、HTMLを打ち込むこと", en: "Updating sites, coding HTML", hira: "ほーむぺーじづくり", ko: "사이트 업데이트, HTML 코딩", zh: "更新网站，编写HTML", ar: "تحديث المواقع وكتابة كود HTML", eo: "Ĝisdatigi retejojn, kodi HTML" },
   prof_quote_lbl: { ja: "格言・好きな言葉", en: "Motto", hira: "すきなことば", ko: "좌우명", zh: "座右铭", ar: "المقولة المفضلة", eo: "Moto" },
-  prof_quote_val: {
-    ja: "「私たちは、たゆまず善を行いましょう。飽きずにいれば、時が来て刈り取ることになります。── ガラテヤ人への手紙 6章9節」",
-    en: "\"Let us not grow weary of doing good, for in due season we will reap, if we do not give up. — Galatians 6:9\"",
-    hira: "「よいことを あきらめずに つづけよう。」",
-    ko: "\"우리가 선을 행하되 낙심하지 말지니 포기하지 아니하면 때가 이르매 거두리라 ── 갈라디아서 6장 9절\"",
-    zh: "“我们行善，不可丧志；若不灰心，到了时候就要收成。── 加拉太书 6:9”",
-    ar: "«فَلَا نَفْشَلْ فِي عَمَلِ الْخَيْرِ لِأَنَّنَا سَنَحْصُدُ فِي وَقْتِهِ إِنْ كُنَّا لَا نَكِلُّ. ── غلاطية 6:9»",
-    eo: "\"Kaj ni ne laciĝu en bonfarado; ĉar ĝustatempe ni rikoltos, se ni ne senkuraĝiĝos. ── Galatoj 6:9\""
-  },
+  prof_quote_val: { ja: "「私たちは、たゆまず善を行いましょう。飽きずにいれば、時が来て刈り取ることになります。── ガラテヤ人への手紙 6章9節」", en: "\"Let us not grow weary of doing good, for in due season we will reap, if we do not give up. — Galatians 6:9\"", hira: "「よいことを あきらめずに つづけよう。」", ko: "\"우리가 선을 행하되 낙심하지 말지니 포기하지 아니하면 때가 이르매 거두리라 ── 갈라디아서 6장 9절\"", zh: "“我们行善，不可丧志；若不灰心，到了时候就要收成。── 加拉太书 6:9”", ar: "«فَلَا نَفْشَلْ فِي عَمَلِ الْخَيْرِ لِأَنَّنَا سَنَحْصُدُ فِي وَقْتِهِ إِنْ كُنَّا لَا نَكِلُّ. ── غلاطية 6:9»", eo: "\"Kaj ni ne laciĝu en bonfarado; ĉar ĝustatempe ni rikoltos, se ni ne senkuraĝiĝos. ── Galatoj 6:9\"" },
   prof_msg_lbl: { ja: "一言", en: "Message", hira: "ひとこと", ko: "한마디", zh: "留言", ar: "كلمة", eo: "Mesaĝo" },
   prof_msg_val: { ja: "更新するのがたのしい", en: "It's so fun to update!", hira: "こうしんが たのしい", ko: "업데이트하는 것이 즐겁습니다", zh: "更新非常有乐趣", ar: "التحديث ممتع للغاية", eo: "Ĝisdatigi estas tre amuze" },
   prof_timer_h: { ja: "サイト開設(2026/09/18)からの歩み", en: "Time Since Opening (2026/09/18)", hira: "さいとが できてからの じかん", ko: "사이트 개설(2026/09/18) 이후 시간", zh: "自开站(2026/09/18)以来的历程", ar: "الوقت المنقضي منذ إطلاق الموقع (2026/09/18)", eo: "Tempo ekde Lanĉo (2026/09/18)" },
@@ -1230,15 +1347,7 @@ const I18N_DICTIONARY = {
   th_diff: { ja: "ハイスコアとの差", en: "High Score Diff", hira: "さいこう との さ", ko: "최고점 대비", zh: "与最高分差", ar: "الفرق عن الرقم القياسي", eo: "Diferenco de Rekordo" },
   data_backup_h: { ja: "バックアップ & 復元", en: "Backup & Restore", hira: "ばっくあっぷ と ふくげん", ko: "백업 및 복원", zh: "备份与还原", ar: "النسخ الاحتياطي والاستعادة", eo: "Savkopio kaj Restarigo" },
   lbl_restore: { ja: "データ復元 (.itsme / .indexeddb / backup.zip):", en: "Restore Data (.itsme / .indexeddb / backup.zip):", hira: "ふくげん:", ko: "데이터 복원:", zh: "数据还原:", ar: "استعادة البيانات:", eo: "Restarigi Datumojn:" },
-  footer_running: {
-    ja: "飛行機でも遊べるゲーム ★ 快適な空の旅を！",
-    en: "Airplane Playable Games ★ Have a nice flight!",
-    hira: "ひこうきでも あそべる げーむ ★ たのしい たびを！",
-    ko: "비행기에서도 즐기는 게임 ★ 쾌적하고 즐거운 비행 되세요!",
-    zh: "飞机上也能玩的游戏 ★ 祝您旅途愉快！",
-    ar: "ألعاب ممتعة على متن الطائرة ★ نتمنى لك رحلة سعيدة ومريحة!",
-    eo: "Ludoj Ludeblaj en Aviadilo ★ Bonan flugon al vi!"
-  },
+  footer_running: { ja: "飛行機でも遊べるゲーム ★ 快適な空の旅を！", en: "Airplane Playable Games ★ Have a nice flight!", hira: "ひこうきでも あそべる げーむ ★ たのしい たびを！", ko: "비행기에서도 즐기는 게임 ★ 쾌적하고 즐거운 비행 되세요!", zh: "飞机上也能玩的游戏 ★ 祝您旅途愉快！", ar: "ألعاب ممتعة على متن الطائرة ★ نتمنى لك رحلة سعيدة ومريحة!", eo: "Ludoj Ludeblaj en Aviadilo ★ Bonan flugon al vi!" },
   btn_close: { ja: "閉じる", en: "Close", hira: "とじる", ko: "닫기", zh: "关闭", ar: "إغلاق", eo: "Fermi" }
 };
 
@@ -1248,71 +1357,11 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
-  {
-    id: 1, pinned: true,
-    date: '2026/09/20 12:00',
-    desc: {
-      ja: '航空機内完全オフライン対応ゲーム集 正式リリース & 多言語(7言語)対応',
-      en: 'Official release of fully offline airplane games with 7-language support',
-      hira: 'ひこうきでも あそべる げーむしゅう せいしき りりーす (7つの ことば)',
-      ko: '기내 완전 오프라인 게임 모음 정식 출시 및 7개 언어 완벽 지원',
-      zh: '飞机内完全离线游戏集正式发布，支持7种多语言切换',
-      ar: 'الإطلاق الرسمي لمجموعة ألعاب الطائرات غير المتصلة مع دعم 7 لغات بالكامل',
-      eo: 'Oficiala lanĉo de tute eksterretaj aviadilaj ludoj kun subteno de 7 lingvoj'
-    }
-  },
-  {
-    id: 2, pinned: false,
-    date: '2026/09/19 18:30',
-    desc: {
-      ja: 'ショートカットキー無制限追加機能 & テーマ連動文字色補正システム搭載',
-      en: 'Added unlimited shortcut keys & automatic text contrast correction system',
-      hira: 'しょーとかっと むせいげん ついか ＆ もじのいろ じどう ちょうせい',
-      ko: '단축키 무제한 추가 기능 및 테마 연동 텍스트 대비 자동 보정 시스템 탑재',
-      zh: '搭载快捷键无限制设定与浅/深色主题文字颜色防同化补偿系统',
-      ar: 'إضافة اختصارات غير محدودة ونظام تصحيح تباين ألوان النصوص تلقائيًا',
-      eo: 'Aldonis senlimajn klavkombinojn kaj aŭtomatan tekstan kontrastan sistemon'
-    }
-  },
-  {
-    id: 3, pinned: false,
-    date: '2026/09/19 14:15',
-    desc: {
-      ja: '黒板をお掃除しよう・棒とビの物理演算およびカスタマイズ上限機能実装',
-      en: 'Implemented blackboard cleaning & obstacle jumping physics with custom limits',
-      hira: 'こくばんそうじ と ぼうとびの じゆう せっていを ついか',
-      ko: '칠판 청소 및 봉 넘기 물리 엔진과 커스텀 상한치 설정 구현',
-      zh: '实现清理黑板与火柴人跳跃的物理演算及自定义上限参数功能',
-      ar: 'تطبيق فيزياء تنظيف السبورة والقفز فوق الأعمدة مع خيارات التخصيص',
-      eo: 'Efektivigis purigadon de nigra tabulo kaj baston-salton kun propraj agordoj'
-    }
-  },
-  {
-    id: 4, pinned: false,
-    date: '2026/09/18 20:00',
-    desc: {
-      ja: '自作プロフィール保存＆多形式書き出し(PNG/AVIF/WebP/GIF等)対応',
-      en: 'Custom profile creator & multi-format exporter (PNG/AVIF/WebP/GIF/HTML)',
-      hira: 'じぶんの ぷろふぃーる ほぞん と がぞう ほぞんきのう',
-      ko: '커스텀 프로필 작성 및 다채로운 형식(PNG/AVIF/WebP/GIF 등) 내보내기 지원',
-      zh: '自定义个人档案保存与多格式(PNG/AVIF/WebP/GIF等)图片文件导出',
-      ar: 'إنشاء وحفظ الملف الشخصي مع التصدير بصيغ متعددة (PNG/AVIF/WebP/GIF)',
-      eo: 'Kreo de propra profilo kaj plurobla elporto (PNG/AVIF/WebP/GIF/HTML)'
-    }
-  },
-  {
-    id: 5, pinned: false,
-    date: '2026/09/18 12:00',
-    desc: {
-      ja: 'サイト開設と初期アーキテクチャの構築',
-      en: 'Initial release and architecture setup',
-      hira: 'さいとが できあがりました',
-      ko: '사이트 개설 및 초기 아키텍처 구축',
-      zh: '开站与初始架构搭建',
-      ar: 'إطلاق الموقع وتأسيس الهيكلية الأولية',
-      eo: 'Reteja malfermo kaj komenca arkitekturo'
-    }
-  }
+  { id: 1, pinned: true, date: '2026/09/20 12:00', desc: { ja: '2P画面分割対戦モード & 12種の機内特化新設定 追加', en: 'Added 2P Split Battle mode & 12 in-flight custom settings', hira: '2にんでたいせん もーど と べんりな せっていを ついか', ko: '2인 화면분할 대전 모드 및 12가지 기내 특화 설정 추가', zh: '新增双人分屏对战模式及12项机内深度专属设置', ar: 'إضافة وضع المعركة الثنائية و12 إعدادًا مخصصًا للطيران', eo: 'Aldonis 2-ludantan batalreĝimon kaj 12 flugajn agordojn' } },
+  { id: 2, pinned: false, date: '2026/09/19 18:30', desc: { ja: 'ショートカットキー無制限追加機能 & テーマ連動文字色補正システム搭載', en: 'Added unlimited shortcut keys & automatic text contrast correction system', hira: 'しょーとかっと むせいげん ついか ＆ もじのいろ じどう ちょうせい', ko: '단축키 무제한 추가 기능 및 테마 연동 텍스트 대비 자동 보정 시스템 탑재', zh: '搭载快捷键无限制设定与浅/深色主题文字颜色防同化补偿系统', ar: 'إضافة اختصارات غير محدودة ونظام تصحيح تباين ألوان النصوص تلقائيًا', eo: 'Aldonis senlimajn klavkombinojn kaj aŭtomatan tekstan kontrastan sistemon' } },
+  { id: 3, pinned: false, date: '2026/09/19 14:15', desc: { ja: '黒板をお掃除しよう・棒とビの物理演算およびカスタマイズ上限機能実装', en: 'Implemented blackboard cleaning & obstacle jumping physics with custom limits', hira: 'こくばんそうじ と ぼうとびの じゆう せっていを ついか', ko: '칠판 청소 및 봉 넘기 물리 엔진과 커스텀 상한치 설정 구현', zh: '实现清理黑板与火柴人跳跃的物理演算及自定义上限参数功能', ar: 'تطبيق فيزياء تنظيف السبورة والقفز فوق الأعمدة مع خيارات التخصيص', eo: 'Efektivigis purigadon de nigra tabulo kaj baston-salton kun propraj agordoj' } },
+  { id: 4, pinned: false, date: '2026/09/18 20:00', desc: { ja: '自作プロフィール保存＆多形式書き出し(PNG/AVIF/WebP/GIF等)対応', en: 'Custom profile creator & multi-format exporter (PNG/AVIF/WebP/GIF/HTML)', hira: 'じぶんの ぷろふぃーる ほぞん と がぞう ほぞんきのう', ko: '커스텀 프로필 작성 및 다채로운 형식(PNG/AVIF/WebP/GIF 등) 내보내기 지원', zh: '自定义个人档案保存与多格式(PNG/AVIF/WebP/GIF等)图片文件导出', ar: 'إنشاء وحفظ الملف الشخصي مع التصدير بصيغ متعددة (PNG/AVIF/WebP/GIF)', eo: 'Kreo de propra profilo kaj plurobla elporto (PNG/AVIF/WebP/GIF/HTML)' } },
+  { id: 5, pinned: false, date: '2026/09/18 12:00', desc: { ja: 'サイト開設と初期アーキテクチャの構築', en: 'Initial release and architecture setup', hira: 'さいとが できあがりました', ko: '사이트 개설 및 초기 아키텍처 구축', zh: '开站与初始架构搭建', ar: 'إطلاق الموقع وتأسيس الهيكلية الأولية', eo: 'Reteja malfermo kaj komenca arkitekturo' } }
 ];
 
 let currentLang = 'ja';
@@ -1324,9 +1373,9 @@ function t(key) {
 }
 
 /* ==========================================================================
-   全データ完全永続化管理システム (例外なし・LocalStorage & IndexedDB)
+   全データ完全永続化管理システム (LocalStorage & IndexedDB)
    ========================================================================== */
-const CURRENT_DATA_VERSION = 2;
+const CURRENT_DATA_VERSION = 3;
 let currentActiveTab = 'gameTab';
 let currentGame = 'stick';
 
@@ -1351,7 +1400,7 @@ const availableActions = [
   { id: 'sound', name: { ja: '効果音テスト', en: 'Sound Test', hira: 'おと', ko: '효과음 테스트', zh: '音效测试', ar: 'اختبار الصوت', eo: 'Son-Testo' } }
 ];
 
-// 設定値・UI状態を全保存
+// 全データ保存 (追加された全12設定も完全保存)
 function saveAllConfig() {
   const config = {
     activeTab: currentActiveTab,
@@ -1376,7 +1425,26 @@ function saveAllConfig() {
     showHeader: document.getElementById('cfgShowHeader').checked,
     colorTheme: document.getElementById('cfgColorTheme').value,
     stickMaxHeight: document.getElementById('stickMaxHeight').value,
-    stickMaxPillars: document.getElementById('stickMaxPillars').value
+    stickMaxPillars: document.getElementById('stickMaxPillars').value,
+
+    /* ★ 追加全設定 */
+    nightFlight: document.getElementById('cfgNightFlight').checked,
+    reducedMotion: document.getElementById('cfgReducedMotion').checked,
+    batterySaver: document.getElementById('cfgBatterySaver').checked,
+    masterVolume: document.getElementById('cfgMasterVolume').value,
+    muteAudio: document.getElementById('cfgMuteAudio').checked,
+    dpadPosition: document.getElementById('cfgDpadPosition').value,
+    dpadSize: document.getElementById('cfgDpadSize').value,
+    dpadOpacity: document.getElementById('cfgDpadOpacity').value,
+    vibrate: document.getElementById('cfgVibrate').checked,
+    gameSpeed: document.getElementById('cfgGameSpeed').value,
+    invincible: document.getElementById('cfgInvincible').checked,
+    konjacMaterial: document.getElementById('cfgKonjacMaterial').value,
+    konjacKnife: document.getElementById('cfgKonjacKnife').value,
+    flagRegion: document.getElementById('cfgFlagRegion').value,
+    flightHours: document.getElementById('cfgFlightHours').value,
+    flightMinutes: document.getElementById('cfgFlightMinutes').value,
+    timezoneDiff: document.getElementById('cfgTimezoneDiff').value
   };
 
   localStorage.setItem('airplane_game_config', JSON.stringify(config));
@@ -1395,7 +1463,6 @@ function saveConfig() {
   saveAllConfig();
 }
 
-// ゲーム機能ON/OFF時のタブ表示切り替え
 function toggleGameFeatureSetting() {
   const isEnabled = document.getElementById('cfgGameEnabled').checked;
   const tabBtn = document.getElementById('tabBtnGame');
@@ -1407,7 +1474,6 @@ function toggleGameFeatureSetting() {
   saveAllConfig();
 }
 
-// 設定を初期化（デフォルト復元）
 function resetAllConfigToDefault() {
   document.getElementById('cfgGameEnabled').checked = true;
   document.getElementById('cfgSaveScore').checked = true;
@@ -1430,6 +1496,24 @@ function resetAllConfigToDefault() {
   document.getElementById('stickMaxHeight').value = '200';
   document.getElementById('stickMaxPillars').value = '5';
 
+  document.getElementById('cfgNightFlight').checked = false;
+  document.getElementById('cfgReducedMotion').checked = false;
+  document.getElementById('cfgBatterySaver').checked = false;
+  document.getElementById('cfgMasterVolume').value = '0.7';
+  document.getElementById('cfgMuteAudio').checked = false;
+  document.getElementById('cfgDpadPosition').value = 'center';
+  document.getElementById('cfgDpadSize').value = 'medium';
+  document.getElementById('cfgDpadOpacity').value = '1';
+  document.getElementById('cfgVibrate').checked = true;
+  document.getElementById('cfgGameSpeed').value = '1.0';
+  document.getElementById('cfgInvincible').checked = false;
+  document.getElementById('cfgKonjacMaterial').value = 'gray';
+  document.getElementById('cfgKonjacKnife').value = 'standard';
+  document.getElementById('cfgFlagRegion').value = 'all';
+  document.getElementById('cfgFlightHours').value = '6';
+  document.getElementById('cfgFlightMinutes').value = '30';
+  document.getElementById('cfgTimezoneDiff').value = '-7';
+
   shortcutData = [
     { key: 'Space', action: 'jump' },
     { key: 'KeyP', action: 'pause' }
@@ -1438,6 +1522,12 @@ function resetAllConfigToDefault() {
   applyColors();
   applyFontSettings();
   applyColorTheme('light');
+  applyNightFlightMode();
+  applyReducedMotion();
+  updateMasterVolume();
+  applyDpadSettings();
+  initFlightTimer();
+  updateWorldClock();
   toggleSearchBarVisibility();
   toggleHeader(true);
   toggleGameFeatureSetting();
@@ -1445,10 +1535,9 @@ function resetAllConfigToDefault() {
   renderShortcuts();
   saveAllConfig();
 
-  showModal(t('btn_reset_config'), '設定を初期値に戻しました。');
+  showModal(t('btn_reset_config'), 'すべての設定を初期値に戻しました。');
 }
 
-// 言語変更（タイトルバー＆メタタグも多言語同期）
 function changeLanguage(lang) {
   currentLang = lang;
   document.getElementById('langSelector').value = lang;
@@ -1481,7 +1570,7 @@ function initIndexedDB() {
     if (!window.indexedDB || !document.getElementById('cfgUseIndexedDB').checked) {
       resolve(null); return;
     }
-    const req = indexedDB.open('AirplaneGamesDB_v2', 1);
+    const req = indexedDB.open('AirplaneGamesDB_v3', 1);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
@@ -1524,9 +1613,9 @@ function saveScoreRecord(gameName, timeLimit, score) {
   const record = {
     game: gameName,
     date: dateStr,
-    limit: (gameName === t('game_konjac') || gameName === t('game_blackboard')) ? '∞' : `${timeLimit}s`,
+    limit: (gameName === t('game_konjac') || gameName === t('game_blackboard') || gameName === t('game_vs')) ? '∞' : `${timeLimit}s`,
     score: score,
-    diff: (gameName === t('game_konjac') || gameName === t('game_blackboard')) ? '-' : (diff >= 0 ? `+${diff}` : `${diff}`)
+    diff: (gameName === t('game_konjac') || gameName === t('game_blackboard') || gameName === t('game_vs')) ? '-' : (diff >= 0 ? `+${diff}` : `${diff}`)
   };
 
   memoryStore.scores.unshift(record);
@@ -1571,7 +1660,6 @@ function showDeletionModal() {
 
 function handleDeletionAnswer(isYes) {
   if (!isYes) {
-    // NOを押したら即座に中断・終了
     closeModal();
     document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
     deletionStep = 0;
@@ -1582,7 +1670,6 @@ function handleDeletionAnswer(isYes) {
     deletionStep++;
     showDeletionModal();
   } else {
-    // 5回連続YES達成 ➔ 3秒ホワイトアウト演出後に初期化リロード
     closeModal();
     document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
     deletionStep = 0;
@@ -1594,7 +1681,7 @@ function handleDeletionAnswer(isYes) {
     setTimeout(async () => {
       localStorage.clear();
       if (window.indexedDB) {
-        try { indexedDB.deleteDatabase('AirplaneGamesDB_v2'); } catch(e){}
+        try { indexedDB.deleteDatabase('AirplaneGamesDB_v3'); } catch(e){}
       }
       location.reload();
     }, 3000);
@@ -1602,19 +1689,40 @@ function handleDeletionAnswer(isYes) {
 }
 
 /* ==========================================================================
-   Web Audio API 音響合成 (完全オフライン)
+   Web Audio API 音響合成 & 触覚バイブレーション
    ========================================================================== */
 let audioCtx = null;
+let masterGainNode = null;
+
 function getAudioContext() {
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (AudioContextClass) audioCtx = new AudioContextClass();
+    if (AudioContextClass) {
+      audioCtx = new AudioContextClass();
+      masterGainNode = audioCtx.createGain();
+      masterGainNode.connect(audioCtx.destination);
+      updateMasterVolume();
+    }
   }
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
 
+function updateMasterVolume() {
+  if (!masterGainNode || !audioCtx) return;
+  const isMute = document.getElementById('cfgMuteAudio').checked;
+  const vol = parseFloat(document.getElementById('cfgMasterVolume').value);
+  masterGainNode.gain.setValueAtTime(isMute ? 0 : vol, audioCtx.currentTime);
+}
+
+function triggerHaptic(pattern = 15) {
+  if (document.getElementById('cfgVibrate').checked && navigator.vibrate) {
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
+}
+
 function playClickSound() {
+  triggerHaptic(12);
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -1626,13 +1734,14 @@ function playClickSound() {
     gain.gain.setValueAtTime(0.3, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(masterGainNode || ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.035);
   } catch (e) {}
 }
 
 function playKonjacSliceSound() {
+  triggerHaptic(20);
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -1653,12 +1762,13 @@ function playKonjacSliceSound() {
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(masterGainNode || ctx.destination);
     noise.start();
   } catch (e) {}
 }
 
 function playBlockPopSound() {
+  triggerHaptic(25);
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -1670,13 +1780,14 @@ function playBlockPopSound() {
     gain.gain.setValueAtTime(0.3, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(masterGainNode || ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.1);
   } catch (e) {}
 }
 
 function playEraserSound() {
+  triggerHaptic(8);
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -1690,7 +1801,7 @@ function playEraserSound() {
     filter.type = 'lowpass';
     filter.frequency.value = 1200;
     noise.connect(filter);
-    filter.connect(ctx.destination);
+    filter.connect(masterGainNode || ctx.destination);
     noise.start();
   } catch (e) {}
 }
@@ -1710,7 +1821,10 @@ resizeTitleCanvas();
 
 function draw3DTitle() {
   titleCtx.clearRect(0, 0, titleCanvas.width, titleCanvas.height);
-  titleAngle += 0.03;
+  
+  if (!document.getElementById('cfgReducedMotion').checked) {
+    titleAngle += 0.03;
+  }
   const floatY = Math.sin(titleAngle) * 4;
 
   titleCtx.save();
@@ -1870,6 +1984,13 @@ function recordKey(inputElement, index) {
 
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' && !e.target.readOnly) return;
+
+  // 2P対戦用キーバインド
+  if (currentGame === 'vs' && isGameRunning) {
+    if (e.code === 'KeyW' || e.code === 'KeyA') triggerVsJump(1);
+    if (e.code === 'ArrowUp' || e.code === 'KeyL') triggerVsJump(2);
+  }
+
   const match = shortcutData.find(s => s.key === e.code);
   if (match) {
     if (match.action === 'jump') triggerDpad('up');
@@ -1880,7 +2001,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 /* ==========================================================================
-   ゲームエンジン本体 (全5種)
+   ゲームエンジン本体 (全5種 + 2P対戦モード)
    ========================================================================== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -1889,6 +2010,7 @@ let gameTimer = null;
 let timeLeft = 60;
 let currentScore = 0;
 let stars = [];
+let lastFrameTime = 0;
 
 function resizeGameCanvas() {
   const wrap = canvas.parentElement;
@@ -1902,7 +2024,8 @@ function initStars() {
   stars = [];
   const w = canvas.width / window.devicePixelRatio;
   const h = canvas.height / window.devicePixelRatio;
-  for (let i = 0; i < 80; i++) {
+  const count = document.getElementById('cfgBatterySaver')?.checked ? 15 : 80;
+  for (let i = 0; i < count; i++) {
     stars.push({
       x: Math.random() * w,
       y: Math.random() * h,
@@ -1913,12 +2036,15 @@ function initStars() {
 }
 
 function renderStars() {
+  const isReduced = document.getElementById('cfgReducedMotion').checked;
   const w = canvas.width / window.devicePixelRatio;
   const h = canvas.height / window.devicePixelRatio;
   ctx.fillStyle = '#fffae0';
   for (let s of stars) {
-    s.y += s.speed;
-    if (s.y > h) { s.y = 0; s.x = Math.random() * w; }
+    if (!isReduced) {
+      s.y += s.speed;
+      if (s.y > h) { s.y = 0; s.x = Math.random() * w; }
+    }
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
     ctx.fill();
@@ -1927,51 +2053,12 @@ function renderStars() {
 
 function updateGameInstructionText() {
   const texts = {
-    stick: {
-      ja: "【棒とビ】十字キーの上、またはキャンバスクリックで棒人間がジャンプ！バーを飛び越えろ！3回接触で即アウト。",
-      en: "[Stick & Jump] Press Up or tap canvas to make Stickman jump! 3 hits = Out.",
-      hira: "【ぼうとび】うえのおすか、たっちで じゃんぷ！3かい ぶつかったら おわり。",
-      ko: "【봉 넘기】위쪽 키 또는 터치로 봉 인간이 점프! 3번 부딪히면 아웃.",
-      zh: "【火柴人跳跃】按上键或点击屏幕跳跃！碰撞3次游戏结束。",
-      ar: "【القفز فوق العصي】اضغط على زر لأعلى للقفز! الاصطدام 3 مرات يعني الخسارة.",
-      eo: "【Baston-Salto】Premu Supren aŭ frapetu por salti! 3 kolizioj = Fino."
-    },
-    block: {
-      ja: "【ブロック消し】星空から降ってくる多彩な3Dブロックをマウスやタップで次々に消していこう！",
-      en: "[Block Breaker] Click/tap colorful falling 3D blocks to clear them!",
-      hira: "【ぶろっくけし】おちてくる ぶろっくを たっちして けそう！",
-      ko: "【블록 깨기】하늘에서 떨어지는 다채로운 3D 블록을 탭하여 제거하세요!",
-      zh: "【消除方块】点击消除空落下的各种3D立体方块！",
-      ar: "【تكسير الكتل】انقر على الكتل ثلاثية الأبعاد المتساقطة لتحطيمها!",
-      eo: "【Blok-Rompo】Alklaku falantajn 3D-blokojn por detrui ilin!"
-    },
-    konjac: {
-      ja: "【こんにゃく切り】制限時間なし(∞)！クリックやドラッグで包丁を振り、こんにゃくを好きな細さにざく切りしよう。",
-      en: "[Konjac Slicer] Infinite time! Drag or tap to slice the konjac smoothly.",
-      hira: "【こんにゃくきり】じかんは むげん！なんかいでも ざくざく きれるよ。",
-      ko: "【곤약 자르기】제한시간 무제한(∞)! 자유롭게 곤약을 썰어보세요.",
-      zh: "【切魔芋】无限时间(∞)！挥动刀刃将立体魔芋切成各种细条。",
-      ar: "【تقطيع الكونجاك】وقت لا نهائي(∞)! اسحب لتقطيع قالب الكونجاك بحرية.",
-      eo: "【Konjak-Tranĉo】Senlima tempo (∞)! Tranĉu la konjakon laŭvole."
-    },
-    blackboard: {
-      ja: "【黒板をお掃除しよう】制限時間なし(∞)！指やマウスで黒板消しを動かし、チョークの落書きをピカピカに消そう。",
-      en: "[Clean Chalkboard] Infinite time! Wipe chalk drawings clean with mini eraser.",
-      hira: "【こくばんそうじ】こくばんけしで ちょーくを きれいに けそう！",
-      ko: "【칠판 청소하기】제한시간 무제한(∞)! 미니 칠판 지우개로 낙서를 말끔히 지우세요.",
-      zh: "【黑板清理大作战】无限时间(∞)！用黑板擦擦除粉笔涂鸦。",
-      ar: "【تنظيف السبورة】وقت لا نهائي(∞)! امسح رسومات الطباشير العشوائية بممحاة السبورة الصغيرة لتنظيفها بالكامل.",
-      eo: "【Purigi Tabulon】Senlima tempo (∞)! Viŝu la kretajn desegnojn tute pure."
-    },
-    flag: {
-      ja: "【国旗クイズ】表示される国旗の国名を4択から選んで答えよう！ミスは減点、正解でスコア加算！",
-      en: "[Flag Quiz] Guess country names from 4 choices! Misses subtract points.",
-      hira: "【こっきくいず】こっきをみて 4つのなかから こたえを えらんでね！",
-      ko: "【국기 퀴즈】표시되는 국기를 보고 4지선다에서 정답을 맞혀보세요!",
-      zh: "【国旗问答】看国旗并从4个选项中选出正确国名！答错扣分。",
-      ar: "【اختبار الأعلام】خمن الدولة الصحيحة من بين 4 خيارات!",
-      eo: "【Flaga Kviz】Divenu la landon el 4 elektoj! Eraroj subtrahos poentojn."
-    }
+    stick: { ja: "【棒とビ】十字キーの上、またはキャンバスクリックで棒人間がジャンプ！バーを飛び越えろ！3回接触で即アウト。", en: "[Stick & Jump] Press Up or tap canvas to make Stickman jump! 3 hits = Out.", hira: "【ぼうとび】うえのおすか、たっちで じゃんぷ！3かい ぶつかったら おわり。", ko: "【봉 넘기】위쪽 키 또는 터치로 봉 인간이 점프! 3번 부딪히면 아웃.", zh: "【火柴人跳跃】按上键或点击屏幕跳跃！碰撞3次游戏结束。", ar: "【القفز فوق العصي】اضغط على زر لأعلى للقفز! الاصطدام 3 مرات يعني الخسارة.", eo: "【Baston-Salto】Premu Supren aŭ frapetu por salti! 3 kolizioj = Fino." },
+    block: { ja: "【ブロック消し】星空から降ってくる多彩な3Dブロックをマウスやタップで次々に消していこう！", en: "[Block Breaker] Click/tap colorful falling 3D blocks to clear them!", hira: "【ぶろっくけし】おちてくる ぶろっくを たっちして けそう！", ko: "【블록 깨기】하늘에서 떨어지는 다채로운 3D 블록을 탭하여 제거하세요!", zh: "【消除方块】点击消除空落下的各种3D立体方块！", ar: "【تكسير الكتل】انقر على الكتل ثلاثية الأبعاد المتساقطة لتحطيمها!", eo: "【Blok-Rompo】Alklaku falantajn 3D-blokojn por detrui ilin!" },
+    konjac: { ja: "【こんにゃく切り】制限時間なし(∞)！クリックやドラッグで包丁を振り、こんにゃくを好きな細さにざく切りしよう。", en: "[Konjac Slicer] Infinite time! Drag or tap to slice the konjac smoothly.", hira: "【こんにゃくきり】じかんは むげん！なんかいでも ざくざく きれるよ。", ko: "【곤약 자르기】제한시간 무제한(∞)! 자유롭게 곤약을 썰어보세요.", zh: "【切魔芋】无限时间(∞)！挥动刀刃将立体魔芋切成各种细条。", ar: "【تقطيع الكونجاك】وقت لا نهائي(∞)! اسحب لتقطيع قالب الكونجاك بحرية.", eo: "【Konjak-Tranĉo】Senlima tempo (∞)! Tranĉu la konjakon laŭvole." },
+    blackboard: { ja: "【黒板をお掃除しよう】制限時間なし(∞)！指やマウスで黒板消しを動かし、チョークの落書きをピカピカに消そう。", en: "[Clean Chalkboard] Infinite time! Wipe chalk drawings clean with mini eraser.", hira: "【こくばんそうじ】こくばんけしで ちょーくを きれいに けそう！", ko: "【칠판 청소하기】제한시간 무제한(∞)! 미니 칠판 지우개로 낙서를 말끔히 지우세요.", zh: "【黑板清理大作战】无限时间(∞)！用黑板擦擦除粉笔涂鸦。", ar: "【تنظيف السبورة】وقت لا نهائي(∞)! امسح رسومات الطباشير العشوائية بممحاة السبورة الصغيرة لتنظيفها بالكامل.", eo: "【Purigi Tabulon】Senlima tempo (∞)! Viŝu la kretajn desegnojn tute pure." },
+    flag: { ja: "【国旗クイズ】表示される国旗の国名を4択から選んで答えよう！ミスは減点、正解でスコア加算！", en: "[Flag Quiz] Guess country names from 4 choices! Misses subtract points.", hira: "【こっきくいず】こっきをみて 4つのなかから こたえを えらんでね！", ko: "【국기 퀴즈】표시되는 국기를 보고 4지선다에서 정답을 맞혀보세요!", zh: "【国旗问答】看国旗并从4个选项中选出正确国名！答错扣分。", ar: "【اختبار الأعلام】خمن الدولة الصحيحة من بين 4 خيارات!", eo: "【Flaga Kviz】Divenu la landon el 4 elektoj! Eraroj subtrahos poentojn." },
+    vs: { ja: "【2P分割対戦】隣の席の人と1台で真剣勝負！左側1P・右側2Pで画面をタップして障害物を跳べ！", en: "[2P Battle] Battle side-by-side! 1P left, 2P right. Jump over obstacles and survive!", hira: "【2にんでたいせん】となりのおともだちと しょうぶ！がめんを たっちして じゃんぷ！", ko: "【2인 대전】옆자리 친구와 1대로 대결! 화면 좌측 1P, 우측 2P 탭으로 장애물을 넘으세요!", zh: "【双人对战】同一台设备左右分屏对战！点击跳过障碍，比比谁能坚持更久！", ar: "【معركة ثنائية】تنافس مع جارك على جهاز واحد! انقر يسارًا لـ 1P ويمينًا لـ 2P.", eo: "【2P Batalo】Batalu sur unu aparato! 1P maldekstre, 2P dekstre. Kiu transvivos pli longe?" }
   };
   const inst = texts[currentGame];
   document.getElementById('gameInstructionText').textContent = inst ? (inst[currentLang] || inst.ja) : '';
@@ -1990,6 +2077,11 @@ function selectGame(gameKey, btn) {
 
   document.getElementById('stickGameSettings').style.display = (gameKey === 'stick') ? 'flex' : 'none';
   document.getElementById('flagQuizOverlay').style.display = 'none';
+
+  // 2P対戦UIの切り替え
+  const isVs = (gameKey === 'vs');
+  document.getElementById('standardDpad').style.display = isVs ? 'none' : 'block';
+  document.getElementById('vsControllerWrap').style.display = isVs ? 'flex' : 'none';
 
   updateGameInstructionText();
   initGameScene();
@@ -2017,6 +2109,10 @@ function getTimeLimit() {
   return parseInt(val, 10);
 }
 
+function getGameSpeed() {
+  return parseFloat(document.getElementById('cfgGameSpeed')?.value || '1.0');
+}
+
 // 1. 棒とビ
 let stickMan = { x: 80, y: 300, vy: 0, jumping: false, width: 20, height: 45 };
 let pillars = [];
@@ -2029,7 +2125,8 @@ function initStickGame() {
 }
 
 function updateStickGame() {
-  stickMan.vy += 0.55;
+  const spd = getGameSpeed();
+  stickMan.vy += 0.55 * spd;
   stickMan.y += stickMan.vy;
   const ground = (canvas.height / window.devicePixelRatio) - 70;
   if (stickMan.y > ground) {
@@ -2052,22 +2149,27 @@ function updateStickGame() {
     });
   }
 
+  const isInvincible = document.getElementById('cfgInvincible')?.checked;
+
   for (let i = pillars.length - 1; i >= 0; i--) {
     const p = pillars[i];
-    p.x -= 3.5;
+    p.x -= 3.5 * spd;
 
     const pTop = ground + 45 - p.height;
     if (stickMan.x + stickMan.width > p.x && stickMan.x < p.x + p.width &&
         stickMan.y + stickMan.height > pTop) {
-      stickMissCount++;
-      pillars.splice(i, 1);
-      playClickSound();
-      if (stickMissCount >= 3) {
-        showModal('GAME OVER', '3 Misses! Out.');
-        stopGame();
-        return;
+      if (!isInvincible) {
+        stickMissCount++;
+        playClickSound();
+        triggerHaptic(50);
+        pillars.splice(i, 1);
+        if (stickMissCount >= 3) {
+          showModal('GAME OVER', '3 Misses! Out.');
+          stopGame();
+          return;
+        }
+        continue;
       }
-      continue;
     }
 
     if (!p.passed && p.x + p.width < stickMan.x) {
@@ -2114,7 +2216,8 @@ function renderStickGame() {
 
   ctx.fillStyle = '#ff1744';
   ctx.font = 'bold 16px sans-serif';
-  ctx.fillText(`MISS: ${stickMissCount} / 3`, 20, 75);
+  const isInv = document.getElementById('cfgInvincible')?.checked;
+  ctx.fillText(isInv ? `MODE: INVINCIBLE (無限)` : `MISS: ${stickMissCount} / 3`, 20, 75);
 }
 
 // 2. ブロック消し
@@ -2122,14 +2225,15 @@ let blocks3D = [];
 function initBlockGame() { blocks3D = []; }
 
 function updateBlockGame() {
-  if (Math.random() < 0.05 && blocks3D.length < 15) {
+  const spd = getGameSpeed();
+  if (Math.random() < 0.05 * spd && blocks3D.length < 15) {
     const shapes = ['cube', 'pyramid', 'sphere'];
     const w = canvas.width / window.devicePixelRatio;
     blocks3D.push({
       x: Math.random() * (w - 60) + 20,
       y: -50,
       size: Math.random() * 30 + 30,
-      speed: Math.random() * 2 + 1.5,
+      speed: (Math.random() * 2 + 1.5) * spd,
       shape: shapes[Math.floor(Math.random() * shapes.length)],
       color: `hsl(${Math.random() * 360}, 80%, 65%)`,
       rot: Math.random() * Math.PI
@@ -2140,7 +2244,7 @@ function updateBlockGame() {
   for (let i = blocks3D.length - 1; i >= 0; i--) {
     const b = blocks3D[i];
     b.y += b.speed;
-    b.rot += 0.02;
+    b.rot += 0.02 * spd;
     if (b.y > h + 50) blocks3D.splice(i, 1);
   }
 }
@@ -2172,7 +2276,7 @@ function renderBlockGame() {
   }
 }
 
-// 3. こんにゃく切り
+// 3. こんにゃく切り (★ 素材・包丁スキン対応)
 let konjacSlices = [];
 let konjacDots = [];
 
@@ -2189,21 +2293,34 @@ function renderKonjacGame() {
   ctx.fillStyle = '#d7ccc8';
   ctx.fillRect(30, centerY + 100, canvas.width / window.devicePixelRatio - 60, 40);
 
+  const mat = document.getElementById('cfgKonjacMaterial')?.value || 'gray';
+  const matStyles = {
+    gray: { top: '#b0bec5', front: '#90a4ae', side: '#78909c', dots: '#263238' },
+    white: { top: '#ffffff', front: '#eceff1', side: '#cfd8dc', dots: null },
+    matcha: { top: '#7cb342', front: '#558b2f', side: '#33691e', dots: '#1b5e20' },
+    yokan: { top: '#5d4037', front: '#4e342e', side: '#3e2723', dots: null },
+    tofu: { top: '#fffde7', front: '#fff9c4', side: '#fff59d', dots: null },
+    cheese: { top: '#fdd835', front: '#fbc02d', side: '#f57f17', dots: null }
+  };
+  const c = matStyles[mat] || matStyles.gray;
+
   for (let s of konjacSlices) {
     if (s.width <= 2) continue;
-    ctx.fillStyle = '#78909c';
+    ctx.fillStyle = c.side;
     ctx.fillRect(s.x, centerY + 80, s.width, 20);
-    ctx.fillStyle = '#90a4ae';
+    ctx.fillStyle = c.front;
     ctx.fillRect(s.x, centerY, s.width, 80);
-    ctx.fillStyle = '#b0bec5';
+    ctx.fillStyle = c.top;
     ctx.fillRect(s.x, centerY, s.width, 15);
 
-    ctx.fillStyle = '#263238';
-    for (let d of konjacDots) {
-      if (d.x >= s.x - 60 && d.x <= s.x - 60 + s.width) {
-        ctx.beginPath();
-        ctx.arc(s.x + (d.x - (s.x - 60)), centerY + d.y * 0.65 + 10, 1.5, 0, Math.PI*2);
-        ctx.fill();
+    if (c.dots) {
+      ctx.fillStyle = c.dots;
+      for (let d of konjacDots) {
+        if (d.x >= s.x - 60 && d.x <= s.x - 60 + s.width) {
+          ctx.beginPath();
+          ctx.arc(s.x + (d.x - (s.x - 60)), centerY + d.y * 0.65 + 10, 1.5, 0, Math.PI*2);
+          ctx.fill();
+        }
       }
     }
   }
@@ -2291,35 +2408,39 @@ function renderBlackboardGame() {
   }
 }
 
-// 5. 国旗クイズ (190カ国対応ベース)
+// 5. 国旗クイズ (★ 地域フィルター対応)
 const FLAG_DATABASE = [
-  { name: { ja: '日本', en: 'Japan', hira: 'にほん', ko: '일본', zh: '日本', ar: 'اليابان', eo: 'Japanio' }, flag: '🇯🇵' },
-  { name: { ja: 'アメリカ', en: 'USA', hira: 'あめりか', ko: '미국', zh: '美国', ar: 'الولايات المتحدة', eo: 'Usono' }, flag: '🇺🇸' },
-  { name: { ja: 'イギリス', en: 'UK', hira: 'いぎりす', ko: '영국', zh: '英国', ar: 'المملكة المتحدة', eo: 'Britio' }, flag: '🇬🇧' },
-  { name: { ja: 'フランス', en: 'France', hira: 'ふらんす', ko: '프랑스', zh: '法国', ar: 'فرنسا', eo: 'Francio' }, flag: '🇫🇷' },
-  { name: { ja: 'ドイツ', en: 'Germany', hira: 'どいつ', ko: '독일', zh: '德国', ar: 'ألمانيا', eo: 'Germanio' }, flag: '🇩🇪' },
-  { name: { ja: 'イタリア', en: 'Italy', hira: 'いたりあ', ko: '이탈리아', zh: '意大利', ar: 'إيطاليا', eo: 'Italio' }, flag: '🇮🇹' },
-  { name: { ja: 'カナダ', en: 'Canada', hira: 'かなだ', ko: '캐나다', zh: '加拿大', ar: 'كندا', eo: 'Kanado' }, flag: '🇨🇦' },
-  { name: { ja: '韓国', en: 'South Korea', hira: 'かんこく', ko: '대한민국', zh: '韩国', ar: 'كوريا الجنوبية', eo: 'Sud-Koreio' }, flag: '🇰🇷' },
-  { name: { ja: '中国', en: 'China', hira: 'ちゅうごく', ko: '중국', zh: '中国', ar: 'الصين', eo: 'Ĉinio' }, flag: '🇨🇳' },
-  { name: { ja: 'ブラジル', en: 'Brazil', hira: 'ぶらじる', ko: '브라질', zh: '巴西', ar: 'البرازيل', eo: 'Brazilo' }, flag: '🇧🇷' },
-  { name: { ja: 'オーストラリア', en: 'Australia', hira: 'おーすとらりあ', ko: '호주', zh: '澳大利亚', ar: 'أستراليا', eo: 'Aŭstralio' }, flag: '🇦🇺' },
-  { name: { ja: 'スペイン', en: 'Spain', hira: 'すぺいん', ko: '스페인', zh: '西班牙', ar: 'إسبانيا', eo: 'Hispanio' }, flag: '🇪🇸' },
-  { name: { ja: 'エジプト', en: 'Egypt', hira: 'えじぷと', ko: '이집트', zh: '埃及', ar: 'مصر', eo: 'Egipto' }, flag: '🇪🇬' },
-  { name: { ja: 'サウジアラビア', en: 'Saudi Arabia', hira: 'さうじあらびあ', ko: '사우디아라비아', zh: '沙特阿拉伯', ar: 'المملكة العربية السعودية', eo: 'Sauda Arabio' }, flag: '🇸🇦' }
+  { region: 'asia', name: { ja: '日本', en: 'Japan', hira: 'にほん', ko: '일본', zh: '日本', ar: 'اليابان', eo: 'Japanio' }, flag: '🇯🇵' },
+  { region: 'americas', name: { ja: 'アメリカ', en: 'USA', hira: 'あめりか', ko: '미국', zh: '美国', ar: 'الولايات المتحدة', eo: 'Usono' }, flag: '🇺🇸' },
+  { region: 'europe', name: { ja: 'イギリス', en: 'UK', hira: 'いぎりす', ko: '영국', zh: '英国', ar: 'المملكة المتحدة', eo: 'Britio' }, flag: '🇬🇧' },
+  { region: 'europe', name: { ja: 'フランス', en: 'France', hira: 'ふらんす', ko: '프랑스', zh: '法国', ar: 'فرنسا', eo: 'Francio' }, flag: '🇫🇷' },
+  { region: 'europe', name: { ja: 'ドイツ', en: 'Germany', hira: 'どいつ', ko: '독일', zh: '德国', ar: 'ألمانيا', eo: 'Germanio' }, flag: '🇩🇪' },
+  { region: 'europe', name: { ja: 'イタリア', en: 'Italy', hira: 'いたりあ', ko: '이탈리아', zh: '意大利', ar: 'إيطاليا', eo: 'Italio' }, flag: '🇮🇹' },
+  { region: 'americas', name: { ja: 'カナダ', en: 'Canada', hira: 'かなだ', ko: '캐나다', zh: '加拿大', ar: 'كندا', eo: 'Kanado' }, flag: '🇨🇦' },
+  { region: 'asia', name: { ja: '韓国', en: 'South Korea', hira: 'かんこく', ko: '대한민국', zh: '韩国', ar: 'كوريا الجنوبية', eo: 'Sud-Koreio' }, flag: '🇰🇷' },
+  { region: 'asia', name: { ja: '中国', en: 'China', hira: 'ちゅうごく', ko: '중국', zh: '中国', ar: 'الصين', eo: 'Ĉinio' }, flag: '🇨🇳' },
+  { region: 'americas', name: { ja: 'ブラジル', en: 'Brazil', hira: 'ぶらじる', ko: '브라질', zh: '巴西', ar: 'البرازيل', eo: 'Brazilo' }, flag: '🇧🇷' },
+  { region: 'oceania', name: { ja: 'オーストラリア', en: 'Australia', hira: 'おーすとらりあ', ko: '호주', zh: '澳大利亚', ar: 'أستراليا', eo: 'Aŭstralio' }, flag: '🇦🇺' },
+  { region: 'europe', name: { ja: 'スペイン', en: 'Spain', hira: 'すぺいん', ko: '스페인', zh: '西班牙', ar: 'إسبانيا', eo: 'Hispanio' }, flag: '🇪🇸' },
+  { region: 'africa', name: { ja: 'エジプト', en: 'Egypt', hira: 'えじぷと', ko: '이집트', zh: '埃及', ar: 'مصر', eo: 'Egipto' }, flag: '🇪🇬' },
+  { region: 'asia', name: { ja: 'サウジアラビア', en: 'Saudi Arabia', hira: 'さうじあらびあ', ko: '사우디아라비아', zh: '沙特阿拉伯', ar: 'المملكة العربية السعودية', eo: 'Sauda Arabio' }, flag: '🇸🇦' }
 ];
 let currentFlagQuestion = null;
 let flagMissScore = 0;
 
 function nextFlagQuestion() {
-  const q = FLAG_DATABASE[Math.floor(Math.random() * FLAG_DATABASE.length)];
+  const reg = document.getElementById('cfgFlagRegion')?.value || 'all';
+  const list = (reg === 'all') ? FLAG_DATABASE : FLAG_DATABASE.filter(f => f.region === reg);
+  const pool = list.length >= 4 ? list : FLAG_DATABASE;
+
+  const q = pool[Math.floor(Math.random() * pool.length)];
   currentFlagQuestion = q;
   document.getElementById('flagEmojiDisplay').textContent = q.flag;
 
   const correctName = q.name[currentLang] || q.name.ja;
   const options = [correctName];
   while (options.length < 4) {
-    const r = FLAG_DATABASE[Math.floor(Math.random() * FLAG_DATABASE.length)];
+    const r = pool[Math.floor(Math.random() * pool.length)];
     const rName = r.name[currentLang] || r.name.ja;
     if (!options.includes(rName)) options.push(rName);
   }
@@ -2351,17 +2472,172 @@ function answerFlagQuestion(ans) {
   nextFlagQuestion();
 }
 
+// ★ 6. 2P画面分割サバイバル対戦モード
+let vsP1 = { y: 300, vy: 0, jumping: false, alive: true, score: 0 };
+let vsP2 = { y: 300, vy: 0, jumping: false, alive: true, score: 0 };
+let vsPillars = [];
+
+function initVsGame() {
+  vsP1 = { y: 300, vy: 0, jumping: false, alive: true, score: 0 };
+  vsP2 = { y: 300, vy: 0, jumping: false, alive: true, score: 0 };
+  vsPillars = [];
+}
+
+function triggerVsJump(player) {
+  if (!isGameRunning || currentGame !== 'vs') return;
+  const spd = getGameSpeed();
+  if (player === 1 && vsP1.alive && !vsP1.jumping) {
+    vsP1.vy = -12 * Math.min(1.2, spd);
+    vsP1.jumping = true;
+    playClickSound();
+  } else if (player === 2 && vsP2.alive && !vsP2.jumping) {
+    vsP2.vy = -12 * Math.min(1.2, spd);
+    vsP2.jumping = true;
+    playClickSound();
+  }
+}
+
+function updateVsGame() {
+  const spd = getGameSpeed();
+  const ground = (canvas.height / window.devicePixelRatio) - 70;
+
+  // 1P 物理
+  if (vsP1.alive) {
+    vsP1.vy += 0.55 * spd;
+    vsP1.y += vsP1.vy;
+    if (vsP1.y > ground) { vsP1.y = ground; vsP1.vy = 0; vsP1.jumping = false; }
+  }
+  // 2P 物理
+  if (vsP2.alive) {
+    vsP2.vy += 0.55 * spd;
+    vsP2.y += vsP2.vy;
+    if (vsP2.y > ground) { vsP2.y = ground; vsP2.vy = 0; vsP2.jumping = false; }
+  }
+
+  // 障害物生成
+  if (vsPillars.length === 0 || vsPillars[vsPillars.length - 1].x < (canvas.width / window.devicePixelRatio) - 180) {
+    const h = Math.random() * 120 + 60;
+    vsPillars.push({
+      x: canvas.width / window.devicePixelRatio + 30,
+      width: 35,
+      height: h,
+      passed1: false,
+      passed2: false
+    });
+  }
+
+  const p1X = 60;
+  const p2X = 140;
+
+  for (let i = vsPillars.length - 1; i >= 0; i--) {
+    const p = vsPillars[i];
+    p.x -= 3.8 * spd;
+    const pTop = ground + 45 - p.height;
+
+    // 1P 判定
+    if (vsP1.alive && p1X + 20 > p.x && p1X < p.x + p.width && vsP1.y + 45 > pTop) {
+      vsP1.alive = false;
+      playClickSound();
+      triggerHaptic([50, 50, 50]);
+    }
+    // 2P 判定
+    if (vsP2.alive && p2X + 20 > p.x && p2X < p.x + p.width && vsP2.y + 45 > pTop) {
+      vsP2.alive = false;
+      playClickSound();
+      triggerHaptic([50, 50, 50]);
+    }
+
+    if (vsP1.alive && !p.passed1 && p.x + p.width < p1X) { p.passed1 = true; vsP1.score += 10; }
+    if (vsP2.alive && !p.passed2 && p.x + p.width < p2X) { p.passed2 = true; vsP2.score += 10; }
+
+    if (p.x + p.width < -50) vsPillars.splice(i, 1);
+  }
+
+  // 勝敗判定
+  if (!vsP1.alive && !vsP2.alive) {
+    showModal('VS FINISH!', '両者脱落！引き分け！');
+    stopGame();
+  } else if (!vsP1.alive && vsP2.alive && vsP2.score > vsP1.score + 20) {
+    showModal('VS FINISH!', '2P (赤) の完全勝利！🏆');
+    stopGame();
+  } else if (!vsP2.alive && vsP1.alive && vsP1.score > vsP2.score + 20) {
+    showModal('VS FINISH!', '1P (青) の完全勝利！🏆');
+    stopGame();
+  }
+}
+
+function renderVsGame() {
+  const w = canvas.width / window.devicePixelRatio;
+  const ground = (canvas.height / window.devicePixelRatio) - 25;
+
+  // 地面
+  ctx.fillStyle = '#37474f';
+  ctx.fillRect(0, ground, w, 100);
+
+  // 障害物描画
+  for (let p of vsPillars) {
+    ctx.fillStyle = '#ff9800';
+    ctx.fillRect(p.x, ground - p.height, p.width, p.height);
+  }
+
+  // 1P (青)
+  if (vsP1.alive) {
+    ctx.save();
+    ctx.translate(60, vsP1.y);
+    ctx.strokeStyle = '#2196f3';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(10, 10, 8, 0, Math.PI * 2);
+    ctx.moveTo(10, 18); ctx.lineTo(10, 32);
+    ctx.moveTo(0, 22); ctx.lineTo(20, 22);
+    ctx.moveTo(10, 32); ctx.lineTo(2, 45);
+    ctx.moveTo(10, 32); ctx.lineTo(18, 45);
+    ctx.stroke();
+    ctx.fillStyle = '#2196f3';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('1P', 4, 0);
+    ctx.restore();
+  }
+
+  // 2P (赤)
+  if (vsP2.alive) {
+    ctx.save();
+    ctx.translate(140, vsP2.y);
+    ctx.strokeStyle = '#f44336';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(10, 10, 8, 0, Math.PI * 2);
+    ctx.moveTo(10, 18); ctx.lineTo(10, 32);
+    ctx.moveTo(0, 22); ctx.lineTo(20, 22);
+    ctx.moveTo(10, 32); ctx.lineTo(2, 45);
+    ctx.moveTo(10, 32); ctx.lineTo(18, 45);
+    ctx.stroke();
+    ctx.fillStyle = '#f44336';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('2P', 4, 0);
+    ctx.restore();
+  }
+
+  // HUD
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = '#2196f3';
+  ctx.fillText(`1P(青): ${vsP1.score} ${vsP1.alive ? '生存' : '脱落'}`, 20, 75);
+  ctx.fillStyle = '#f44336';
+  ctx.fillText(`2P(赤): ${vsP2.score} ${vsP2.alive ? '生存' : '脱落'}`, 20, 100);
+}
+
 function initGameScene() {
   currentScore = 0;
   flagMissScore = 0;
   updateScoreDisplay();
-  const isInf = (currentGame === 'konjac' || currentGame === 'blackboard');
+  const isInf = (currentGame === 'konjac' || currentGame === 'blackboard' || currentGame === 'vs');
   document.getElementById('gameHudTimer').textContent = isInf ? 'TIME: ∞' : `TIME: ${getTimeLimit()}`;
 
   if (currentGame === 'stick') initStickGame();
   else if (currentGame === 'block') initBlockGame();
   else if (currentGame === 'konjac') initKonjacGame();
   else if (currentGame === 'blackboard') initBlackboardGame();
+  else if (currentGame === 'vs') initVsGame();
 
   drawFrame();
 }
@@ -2384,7 +2660,7 @@ function startGame() {
   document.getElementById('gameActionBtn').textContent = t('btn_stop');
   document.getElementById('gameActionBtn').classList.add('btn-secondary');
 
-  const isInfinite = (currentGame === 'konjac' || currentGame === 'blackboard');
+  const isInfinite = (currentGame === 'konjac' || currentGame === 'blackboard' || currentGame === 'vs');
   timeLeft = isInfinite ? 999999 : getTimeLimit();
 
   if (currentGame === 'flag') {
@@ -2422,14 +2698,25 @@ function stopGame() {
   saveScoreRecord(
     t(`game_${currentGame}`),
     getTimeLimit(),
-    currentGame === 'flag' ? (currentScore - flagMissScore) : currentScore
+    currentGame === 'flag' ? (currentScore - flagMissScore) : (currentGame === 'vs' ? Math.max(vsP1.score, vsP2.score) : currentScore)
   );
 }
 
-function loop() {
+function loop(timestamp = 0) {
   if (!isGameRunning) return;
+
+  // バッテリー節約 30fps制限
+  const isBatterySaver = document.getElementById('cfgBatterySaver')?.checked;
+  if (isBatterySaver && timestamp - lastFrameTime < 32) {
+    requestAnimationFrame(loop);
+    return;
+  }
+  lastFrameTime = timestamp;
+
   if (currentGame === 'stick') updateStickGame();
   else if (currentGame === 'block') updateBlockGame();
+  else if (currentGame === 'vs') updateVsGame();
+
   drawFrame();
   requestAnimationFrame(loop);
 }
@@ -2445,6 +2732,7 @@ function drawFrame() {
   else if (currentGame === 'block') renderBlockGame();
   else if (currentGame === 'konjac') renderKonjacGame();
   else if (currentGame === 'blackboard') renderBlackboardGame();
+  else if (currentGame === 'vs') renderVsGame();
   ctx.restore();
 }
 
@@ -2458,7 +2746,7 @@ function triggerDpad(dir) {
 
   if (currentGame === 'stick' && (dir === 'up' || dir === 'center')) {
     if (!stickMan.jumping) {
-      stickMan.vy = -12;
+      stickMan.vy = -12 * Math.min(1.2, getGameSpeed());
       stickMan.jumping = true;
     }
   }
@@ -2469,9 +2757,16 @@ function handleCanvasPointer(e) {
   const x = (e.clientX - rect.left);
   const y = (e.clientY - rect.top);
 
+  if (currentGame === 'vs') {
+    // 画面の左右半分タップで1P / 2Pジャンプ
+    if (x < rect.width / 2) triggerVsJump(1);
+    else triggerVsJump(2);
+    return;
+  }
+
   if (currentGame === 'stick') {
     if (!stickMan.jumping) {
-      stickMan.vy = -12;
+      stickMan.vy = -12 * Math.min(1.2, getGameSpeed());
       stickMan.jumping = true;
       playClickSound();
     }
@@ -2527,7 +2822,7 @@ function startHowToAnimation() {
 }
 
 /* ==========================================================================
-   4. 設定 & マウスストーカー & スタイル反映
+   4. 設定機能群 (★ 新規12設定ハンドラー)
    ========================================================================== */
 const mouseStalker = document.getElementById('mouseStalker');
 window.addEventListener('mousemove', (e) => {
@@ -2594,23 +2889,18 @@ function applyFontSettings() {
   document.documentElement.style.setProperty('--font-size', `${sizeNum}${sizeUnit}`);
 }
 
-// 検索バーの表示切り替え（ゲーム／更新履歴・プロフを完全分離）
 function toggleSearchBarVisibility() {
   const showGame = document.getElementById('cfgShowSearchGame').checked;
   const showOther = document.getElementById('cfgShowSearchOther').checked;
-
   document.getElementById('gameSearchInput').style.display = showGame ? 'inline-block' : 'none';
-  
   const historyBar = document.getElementById('historySearchBarWrapper');
   if (historyBar) historyBar.style.display = showOther ? 'flex' : 'none';
 }
 
 function applyColorTheme(theme) {
-  if (theme === 'dark') {
-    document.body.classList.add('dark-mode');
-  } else if (theme === 'light') {
-    document.body.classList.remove('dark-mode');
-  } else {
+  if (theme === 'dark') document.body.classList.add('dark-mode');
+  else if (theme === 'light') document.body.classList.remove('dark-mode');
+  else {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     document.body.classList.toggle('dark-mode', isDark);
   }
@@ -2626,8 +2916,82 @@ function toggleIndexedDBSetting() {
   saveAllConfig();
 }
 
+// 1. 機内消灯モード
+function applyNightFlightMode() {
+  const enabled = document.getElementById('cfgNightFlight').checked;
+  document.body.classList.toggle('night-flight-mode', enabled);
+}
+
+// 2. 乗り物酔い防止
+function applyReducedMotion() {
+  const enabled = document.getElementById('cfgReducedMotion').checked;
+  document.body.classList.toggle('reduced-motion-mode', enabled);
+}
+
+// 5. コントローラー配置 & サイズ
+function applyDpadSettings() {
+  const pos = document.getElementById('cfgDpadPosition').value;
+  const size = document.getElementById('cfgDpadSize').value;
+  const opacity = document.getElementById('cfgDpadOpacity').value;
+
+  const wrapper = document.getElementById('mainControllerWrapper');
+  wrapper.className = `controller-wrapper align-${pos}`;
+
+  const dpad = document.getElementById('standardDpad');
+  dpad.className = `dpad size-${size}`;
+  dpad.style.opacity = opacity;
+}
+
+// 11. フライトタイマー機能
+let flightRemainingSeconds = 6.5 * 3600;
+let flightTimerInterval = null;
+
+function initFlightTimer() {
+  const h = parseInt(document.getElementById('cfgFlightHours')?.value || '6', 10);
+  const m = parseInt(document.getElementById('cfgFlightMinutes')?.value || '30', 10);
+  flightRemainingSeconds = h * 3600 + m * 60;
+  if (!flightTimerInterval) {
+    flightTimerInterval = setInterval(() => {
+      if (flightRemainingSeconds > 0) flightRemainingSeconds--;
+      updateFlightTimerDisplay();
+    }, 1000);
+  }
+  updateFlightTimerDisplay();
+}
+
+function resetFlightTimer() {
+  initFlightTimer();
+}
+
+function updateFlightTimerDisplay() {
+  const hrs = Math.floor(flightRemainingSeconds / 3600);
+  const mins = Math.floor((flightRemainingSeconds % 3600) / 60);
+  const secs = flightRemainingSeconds % 60;
+  const str = `FLIGHT: ${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  const el = document.getElementById('flightHudClock');
+  if (el) el.textContent = str;
+}
+
+// 12. 世界時計・時差
+function updateWorldClock() {
+  const diff = parseInt(document.getElementById('cfgTimezoneDiff')?.value || '-7', 10);
+  const now = new Date();
+  const jstHrs = now.getHours();
+  const jstMins = now.getMinutes();
+
+  const destDate = new Date(now.getTime() + diff * 3600 * 1000);
+  const destHrs = destDate.getHours();
+  const destMins = destDate.getMinutes();
+
+  const el = document.getElementById('worldClockDisplay');
+  if (el) {
+    el.textContent = `日本: ${String(jstHrs).padStart(2,'0')}:${String(jstMins).padStart(2,'0')} | 現地: ${String(destHrs).padStart(2,'0')}:${String(destMins).padStart(2,'0')} (${diff >= 0 ? '+' : ''}${diff}h)`;
+  }
+}
+setInterval(updateWorldClock, 1000);
+
 /* ==========================================================================
-   5. プロフィール & 経過時間 & 動画録画 & 自作プロフリアルタイム表示
+   5. プロフィール & 経過時間 & 動画録画
    ========================================================================== */
 const SITE_OPEN_DATE = new Date('2026-09-18T00:00:00');
 
@@ -2703,7 +3067,6 @@ function updateMyProfileLive() {
     message: document.getElementById('myProfMessage').value
   };
 
-  // 下段のリアルタイム表示カードを更新
   const view = document.getElementById('liveProfileCardView');
   if (view) {
     const p = memoryStore.myProfile;
@@ -2784,7 +3147,7 @@ function exportProfileCard(format) {
 }
 
 /* ==========================================================================
-   6. 更新履歴システム (日付ソート厳密化：最新順／古い順)
+   6. 更新履歴システム (日付完全ソート)
    ========================================================================== */
 let historyPage = 1;
 
@@ -2797,7 +3160,6 @@ function renderHistoryTable() {
     return item.date.toLowerCase().includes(query) || text.toLowerCase().includes(query);
   });
 
-  // 日付のミリ秒比較による完全なソート
   list.sort((a, b) => {
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     const timeA = new Date(a.date.replace(/\//g, '-')).getTime() || 0;
@@ -2848,13 +3210,10 @@ function downloadHistoryTxt() {
 
 function copyAllHistory() {
   let content = KOUSHIN_DATA.map(k => `[${k.date}] ${k.desc[currentLang] || k.desc.ja}`).join('\n');
-  
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(content).then(() => {
       showModal('Copied', 'All history copied!');
-    }).catch(() => {
-      fallbackCopy(content);
-    });
+    }).catch(() => fallbackCopy(content));
   } else {
     fallbackCopy(content);
   }
@@ -3046,7 +3405,6 @@ function exportScoreTable(format) {
   }, mime);
 }
 
-// .itsme 拡張子での完全エクスポート
 function exportDataFile(type) {
   const fullBackupData = {
     activeTab: currentActiveTab,
@@ -3076,7 +3434,25 @@ function exportDataFile(type) {
       showHeader: document.getElementById('cfgShowHeader').checked,
       colorTheme: document.getElementById('cfgColorTheme').value,
       stickMaxHeight: document.getElementById('stickMaxHeight').value,
-      stickMaxPillars: document.getElementById('stickMaxPillars').value
+      stickMaxPillars: document.getElementById('stickMaxPillars').value,
+
+      nightFlight: document.getElementById('cfgNightFlight').checked,
+      reducedMotion: document.getElementById('cfgReducedMotion').checked,
+      batterySaver: document.getElementById('cfgBatterySaver').checked,
+      masterVolume: document.getElementById('cfgMasterVolume').value,
+      muteAudio: document.getElementById('cfgMuteAudio').checked,
+      dpadPosition: document.getElementById('cfgDpadPosition').value,
+      dpadSize: document.getElementById('cfgDpadSize').value,
+      dpadOpacity: document.getElementById('cfgDpadOpacity').value,
+      vibrate: document.getElementById('cfgVibrate').checked,
+      gameSpeed: document.getElementById('cfgGameSpeed').value,
+      invincible: document.getElementById('cfgInvincible').checked,
+      konjacMaterial: document.getElementById('cfgKonjacMaterial').value,
+      konjacKnife: document.getElementById('cfgKonjacKnife').value,
+      flagRegion: document.getElementById('cfgFlagRegion').value,
+      flightHours: document.getElementById('cfgFlightHours').value,
+      flightMinutes: document.getElementById('cfgFlightMinutes').value,
+      timezoneDiff: document.getElementById('cfgTimezoneDiff').value
     }
   };
 
@@ -3090,7 +3466,7 @@ function exportDataFile(type) {
   const jsonStr = JSON.stringify(payload, null, 2);
 
   if (type === 'itsme') {
-    downloadBlob(new Blob([jsonStr], { type: 'application/json' }), 'backup.itsme'); // ★拡張子 .itsme
+    downloadBlob(new Blob([jsonStr], { type: 'application/json' }), 'backup.itsme');
   } else if (type === 'indexeddb') {
     const idbPayload = { app: "AirplaneGames", store: "indexeddb", version: CURRENT_DATA_VERSION, scores: memoryStore.scores };
     downloadBlob(new Blob([JSON.stringify(idbPayload, null, 2)], { type: 'application/json' }), 'backup.indexeddb');
@@ -3182,6 +3558,24 @@ function handleRestoreFile(e) {
         if (c.stickMaxHeight) document.getElementById('stickMaxHeight').value = c.stickMaxHeight;
         if (c.stickMaxPillars) document.getElementById('stickMaxPillars').value = c.stickMaxPillars;
 
+        if (c.nightFlight !== undefined) document.getElementById('cfgNightFlight').checked = c.nightFlight;
+        if (c.reducedMotion !== undefined) document.getElementById('cfgReducedMotion').checked = c.reducedMotion;
+        if (c.batterySaver !== undefined) document.getElementById('cfgBatterySaver').checked = c.batterySaver;
+        if (c.masterVolume !== undefined) document.getElementById('cfgMasterVolume').value = c.masterVolume;
+        if (c.muteAudio !== undefined) document.getElementById('cfgMuteAudio').checked = c.muteAudio;
+        if (c.dpadPosition) document.getElementById('cfgDpadPosition').value = c.dpadPosition;
+        if (c.dpadSize) document.getElementById('cfgDpadSize').value = c.dpadSize;
+        if (c.dpadOpacity !== undefined) document.getElementById('cfgDpadOpacity').value = c.dpadOpacity;
+        if (c.vibrate !== undefined) document.getElementById('cfgVibrate').checked = c.vibrate;
+        if (c.gameSpeed) document.getElementById('cfgGameSpeed').value = c.gameSpeed;
+        if (c.invincible !== undefined) document.getElementById('cfgInvincible').checked = c.invincible;
+        if (c.konjacMaterial) document.getElementById('cfgKonjacMaterial').value = c.konjacMaterial;
+        if (c.konjacKnife) document.getElementById('cfgKonjacKnife').value = c.konjacKnife;
+        if (c.flagRegion) document.getElementById('cfgFlagRegion').value = c.flagRegion;
+        if (c.flightHours) document.getElementById('cfgFlightHours').value = c.flightHours;
+        if (c.flightMinutes) document.getElementById('cfgFlightMinutes').value = c.flightMinutes;
+        if (c.timezoneDiff) document.getElementById('cfgTimezoneDiff').value = c.timezoneDiff;
+
         if (c.stalkerImageData) {
           localStorage.setItem('airplane_game_stalker_img', c.stalkerImageData);
           if (c.mouseStalkerType === 'image') {
@@ -3213,6 +3607,12 @@ function handleRestoreFile(e) {
       applyColors();
       applyFontSettings();
       applyColorTheme(document.getElementById('cfgColorTheme').value);
+      applyNightFlightMode();
+      applyReducedMotion();
+      updateMasterVolume();
+      applyDpadSettings();
+      initFlightTimer();
+      updateWorldClock();
       toggleSearchBarVisibility();
       toggleHeader(document.getElementById('cfgShowHeader').checked);
       updateMouseStalker();
@@ -3261,7 +3661,9 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
-// ★ リロードやページを閉じる「まさにその瞬間」に全データを強制保存
+/* ==========================================================================
+   リロード直前セーフティネット (フォーカス外れ前の急なF5も100%保護)
+   ========================================================================== */
 window.addEventListener('beforeunload', () => {
   if (typeof updateMyProfileLive === 'function') updateMyProfileLive();
   if (typeof saveAllConfig === 'function') saveAllConfig();
@@ -3299,6 +3701,24 @@ window.addEventListener('load', async () => {
     if (config.colorTheme) document.getElementById('cfgColorTheme').value = config.colorTheme;
     if (config.stickMaxHeight) document.getElementById('stickMaxHeight').value = config.stickMaxHeight;
     if (config.stickMaxPillars) document.getElementById('stickMaxPillars').value = config.stickMaxPillars;
+
+    if (config.nightFlight !== undefined) document.getElementById('cfgNightFlight').checked = config.nightFlight;
+    if (config.reducedMotion !== undefined) document.getElementById('cfgReducedMotion').checked = config.reducedMotion;
+    if (config.batterySaver !== undefined) document.getElementById('cfgBatterySaver').checked = config.batterySaver;
+    if (config.masterVolume !== undefined) document.getElementById('cfgMasterVolume').value = config.masterVolume;
+    if (config.muteAudio !== undefined) document.getElementById('cfgMuteAudio').checked = config.muteAudio;
+    if (config.dpadPosition) document.getElementById('cfgDpadPosition').value = config.dpadPosition;
+    if (config.dpadSize) document.getElementById('cfgDpadSize').value = config.dpadSize;
+    if (config.dpadOpacity !== undefined) document.getElementById('cfgDpadOpacity').value = config.dpadOpacity;
+    if (config.vibrate !== undefined) document.getElementById('cfgVibrate').checked = config.vibrate;
+    if (config.gameSpeed) document.getElementById('cfgGameSpeed').value = config.gameSpeed;
+    if (config.invincible !== undefined) document.getElementById('cfgInvincible').checked = config.invincible;
+    if (config.konjacMaterial) document.getElementById('cfgKonjacMaterial').value = config.konjacMaterial;
+    if (config.konjacKnife) document.getElementById('cfgKonjacKnife').value = config.konjacKnife;
+    if (config.flagRegion) document.getElementById('cfgFlagRegion').value = config.flagRegion;
+    if (config.flightHours) document.getElementById('cfgFlightHours').value = config.flightHours;
+    if (config.flightMinutes) document.getElementById('cfgFlightMinutes').value = config.flightMinutes;
+    if (config.timezoneDiff) document.getElementById('cfgTimezoneDiff').value = config.timezoneDiff;
   }
 
   await initIndexedDB();
@@ -3310,6 +3730,11 @@ window.addEventListener('load', async () => {
   applyColors();
   applyFontSettings();
   applyColorTheme(document.getElementById('cfgColorTheme').value);
+  applyNightFlightMode();
+  applyReducedMotion();
+  applyDpadSettings();
+  initFlightTimer();
+  updateWorldClock();
   toggleSearchBarVisibility();
   toggleHeader(document.getElementById('cfgShowHeader').checked);
   toggleGameFeatureSetting();
