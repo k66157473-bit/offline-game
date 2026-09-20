@@ -2977,7 +2977,7 @@ function triggerDpad(dir) {
     dpadBtn.classList.add('pressed');
     setTimeout(() => dpadBtn.classList.remove('pressed'), 100);
   }
-
+}
 // 飛ぶ力（上限98）を取得する関数
 function getJumpForce() {
   const val = parseFloat(document.getElementById('cfgJumpForce')?.value || '12');
