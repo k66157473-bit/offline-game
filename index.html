@@ -1020,23 +1020,32 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <label data-i18n="cfg_invincible">🛡️ 無敵・練習モード (棒とビ)</label>
         <input type="checkbox" id="cfgInvincible" onchange="saveConfig();"> <span data-i18n="val_enable_invincible">有効 (衝突してもアウトにならず継続)</span>
       </div>
-      <div class="config-item">
-        <label data-i18n="cfg_konjac_skin">🔪 こんにゃく素材 & 包丁スキン</label>
-        <div style="display:flex; gap:6px;">
-          <select id="cfgKonjacMaterial" onchange="saveConfig();" style="flex:1;">
-            <option value="gray" selected>普通 (グレー・粒入り)</option>
-            <option value="white">白こんにゃく</option>
-            <option value="matcha">抹茶こんにゃく</option>
-            <option value="yokan">羊羹 (ようかん)</option>
-            <option value="tofu">木綿豆腐</option>
-            <option value="cheese">チェダーチーズ</option>
-          </select>
-          <select id="cfgKonjacKnife" onchange="saveConfig();" style="flex:1;">
-            <option value="standard" selected>普通の包丁</option>
-            <option value="laser">レーザーブレード</option>
-            <option value="katana">日本刀</option>
-          </select>
-        </div>
+<div class="config-item">
+  <label data-i18n="cfg_konjac_skin">🔪 こんにゃく素材 & 包丁スキン</label>
+  <!-- styleに flex-wrap: wrap; を追加しました -->
+  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+    
+    <!-- styleを flex: 1; min-width: 140px; に変更しました -->
+    <select id="cfgKonjacMaterial" onchange="saveConfig();" style="flex: 1; min-width: 140px;">
+      <option value="gray" selected>普通 (グレー・粒入り)</option>
+      <option value="white">白こんにゃく</option>
+      <option value="matcha">抹茶こんにゃく</option>
+      <option value="yokan">羊羹 (ようかん)</option>
+      <option value="tofu">木綿豆腐</option>
+      <option value="cheese">チェダーチーズ</option>
+    </select>
+    
+    <!-- styleを flex: 1; min-width: 140px; に変更しました -->
+    <select id="cfgKonjacKnife" onchange="saveConfig();" style="flex: 1; min-width: 140px;">
+      <option value="standard" selected>普通の包丁</option>
+      <option value="laser">レーザーブレード</option>
+      <option value="katana">日本刀</option>
+    </select>
+    
+  </div>
+</div>
+
+
       </div>
       <div class="config-item">
         <label data-i18n="cfg_flag_region">🚩 国旗クイズ 出題地域フィルター</label>
@@ -1387,6 +1396,17 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+{ pinned: false, date: '2026/09/21 7:58',
+ desc: {
+      ja: 'スマホでこんにゃく素材と包丁スキンを選ぶプリセットが画面から一部はみ出ていたのを修正しました',
+      en: 'Fixed an issue where the Konjac material and knife skin selectors overflowed the screen on mobile devices',
+      hira: 'すまほで こんにゃくの そざいと ほうちょうを えらぶ わくが はみでていたのを なおしました',
+      ko: '스마트폰에서 곤약 재질과 칼 스킨 선택 창이 화면 밖으로 벗어나던 문제를 수정했습니다',
+      zh: '修复了在手机端选择魔芋材质与刀刃皮肤的预设框超出屏幕的问题',
+      ar: 'تم إصلاح مشكلة تجاوز قائمة اختيار مادة الكونجاك ومظهر السكين لحدود الشاشة على الهواتف',
+      eo: 'Korektis problemon, kie la elekto de konjaka materialo kaj tranĉila aspekto superis la ekranon ĉe saĝtelefonoj'
+    }
+  },
   { pinned: false, date: '2026/09/20 19:13',
     desc: { ja: 'データを削除ボタンを設定タブからデータタブに移動しました', en: 'Moved the Delete All Data button from Settings tab to Data tab', hira: 'でーたをけすぼたんを せっていから でーたのぺーじに うつしました', ko: '데이터 삭제 버튼을 설정 탭에서 데이터 탭으로 이동했습니다', zh: '将清除全部数据按钮从设置标签页移动至数据标签页', ar: 'تم نقل زر حذف البيانات من تبويب الإعدادات إلى تبويب البيانات', eo: 'Movis la butonon por forigi datumojn de Agordoj al Datumoj' }
   },
