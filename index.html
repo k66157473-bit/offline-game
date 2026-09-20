@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="site_title">飛行機でも遊べるゲーム</title>
 <meta name="description" data-i18n="site_desc" content="ネットが使えない飛行機でも遊べるオフライン対応ゲームです。">
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff4081">
+
+<!-- 一般ブラウザ用アイコン（PC等のタブ用） -->
+<link rel="icon" type="image/png" href="icon-offgame.png">
+
+<!-- ★ iOS (iPhone / iPad) 向け最適化パラメータ -->
+<!-- ホーム画面から開いたときにブラウザの枠を消して全画面アプリ化する -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<!-- 上部の時計や電波アイコンの背景色（default / black / black-translucent） -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<!-- ホーム画面に追加される時のデフォルトアプリ名 -->
+<meta name="apple-mobile-web-app-title" content="飛行機でも遊べるゲーム">
+<!-- iPhone用アプリアイコン -->
+<link rel="apple-touch-icon" href="icon-offgame.png">
 <style>
 :root {
   --bg-color: #fce4ec;
@@ -678,11 +694,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 <div id="whiteoutOverlay"></div>
 <div id="mouseStalker">★</div>
 
-<!-- 事前ダウンロード推奨バナー -->
-<div class="pre-download-banner">
-  <span>✈️</span>
-  <span data-i18n="banner_predownload">【飛行機に乗る前に】機内ではネット通信が遮断されます。事前にこのページ（HTMLファイル）をご自身の端末にダウンロード保存しておくことを強く推奨します！</span>
-</div>
+
 
 <!-- ヘッダー表示ボタン -->
 <button id="headerShowBtn" onclick="toggleHeader(true)" data-i18n="btn_show_header">ヘッダー表示</button>
@@ -1208,7 +1220,6 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 const I18N_DICTIONARY = {
   site_title: { ja: "飛行機でも遊べるゲーム", en: "Airplane Playable Games", hira: "ひこうきでも あそべる げーむ", ko: "비행기에서도 즐기는 게임", zh: "飞机上也能玩的游戏", ar: "ألعاب قابلة للعب على متن الطائرة", eo: "Ludoj Ludeblaj en Aviadilo" },
   site_desc: { ja: "ネットが使えない飛行機でも遊べるオフライン対応ゲームです。", en: "Offline compatible games playable on airplanes without internet.", hira: "ねっとが つかえない ひこうきでも あそべる おふらいん たいおう げーむです。", ko: "인터넷이 되지 않는 비행기에서도 즐길 수 있는 완전 오프라인 게임입니다.", zh: "在没有网络的飞机上也能玩的完全离线游戏。", ar: "ألعاب متوافقة مع وضع عدم الاتصال للعب في الطائرة دون إنترنت.", eo: "Tute eksterretaj ludoj ludeblaj en aviadiloj sen interreto." },
-  banner_predownload: { ja: "【飛行機に乗る前に】機内ではネット通信が遮断されます。事前にこのページ（HTMLファイル）をご自身の端末にダウンロード保存しておくことを強く推奨します！", en: "[Before Boarding] Internet will be disconnected mid-flight. We strongly recommend downloading and saving this HTML file onto your device beforehand!", hira: "【ひこうきに のるまえに】きないでは ねっとが つかえません。まえもって このぺーじ（HTMLふぁいる）を ほぞんしておくのを おすすめします！", ko: "[탑승 전 안내] 기내에서는 인터넷이 차단됩니다. 사전에 이 HTML 파일을 기기에 미리 다운로드해 두시는 것을 적극 권장합니다!", zh: "【登机前提醒】机内网络将完全切断。强烈建议您在登机前将本HTML文件下载保存至本机！", ar: "【قبل الصعود للطائرة】ستنقطع خدمة الإنترنت أثناء الرحلة. نوصي بشدة بتنزيل ملف HTML هذا وحفظه على جهازك مسبقًا!", eo: "[Antaŭ Enŝipiĝo] Interreto estos malkonektita dumfluge. Ni forte rekomendas elŝuti kaj konservi ĉi tiun HTML-dosieron en via aparato anticipe!" },
   btn_show_header: { ja: "ヘッダー表示", en: "Show Header", hira: "へっだー ひょうじ", ko: "헤더 표시", zh: "显示顶栏", ar: "إظهار الرأس", eo: "Montri Kapon" },
   tab_game: { ja: "ゲーム", en: "Games", hira: "げーむ", ko: "게임", zh: "游戏", ar: "الألعاب", eo: "Ludoj" },
   tab_howto: { ja: "使い方", en: "How to Play", hira: "つかいかた", ko: "이용방법", zh: "玩法说明", ar: "كيفية اللعب", eo: "Kiel Ludi" },
@@ -1357,12 +1368,92 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
-  { id: 1, pinned: true, date: '2026/09/20 12:00', desc: { ja: '2P画面分割対戦モード & 12種の機内特化新設定 追加', en: 'Added 2P Split Battle mode & 12 in-flight custom settings', hira: '2にんでたいせん もーど と べんりな せっていを ついか', ko: '2인 화면분할 대전 모드 및 12가지 기내 특화 설정 추가', zh: '新增双人分屏对战模式及12项机内深度专属设置', ar: 'إضافة وضع المعركة الثنائية و12 إعدادًا مخصصًا للطيران', eo: 'Aldonis 2-ludantan batalreĝimon kaj 12 flugajn agordojn' } },
-  { id: 2, pinned: false, date: '2026/09/19 18:30', desc: { ja: 'ショートカットキー無制限追加機能 & テーマ連動文字色補正システム搭載', en: 'Added unlimited shortcut keys & automatic text contrast correction system', hira: 'しょーとかっと むせいげん ついか ＆ もじのいろ じどう ちょうせい', ko: '단축키 무제한 추가 기능 및 테마 연동 텍스트 대비 자동 보정 시스템 탑재', zh: '搭载快捷键无限制设定与浅/深色主题文字颜色防同化补偿系统', ar: 'إضافة اختصارات غير محدودة ونظام تصحيح تباين ألوان النصوص تلقائيًا', eo: 'Aldonis senlimajn klavkombinojn kaj aŭtomatan tekstan kontrastan sistemon' } },
-  { id: 3, pinned: false, date: '2026/09/19 14:15', desc: { ja: '黒板をお掃除しよう・棒とビの物理演算およびカスタマイズ上限機能実装', en: 'Implemented blackboard cleaning & obstacle jumping physics with custom limits', hira: 'こくばんそうじ と ぼうとびの じゆう せっていを ついか', ko: '칠판 청소 및 봉 넘기 물리 엔진과 커스텀 상한치 설정 구현', zh: '实现清理黑板与火柴人跳跃的物理演算及自定义上限参数功能', ar: 'تطبيق فيزياء تنظيف السبورة والقفز فوق الأعمدة مع خيارات التخصيص', eo: 'Efektivigis purigadon de nigra tabulo kaj baston-salton kun propraj agordoj' } },
-  { id: 4, pinned: false, date: '2026/09/18 20:00', desc: { ja: '自作プロフィール保存＆多形式書き出し(PNG/AVIF/WebP/GIF等)対応', en: 'Custom profile creator & multi-format exporter (PNG/AVIF/WebP/GIF/HTML)', hira: 'じぶんの ぷろふぃーる ほぞん と がぞう ほぞんきのう', ko: '커스텀 프로필 작성 및 다채로운 형식(PNG/AVIF/WebP/GIF 등) 내보내기 지원', zh: '自定义个人档案保存与多格式(PNG/AVIF/WebP/GIF等)图片文件导出', ar: 'إنشاء وحفظ الملف الشخصي مع التصدير بصيغ متعددة (PNG/AVIF/WebP/GIF)', eo: 'Kreo de propra profilo kaj plurobla elporto (PNG/AVIF/WebP/GIF/HTML)' } },
-  { id: 5, pinned: false, date: '2026/09/18 12:00', desc: { ja: 'サイト開設と初期アーキテクチャの構築', en: 'Initial release and architecture setup', hira: 'さいとが できあがりました', ko: '사이트 개설 및 초기 아키텍처 구축', zh: '开站与初始架构搭建', ar: 'إطلاق الموقع وتأسيس الهيكلية الأولية', eo: 'Reteja malfermo kaj komenca arkitekturo' } }
+  {
+    id: 1,
+    pinned: true,
+    date: '2026/09/20 16:28',
+    desc: {
+      ja: 'PWA化しました（ホーム画面追加・オフライン一発起動に対応）',
+      en: 'Enabled PWA support (installable to home screen & instant offline launch)',
+      hira: 'PWAかしました（ほーむがめんから すぐにあそべます）',
+      ko: 'PWA 지원 추가 (홈 화면 추가 및 오프라인 즉시 실행 지원)',
+      zh: '已实现PWA化（支持添加至主屏幕并离线一键启动）',
+      ar: 'تم تحويل التطبيق إلى PWA (يدعم التثبيت على الشاشة الرئيسية والتشغيل الفوري دون إنترنت)',
+      eo: 'PWA-igita (subtenas aldonon al hejmekrano kaj tujan eksterretan lanĉon)'
+    }
+  },
+  {
+    id: 2,
+    pinned: false,
+    date: '2026/09/20 12:00',
+    desc: {
+      ja: '2P画面分割対戦モード & 12種の機内特化新設定 追加',
+      en: 'Added 2P Split Battle mode & 12 in-flight custom settings',
+      hira: '2にんでたいせん もーど と べんりな せっていを ついか',
+      ko: '2인 화면분할 대전 모드 및 12가지 기내 특화 설정 추가',
+      zh: '新增双人分屏对战模式及12项机内深度专属设置',
+      ar: 'إضافة وضع المعركة الثنائية و12 إعدادًا مخصصًا للطيران',
+      eo: 'Aldonis 2-ludantan batalreĝimon kaj 12 flugajn agordojn'
+    }
+  },
+  {
+    id: 3,
+    pinned: false,
+    date: '2026/09/19 18:30',
+    desc: {
+      ja: 'ショートカットキー無制限追加機能 & テーマ連動文字色補正システム搭載',
+      en: 'Added unlimited shortcut keys & automatic text contrast correction system',
+      hira: 'しょーとかっと むせいげん ついか ＆ もじのいろ じどう ちょうせい',
+      ko: '단축키 무제한 추가 기능 및 테마 연동 텍스트 대비 자동 보정 시스템 탑재',
+      zh: '搭载快捷键无限制设定与浅/深色主题文字颜色防同化补偿系统',
+      ar: 'إضافة اختصارات غير محدودة ونظام تصحيح تباين ألوان النصوص تلقائيًا',
+      eo: 'Aldonis senlimajn klavkombinojn kaj aŭtomatan tekstan kontrastan sistemon'
+    }
+  },
+  {
+    id: 4,
+    pinned: false,
+    date: '2026/09/19 14:15',
+    desc: {
+      ja: '黒板をお掃除しよう・棒とビの物理演算およびカスタマイズ上限機能実装',
+      en: 'Implemented blackboard cleaning & obstacle jumping physics with custom limits',
+      hira: 'こくばんそうじ と ぼうとびの じゆう せっていを ついか',
+      ko: '칠판 청소 및 봉 넘기 물리 엔진과 커스텀 상한치 설정 구현',
+      zh: '实现清理黑板与火柴人跳跃的物理演算及自定义上限参数功能',
+      ar: 'تطبيق فيزياء تنظيف السبورة والقفز فوق الأعمدة مع خيارات التخصيص',
+      eo: 'Efektivigis purigadon de nigra tabulo kaj baston-salton kun propraj agordoj'
+    }
+  },
+  {
+    id: 5,
+    pinned: false,
+    date: '2026/09/18 20:00',
+    desc: {
+      ja: '自作プロフィール保存＆多形式書き出し(PNG/AVIF/WebP/GIF等)対応',
+      en: 'Custom profile creator & multi-format exporter (PNG/AVIF/WebP/GIF/HTML)',
+      hira: 'じぶんの ぷろふぃーる ほぞん と がぞう ほぞんきのう',
+      ko: '커스텀 프로필 작성 및 다채로운 형식(PNG/AVIF/WebP/GIF 등) 내보내기 지원',
+      zh: '自定义个人档案保存与多格式(PNG/AVIF/WebP/GIF等)图片文件导出',
+      ar: 'إنشاء وحفظ الملف الشخصي مع التصدير بصيغ متعددة (PNG/AVIF/WebP/GIF)',
+      eo: 'Kreo de propra profilo kaj plurobla elporto (PNG/AVIF/WebP/GIF/HTML)'
+    }
+  },
+  {
+    id: 6,
+    pinned: false,
+    date: '2026/09/18 12:00',
+    desc: {
+      ja: 'サイト開設と初期アーキテクチャの構築',
+      en: 'Initial release and architecture setup',
+      hira: 'さいとが できあがりました',
+      ko: '사이트 개설 및 초기 아키텍처 구축',
+      zh: '开站与初始架构搭建',
+      ar: 'إطلاق الموقع وتأسيس الهيكلية الأولية',
+      eo: 'Reteja malfermo kaj komenca arkitekturo'
+    }
+  }
 ];
+
 
 let currentLang = 'ja';
 function t(key) {
@@ -3721,6 +3812,22 @@ window.addEventListener('load', async () => {
     if (config.timezoneDiff) document.getElementById('cfgTimezoneDiff').value = config.timezoneDiff;
   }
 
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then((reg) => {
+        // 更新チェック（オンライン時に変更を検知）
+        reg.onupdatefound = () => {
+          const installingWorker = reg.installing;
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('新しいバージョンのゲームが利用可能です。次回起動時に反映されます。');
+            }
+          };
+        };
+      })
+      .catch((err) => console.log('SW登録失敗:', err));
+  }
   await initIndexedDB();
   await loadScoresFromIndexedDB();
 

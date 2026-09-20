@@ -1,0 +1,22 @@
+{
+  "name": "飛行機でも遊べるゲーム",
+  "short_name": "飛行機ゲーム",
+  "description": "ネットが使えない飛行機でも遊べるオフライン対応ゲームです。",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fce4ec",
+  "theme_color": "#ff4081",
+  "icons": [
+    {
+      "src": "icon-offgame.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-offgame.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
