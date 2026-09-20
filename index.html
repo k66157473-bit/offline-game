@@ -3324,9 +3324,7 @@ function renderHistoryTable() {
   paged.forEach(item => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><button class="btn btn-outline" style="padding:2px 8px; font-size:11px;" onclick="toggleHistoryPin(${item.id})">${item.pinned ? '★' : '☆'}</button></td>
-      <td>${item.date}</td>
-      <td class="text-dark-adaptive">${item.desc[currentLang] || item.desc.ja}</td>
+     <td><button class="btn btn-outline" style="padding:2px 8px; font-size:11px;" onclick="toggleHistoryPin('${item.date}')">${item.pinned ? '★' : '☆'}</button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -3341,9 +3339,6 @@ function renderHistoryTable() {
     pagin.appendChild(b);
   }
 }
-
-// テーブル描画内のピン留めボタン呼び出し
-<td><button class="btn btn-outline" style="padding:2px 8px; font-size:11px;" onclick="toggleHistoryPin('${item.date}')">${item.pinned ? '★' : '☆'}</button></td>
 
 // ピン留め切り替え関数
 function toggleHistoryPin(date) {
@@ -3931,12 +3926,12 @@ window.addEventListener('load', async () => {
   updateMyProfileLive();
 
   const savedPinnedIds = localStorage.getItem('airplane_game_pinned_ids');
-  if (savedPinnedIds) {
-    try {
-      const ids = JSON.parse(savedPinnedIds);
-      KOUSHIN_DATA.forEach(k => { k.pinned = ids.includes(k.id); });
-    } catch (e) {}
-  }
+if (savedPinnedIds) {
+  try {
+    const dates = JSON.parse(savedPinnedIds);
+    KOUSHIN_DATA.forEach(k => { k.pinned = dates.includes(k.date); });
+  } catch (e) {}
+}
 
   // ★ まずDOM確定後にキャンバスを安全にリサイズ＆シーン初期化
   setTimeout(() => {
