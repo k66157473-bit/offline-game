@@ -3261,6 +3261,12 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+// ★ リロードやページを閉じる「まさにその瞬間」に全データを強制保存
+window.addEventListener('beforeunload', () => {
+  if (typeof updateMyProfileLive === 'function') updateMyProfileLive();
+  if (typeof saveAllConfig === 'function') saveAllConfig();
+});
+
 /* ==========================================================================
    初期ロード処理 (リロード時にも例外なく全復元)
    ========================================================================== */
