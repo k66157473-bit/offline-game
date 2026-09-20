@@ -1,13 +1,12 @@
 
-const CACHE_NAME = 'airplane-games-v1.0.4';
+const CACHE_NAME = 'airplane-games-v1.0.6';
 
-// キャッシュ対象のファイル一覧
+
 const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  '/offline-game/',
+  '/offline-game/index.html',
+  '/offline-game/manifest.json',
+  '/offline-game/icon-offgame.png'
 ];
 
 // 1. インストール時：全ファイルをキャッシュに保存
