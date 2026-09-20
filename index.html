@@ -1,0 +1,3136 @@
+<!DOCTYPE html>
+<html lang="ja" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="site_title">飛行機でも遊べるゲーム</title>
+<meta name="description" data-i18n="site_desc" content="ネットが使えない飛行機でも遊べるオフライン対応ゲームです。">
+<style>
+:root {
+  --bg-color: #fce4ec;
+  --panel-bg: rgba(255, 255, 255, 0.96);
+  --border-color: #ffd1dc;
+  --header-bg: linear-gradient(135deg, #ff80ab, #ff4081);
+  --accent-pink: #f50057;
+  --accent-light: #ff80ab;
+  --dpad-color: #555555;
+  --font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+  --font-size: 16px;
+
+  /* ★ 文字色自動補正システム */
+  /* ライトモード：白系テキストは背景に同化しないよう「濃く」補正 */
+  --text-white-adaptive: #333333;
+  /* ライトモード：黒系テキストはそのまま濃い色 */
+  --text-black-adaptive: #111111;
+  --text-color: var(--text-black-adaptive);
+}
+
+body.dark-mode {
+  --bg-color: #1a1a1a;
+  --panel-bg: rgba(36, 36, 36, 0.96);
+  --border-color: #444444;
+  --header-bg: linear-gradient(135deg, #880e4f, #ad1457);
+  --accent-pink: #ff4081;
+  --accent-light: #f48fb1;
+  --dpad-color: #777777;
+
+  /* ★ 文字色自動補正システム */
+  /* ダークモード：白系テキストは白色 */
+  --text-white-adaptive: #ffffff;
+  /* ダークモード：黒系テキストは背景に沈まないよう「薄いグレー」に補正 */
+  --text-black-adaptive: #dcdcdc;
+  --text-color: var(--text-black-adaptive);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: auto;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* アラビア語対応 (RTL) */
+html[dir="rtl"] body {
+  direction: rtl;
+  text-align: right;
+}
+
+/* コントラスト自動補正用クラス */
+.text-light-adaptive { color: var(--text-white-adaptive) !important; }
+.text-dark-adaptive { color: var(--text-black-adaptive) !important; }
+
+/* --- ヘッダー --- */
+header {
+  background: var(--header-bg);
+  padding: 10px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 15px rgba(255, 64, 129, 0.3);
+  position: relative;
+  z-index: 100;
+  gap: 10px;
+}
+
+header.hidden { display: none !important; }
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+#title3DCanvas {
+  width: 220px;
+  height: 50px;
+  display: block;
+}
+
+nav.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-btn {
+  background: white;
+  border: 2px solid var(--accent-pink);
+  color: var(--accent-pink);
+  padding: 7px 13px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+body.dark-mode .tab-btn {
+  background: #333;
+  color: #ff80ab;
+}
+
+.tab-btn:hover {
+  background: var(--accent-pink);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.tab-btn.active {
+  background: var(--accent-pink);
+  color: white;
+}
+
+.lang-select-header {
+  padding: 6px 10px;
+  border-radius: 18px;
+  border: 2px solid var(--accent-pink);
+  font-weight: bold;
+  background: white;
+  color: var(--accent-pink);
+  cursor: pointer;
+}
+body.dark-mode .lang-select-header {
+  background: #333;
+  color: #ff80ab;
+}
+
+#headerShowBtn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+  background: var(--accent-pink);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 18px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  display: none;
+  font-weight: bold;
+}
+
+/* --- メインコンテンツ --- */
+main {
+  flex: 1;
+  padding: 20px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+.tab-content {
+  display: none;
+  background: var(--panel-bg);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  border: 1px solid var(--border-color);
+}
+
+.tab-content.active { display: block; }
+
+/* --- フッター --- */
+footer {
+  background: var(--panel-bg);
+  border-top: 3px dashed var(--accent-light);
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 10px 0;
+}
+
+.running-text {
+  display: inline-block;
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--accent-pink);
+  text-shadow: 2px 2px 0 rgba(248, 187, 208, 0.5);
+  /* 1分間に10回往復 = 1往復6秒 (片道3秒) */
+  animation: bounceBackAndForth 6s ease-in-out infinite alternate;
+}
+
+@keyframes bounceBackAndForth {
+  0% { transform: translateX(0vw); }
+  100% { transform: translateX(calc(100vw - 260px)); }
+}
+
+/* --- ゲームタブ UI --- */
+.game-selector-container {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 15px;
+}
+
+.game-select-btn {
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid var(--accent-light);
+  color: var(--text-color);
+  padding: 10px 18px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.game-select-btn.active, .game-select-btn:hover {
+  background: var(--accent-pink);
+  color: white;
+}
+
+.game-controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.search-input, .time-select, input[type="text"], input[type="number"], select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background: white;
+  color: #333;
+}
+body.dark-mode .search-input, body.dark-mode select, body.dark-mode input {
+  background: #333;
+  color: #fff;
+  border-color: #555;
+}
+
+.game-viewport-wrap {
+  position: relative;
+  background: #111;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+  margin-bottom: 15px;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 420px;
+}
+
+.game-hud-score {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #00ffcc;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 18px;
+  font-weight: bold;
+  border: 1px solid #00ffcc;
+}
+
+.game-hud-timer {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffeb3b;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* 十字ボタン */
+.controller-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+  gap: 15px;
+}
+
+.instruction-text {
+  font-size: 14px;
+  text-align: center;
+  max-width: 650px;
+  line-height: 1.5;
+}
+
+.dpad {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+body.dark-mode .dpad { background: #333; }
+
+.dpad-btn {
+  position: absolute;
+  background: var(--dpad-color);
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  box-shadow: 0 4px #222;
+  transition: transform 0.05s, box-shadow 0.05s;
+  color: white;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dpad-btn:active, .dpad-btn.pressed {
+  box-shadow: 0 0 #222;
+  transform: translateY(4px);
+}
+
+.dpad-up { top: 10px; left: 52px; width: 46px; height: 46px; }
+.dpad-down { bottom: 10px; left: 52px; width: 46px; height: 46px; }
+.dpad-left { top: 52px; left: 10px; width: 46px; height: 46px; }
+.dpad-right { top: 52px; right: 10px; width: 46px; height: 46px; }
+.dpad-center { top: 52px; left: 52px; width: 46px; height: 46px; background: #333; border-radius: 0; box-shadow: none; cursor: default; }
+
+/* 国旗クイズ オーバーレイ */
+#flagQuizOverlay {
+  display: none;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 500px;
+  background: var(--panel-bg);
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+}
+
+.flag-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.flag-option-btn {
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  background: white;
+  color: #333;
+}
+body.dark-mode .flag-option-btn { background: #333; color: #fff; }
+
+/* テーブル & ページネーション */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  margin: 15px 0;
+  background: var(--panel-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 650px;
+}
+
+th, td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: inherit;
+  font-size: 13px;
+}
+
+th {
+  background: rgba(255, 64, 129, 0.1);
+  color: var(--accent-pink);
+  font-weight: bold;
+}
+
+.pagination-container {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.page-btn {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: white;
+  cursor: pointer;
+}
+body.dark-mode .page-btn { background: #333; color: #fff; border-color: #555; }
+
+.page-btn.active {
+  background: var(--accent-pink);
+  color: white;
+  border-color: var(--accent-pink);
+}
+
+/* モーダル */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-card {
+  background: var(--panel-bg);
+  padding: 25px;
+  border-radius: 12px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.modal-card h3 {
+  margin-bottom: 12px;
+  color: var(--accent-pink);
+}
+
+.modal-close-btn {
+  margin-top: 15px;
+  background: var(--accent-pink);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+/* マウスストーカー */
+#mouseStalker {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  display: none;
+  font-size: 22px;
+  transition: transform 0.05s ease-out;
+}
+
+/* 設定 & 汎用UI */
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.config-item {
+  background: rgba(0,0,0,0.02);
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+body.dark-mode .config-item { background: rgba(255,255,255,0.03); }
+
+.config-item label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  background: var(--accent-pink);
+  color: white;
+  transition: opacity 0.2s;
+}
+
+.btn:hover { opacity: 0.85; }
+.btn-secondary { background: #607d8b; }
+.btn-outline { background: transparent; border: 1px solid var(--accent-pink); color: var(--accent-pink); }
+
+/* ショートカットリスト */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
+
+.key-input {
+  width: 100px;
+  padding: 6px;
+  text-align: center;
+  font-weight: bold;
+  font-family: monospace;
+  cursor: pointer;
+}
+.key-input.recording {
+  border-color: var(--accent-pink);
+  background: #fff0f5;
+  color: var(--accent-pink);
+}
+
+.btn-del {
+  background: #e57373;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="mouseStalker">★</div>
+
+<!-- ヘッダー表示ボタン -->
+<button id="headerShowBtn" onclick="toggleHeader(true)" data-i18n="btn_show_header">ヘッダー表示</button>
+
+<header id="mainHeader">
+  <div class="header-left">
+    <canvas id="title3DCanvas"></canvas>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" onclick="switchTab('gameTab', this)" data-i18n="tab_game">ゲーム</button>
+    <button class="tab-btn" onclick="switchTab('howToTab', this)" data-i18n="tab_howto">使い方</button>
+    <button class="tab-btn" onclick="toggleHeader(false)" data-i18n="tab_hide_header">ヘッダー非表示</button>
+    <button class="tab-btn" onclick="switchTab('settingsTab', this)" data-i18n="tab_settings">設定</button>
+    <button class="tab-btn" onclick="switchTab('profileTab', this)" data-i18n="tab_profile">プロフィール</button>
+    <button class="tab-btn" onclick="switchTab('historyTab', this)" data-i18n="tab_history">更新履歴</button>
+    <button class="tab-btn" onclick="switchTab('dataTab', this)" data-i18n="tab_data">データ</button>
+    <!-- 言語切り替えセレクター (7言語) -->
+    <select id="langSelector" class="lang-select-header" onchange="changeLanguage(this.value)">
+      <option value="ja">日本語</option>
+      <option value="en">English</option>
+      <option value="hira">にほんご (ひらがな)</option>
+      <option value="ko">한국어</option>
+      <option value="zh">中文</option>
+      <option value="ar">العربية</option>
+      <option value="eo">Esperanto</option>
+    </select>
+  </nav>
+</header>
+
+<main>
+  <!-- 1. ゲームタブ -->
+  <section id="gameTab" class="tab-content active">
+    <div class="game-controls-bar">
+      <input type="text" id="gameSearchInput" class="search-input" data-i18n-ph="ph_search_game" placeholder="ゲームを検索..." oninput="filterGames()">
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <label data-i18n="lbl_timelimit">制限時間: </label>
+        <select id="timeLimitSelect" class="time-select" onchange="onTimeLimitChange()">
+          <option value="15">15s</option>
+          <option value="30">30s</option>
+          <option value="45">45s</option>
+          <option value="60" selected>60s</option>
+          <option value="75">75s</option>
+          <option value="90">90s</option>
+          <option value="105">105s</option>
+          <option value="120">120s</option>
+          <option value="135">135s</option>
+          <option value="150">150s</option>
+          <option value="165">165s</option>
+          <option value="180">180s</option>
+          <option value="195">195s</option>
+          <option value="custom" data-i18n="opt_custom">自由入力</option>
+        </select>
+        <input type="number" id="customTimeInput" style="display:none; width:70px;" placeholder="秒数" min="5" value="60">
+        <button class="btn" id="gameActionBtn" onclick="toggleCurrentGame()" data-i18n="btn_start">開始</button>
+      </div>
+    </div>
+
+    <!-- ゲーム選択ボタン -->
+    <div class="game-selector-container" id="gameSelectorContainer">
+      <button class="game-select-btn active" data-game="stick" onclick="selectGame('stick', this)" data-i18n="game_stick">棒とビ</button>
+      <button class="game-select-btn" data-game="block" onclick="selectGame('block', this)" data-i18n="game_block">ブロック消し</button>
+      <button class="game-select-btn" data-game="konjac" onclick="selectGame('konjac', this)" data-i18n="game_konjac">こんにゃく切り</button>
+      <button class="game-select-btn" data-game="blackboard" onclick="selectGame('blackboard', this)" data-i18n="game_blackboard">黒板をお掃除しよう</button>
+      <button class="game-select-btn" data-game="flag" onclick="selectGame('flag', this)" data-i18n="game_flag">国旗クイズ</button>
+    </div>
+
+    <!-- 棒とビ用 詳細設定 -->
+    <div id="stickGameSettings" style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px;">
+      <label><span data-i18n="lbl_stick_maxh">棒の高さ上限</span>: <input type="number" id="stickMaxHeight" value="200" min="50" max="350" style="width:70px;" onchange="saveAllConfig()"></label>
+      <label><span data-i18n="lbl_stick_maxp">棒の出現上限</span>: <input type="number" id="stickMaxPillars" value="5" min="2" max="10" style="width:50px;" onchange="saveAllConfig()"></label>
+    </div>
+
+    <!-- ゲームキャンバス -->
+    <div class="game-viewport-wrap">
+      <canvas id="gameCanvas"></canvas>
+      <div class="game-hud-timer" id="gameHudTimer">TIME: --</div>
+      <div class="game-hud-score" id="gameHudScore">SCORE: 0</div>
+
+      <div id="flagQuizOverlay">
+        <div id="flagEmojiDisplay" style="font-size: 72px; text-align: center; margin-bottom: 10px;">🇯🇵</div>
+        <div class="flag-options-grid" id="flagOptionsGrid"></div>
+      </div>
+    </div>
+
+    <!-- コントローラ & 説明 -->
+    <div class="controller-wrapper">
+      <div class="instruction-text text-dark-adaptive" id="gameInstructionText"></div>
+
+      <div class="dpad">
+        <button class="dpad-btn dpad-up" onmousedown="triggerDpad('up')" ontouchstart="triggerDpad('up')">▲</button>
+        <button class="dpad-btn dpad-left" onmousedown="triggerDpad('left')" ontouchstart="triggerDpad('left')">◀</button>
+        <div class="dpad-center"></div>
+        <button class="dpad-btn dpad-right" onmousedown="triggerDpad('right')" ontouchstart="triggerDpad('right')">▶</button>
+        <button class="dpad-btn dpad-down" onmousedown="triggerDpad('down')" ontouchstart="triggerDpad('down')">▼</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 使い方タブ (増設＆完全多言語版) -->
+  <section id="howToTab" class="tab-content">
+    <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="howto_title">サイトの使い方 & ゲーム詳細解説</h2>
+    <div style="display: flex; flex-direction: column; gap: 15px; line-height: 1.6;">
+      <div style="text-align: center; background: #222; border-radius: 10px; padding: 15px;">
+        <canvas id="howToAnimCanvas" width="600" height="180" style="max-width: 100%;"></canvas>
+      </div>
+
+      <article class="config-item">
+        <h3 style="color:var(--accent-pink); margin-bottom:6px;" data-i18n="howto_h1">1. 完全オフライン & 機内での楽しみ方</h3>
+        <p class="text-dark-adaptive" data-i18n="howto_p1">
+          本サイトは外部サーバ通信を一切行わない完全スタンドアロン型Webアプリです。機内モードやWi-Fiがない上空でも、ブラウザを開くだけで全ゲーム・全エクスポート・バックアップ機能が軽快に動作します。
+        </p>
+      </article>
+
+      <article class="config-item">
+        <h3 style="color:var(--accent-pink); margin-bottom:6px;" data-i18n="howto_h2">2. 5つのゲームルールと攻略のコツ</h3>
+        <ul style="padding-inline-start: 20px;" class="text-dark-adaptive">
+          <li style="margin-bottom: 6px;">
+            <strong data-i18n="game_stick">棒とビ</strong>: 
+            <span data-i18n="howto_stick_desc">クリックまたは十字キー「▲」でジャンプ。3回激突で終了。設定でバーの高さや本数をカスタマイズ可能です。</span>
+          </li>
+          <li style="margin-bottom: 6px;">
+            <strong data-i18n="game_block">ブロック消し</strong>: 
+            <span data-i18n="howto_block_desc">星空から落下する立体キューブ・角錐・球体をタップして消去。連続タップでハイスコアを狙えます。</span>
+          </li>
+          <li style="margin-bottom: 6px;">
+            <strong data-i18n="game_konjac">こんにゃく切り</strong>: 
+            <span data-i18n="howto_konjac_desc">制限時間∞。クリックやスワイプで包丁を入れ、超極細切りも可能。Web Audio APIによるリアルな切断音をお楽しみください。</span>
+          </li>
+          <li style="margin-bottom: 6px;">
+            <strong data-i18n="game_blackboard">黒板をお掃除しよう</strong>: 
+            <span data-i18n="howto_blackboard_desc">制限時間∞。チョークの落書きをミニ黒板消しで消去します。すべて綺麗に消してリフレッシュできます。</span>
+          </li>
+          <li style="margin-bottom: 6px;">
+            <strong data-i18n="game_flag">国旗クイズ</strong>: 
+            <span data-i18n="howto_flag_desc">190カ国の国旗から出題。正解で加算、誤答で減点。地理の知識を楽しく学べます。</span>
+          </li>
+        </ul>
+      </article>
+
+      <article class="config-item">
+        <h3 style="color:var(--accent-pink); margin-bottom:6px;" data-i18n="howto_h3">3. スコア保存・画像書き出し・バックアップ</h3>
+        <p class="text-dark-adaptive" data-i18n="howto_p3">
+          遊んだ記録は自動で「データ」タブに蓄積されます。表はPNG/JPEG/AVIF/WebP/HTML/GIF形式で保存可能。背景色と文字色の同化防止フィルターが施されています。.itsmeや.indexeddb、ZIP形式で全データを一括バックアップ・復元できます。
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 4. 設定タブ -->
+  <section id="settingsTab" class="tab-content">
+    <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="settings_title">各種設定 & カスタマイズ</h2>
+    <div class="config-grid">
+      <div class="config-item">
+        <label data-i18n="cfg_game_enable">1. ゲーム機能のON/OFF</label>
+        <input type="checkbox" id="cfgGameEnabled" checked onchange="saveConfig()"> <span data-i18n="val_enable">有効</span>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_score_save">2. データタブにスコアを残す</label>
+        <input type="checkbox" id="cfgSaveScore" checked onchange="saveConfig()"> <span data-i18n="val_record">記録する</span>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_indexeddb">3. IndexedDBを使用</label>
+        <input type="checkbox" id="cfgUseIndexedDB" checked onchange="toggleIndexedDBSetting()"> <span data-i18n="val_indexeddb_note">有効 (無効時はリロードですべて消失)</span>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_stalker">4. マウスストーカー</label>
+        <select id="cfgMouseStalkerType" onchange="updateMouseStalker(); saveConfig();">
+          <option value="none">OFF</option>
+          <option value="★" selected>★</option>
+          <option value="□">□</option>
+          <option value="〇">〇</option>
+          <option value="△">△</option>
+          <option value="emoji">✈️</option>
+          <option value="custom" data-i18n="opt_custom">自由入力</option>
+          <option value="image" data-i18n="opt_image">画像アップロード</option>
+        </select>
+        <input type="text" id="cfgStalkerCustomText" placeholder="文字入力" style="display:none; margin-top:8px;" oninput="updateMouseStalker(); saveConfig();">
+        <input type="file" id="cfgStalkerImageFile" accept="image/*" style="display:none; margin-top:8px;" onchange="loadStalkerImage(event)">
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_memory">5. 不要なメモリ削除</label>
+        <input type="checkbox" id="cfgGcSimulation" checked onchange="saveConfig()"> <span data-i18n="val_memory_note">ON (即時解放し軽量化)</span>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_colors">6. 背景色 & 7. 文字色</label>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+          <span data-i18n="val_bg">背景:</span> <input type="color" id="cfgBgColor" value="#fce4ec" onchange="applyColors(); saveConfig();">
+          <input type="text" id="cfgBgColorText" value="#fce4ec" style="width: 85px;" onchange="applyColorsText(); saveConfig();">
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span data-i18n="val_text">文字:</span> <input type="color" id="cfgTextColor" value="#333333" onchange="applyColors(); saveConfig();">
+          <input type="text" id="cfgTextColorText" value="#333333" style="width: 85px;" onchange="applyColorsText(); saveConfig();">
+        </div>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_font">8. フォント設定</label>
+        <select id="cfgFontFamily" onchange="applyFontSettings(); saveConfig();">
+          <option value="gothic" data-i18n="val_gothic">ゴシック体</option>
+          <option value="mincho" data-i18n="val_mincho">明朝体</option>
+        </select>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_size">9. 文字サイズ</label>
+        <div style="display:flex; gap:6px;">
+          <input type="number" id="cfgFontSizeNum" value="16" style="width: 70px;" onchange="applyFontSettings(); saveConfig();">
+          <select id="cfgFontSizeUnit" onchange="applyFontSettings(); saveConfig();">
+            <option value="px">px</option>
+            <option value="rem">rem</option>
+            <option value="em">em</option>
+            <option value="%">%</option>
+          </select>
+        </div>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_search">10. 検索バー表示</label>
+        <input type="checkbox" id="cfgShowSearch" checked onchange="toggleSearchBarVisibility(); saveConfig();"> <span data-i18n="val_show">表示</span>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_header">11. ヘッダー表示</label>
+        <input type="checkbox" id="cfgShowHeader" checked onchange="toggleHeader(this.checked)"> <span data-i18n="val_show">表示</span>
+      </div>
+      <div class="config-item">
+        <label data-i18n="cfg_theme">12. テーマ設定</label>
+        <select id="cfgColorTheme" onchange="applyColorTheme(this.value); saveConfig();">
+          <option value="light" data-i18n="val_light">ライトモード</option>
+          <option value="dark" data-i18n="val_dark">ダークモード</option>
+          <option value="device" data-i18n="val_device">端末設定に従う</option>
+        </select>
+      </div>
+
+      <!-- 13. ショートカットキー無制限追加 -->
+      <div class="config-item" style="grid-column: 1 / -1;">
+        <label data-i18n="cfg_shortcuts">13. ショートカットキー無制限設定</label>
+        <p class="text-dark-adaptive" style="font-size: 12px; margin-bottom: 8px;" data-i18n="cfg_shortcuts_note">
+          キー枠をクリックして任意のキーを押してください。何個でもアクションを追加・変更できます。
+        </p>
+        <div class="shortcut-list" id="shortcutListContainer"></div>
+        <button class="btn btn-outline" style="font-size: 12px;" onclick="addShortcutItem()" data-i18n="btn_add_shortcut">+ ショートカットを追加</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. プロフィールタブ -->
+  <section id="profileTab" class="tab-content">
+    <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="profile_title">管理者情報 & 自作プロフィール</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+      <!-- 管理人情報 -->
+      <div style="background: var(--panel-bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);" id="adminProfileCard">
+        <h3 style="color: var(--accent-pink); margin-bottom: 10px;" data-i18n="prof_author_info">作者情報</h3>
+        <p><strong>🤖 AI:</strong> <span data-i18n="prof_ai_note">コードの一部はAIを使用して作成しています。</span></p>
+        <p><strong><span data-i18n="prof_name_lbl">作者名</span>:</strong> <span id="authorName">青井ソラマメ</span></p>
+        <p><strong><span data-i18n="prof_birth_lbl">生年月</span>:</strong> 2013/06</p>
+        <p><strong><span data-i18n="prof_gender_lbl">性別</span>:</strong> boy</p>
+        <p><strong><span data-i18n="prof_origin_lbl">出身地</span>:</strong> <span data-i18n="prof_origin_val">蝦夷</span></p>
+        <p><strong><span data-i18n="prof_hobby_lbl">趣味</span>:</strong> <span data-i18n="prof_hobby_val">サイト更新、HTMLを打ち込むこと</span></p>
+        <p><strong><span data-i18n="prof_quote_lbl">格言・好きな言葉</span>:</strong><br><span data-i18n="prof_quote_val">「私たちは、たゆまず善を行いましょう。飽きずにいれば、時が来て刈り取ることになります。── ガラテヤ人への手紙 6章9節」</span></p>
+        <p><strong><span data-i18n="prof_msg_lbl">一言</span>:</strong> <span data-i18n="prof_msg_val">更新するのがたのしい</span></p>
+
+        <hr style="margin: 12px 0; border: none; border-top: 1px dashed var(--border-color);">
+        <h4 style="color: var(--accent-pink); margin-bottom: 6px;" data-i18n="prof_timer_h">サイト開設(2026/09/18)からの歩み</h4>
+        <div id="timeElapsedDisplay" style="font-family: monospace; font-size: 13px; line-height: 1.6; background: rgba(0,0,0,0.04); padding: 10px; border-radius: 6px;"></div>
+        <button class="btn" style="margin-top: 12px;" onclick="recordAndDownloadKaisetuVideo()" data-i18n="btn_record_video">kaisetu.mp4 として動画録画・保存</button>
+      </div>
+
+      <!-- 自作プロフィール -->
+      <div style="background: var(--panel-bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <h3 style="color: var(--accent-pink); margin-bottom: 10px;" data-i18n="prof_custom_title">自作プロフィール</h3>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+          <label><span data-i18n="my_name">表示名</span>: <input type="text" id="myProfName" value="旅の飛行士" oninput="updateMyProfileLive()"></label>
+          <label><span data-i18n="my_birth">生年月</span>: <input type="text" id="myProfBirth" value="2000/01" oninput="updateMyProfileLive()"></label>
+          <label><span data-i18n="my_gender">性別</span>: <input type="text" id="myProfGender" value="フリー" oninput="updateMyProfileLive()"></label>
+          <label><span data-i18n="my_origin">出身地</span>: <input type="text" id="myProfLocation" value="成田" oninput="updateMyProfileLive()"></label>
+          <label><span data-i18n="my_hobby">趣味</span>: <input type="text" id="myProfHobby" value="空を眺めること" oninput="updateMyProfileLive()"></label>
+          <label><span data-i18n="my_quote">格言・好きな言葉</span>: <input type="text" id="myProfQuote" value="翼は心にある" oninput="updateMyProfileLive()"></label>
+          <label><span data-i18n="my_msg">一言</span>: <input type="text" id="myProfMessage" value="フライト満喫中！" oninput="updateMyProfileLive()"></label>
+        </div>
+        <div style="margin-top: 12px; display: flex; gap: 8px;">
+          <button class="btn" onclick="saveMyProfile()" data-i18n="btn_save">保存</button>
+          <button class="btn btn-secondary" onclick="resetMyProfile()" data-i18n="btn_reset">初期化/リセット</button>
+        </div>
+
+        <div style="margin-top: 15px;">
+          <label><strong data-i18n="lbl_export_format">ダウンロード形式:</strong></label>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+            <button class="btn btn-outline" onclick="exportProfileCard('png')">PNG</button>
+            <button class="btn btn-outline" onclick="exportProfileCard('avif')">AVIF</button>
+            <button class="btn btn-outline" onclick="exportProfileCard('webp')">WebP</button>
+            <button class="btn btn-outline" onclick="exportProfileCard('jpeg')">JPG</button>
+            <button class="btn btn-outline" onclick="exportProfileCard('gif')">GIF</button>
+            <button class="btn btn-outline" onclick="exportProfileCard('html')">HTML</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 更新履歴タブ -->
+  <section id="historyTab" class="tab-content">
+    <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="history_title">更新履歴</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; align-items: center; justify-content: space-between;">
+      <div style="display:flex; gap:10px;">
+        <input type="text" id="historySearchInput" placeholder="絞り込み..." oninput="renderHistoryTable()" class="search-input">
+        <select id="historySortSelect" onchange="renderHistoryTable()" class="time-select">
+          <option value="newest" data-i18n="opt_newest">最新順</option>
+          <option value="oldest" data-i18n="opt_oldest">古い順</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn" onclick="downloadHistoryTxt()">txt保存 (log.txt)</button>
+        <button class="btn btn-secondary" onclick="copyAllHistory()" data-i18n="btn_copy_all">一括コピー</button>
+        <button class="btn btn-outline" onclick="downloadHistoryZip()">log.zip 保存</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 70px;" data-i18n="th_pin">固定</th>
+            <th style="width: 140px;" data-i18n="th_date">日時</th>
+            <th data-i18n="th_content">内容</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination-container" id="historyPagination"></div>
+  </section>
+
+  <!-- 7. データタブ -->
+  <section id="dataTab" class="tab-content">
+    <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="data_title">ゲームスコア & バックアップ・復元</h2>
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+      <h3 style="font-size:16px;" data-i18n="data_table_h">ゲームスコア記録表</h3>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="exportScoreTable('png')">PNG</button>
+        <button class="btn btn-outline" onclick="exportScoreTable('jpeg')">JPEG</button>
+        <button class="btn btn-outline" onclick="exportScoreTable('avif')">AVIF</button>
+        <button class="btn btn-outline" onclick="exportScoreTable('webp')">WebP</button>
+        <button class="btn btn-outline" onclick="exportScoreTable('html')">HTML</button>
+        <button class="btn btn-outline" onclick="exportScoreTable('gif')">GIF</button>
+      </div>
+    </div>
+
+    <div class="table-responsive" id="scoreTableWrapper">
+      <table id="scoreTable">
+        <thead>
+          <tr>
+            <th data-i18n="th_game">遊んだゲーム</th>
+            <th data-i18n="th_date">日時</th>
+            <th data-i18n="th_timelimit">制限時間</th>
+            <th data-i18n="th_score">スコア</th>
+            <th data-i18n="th_diff">ハイスコアとの差</th>
+          </tr>
+        </thead>
+        <tbody id="scoreTableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination-container" id="scorePagination"></div>
+
+    <hr style="margin: 25px 0; border: none; border-top: 2px dashed var(--border-color);">
+
+    <h3 style="font-size: 16px; margin-bottom: 12px;" data-i18n="data_backup_h">バックアップ & 復元</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+      <button class="btn" onclick="exportDataFile('itsme')">.itsme 保存</button>
+      <button class="btn btn-secondary" onclick="exportDataFile('indexeddb')">.indexeddb 保存</button>
+      <button class="btn btn-outline" onclick="exportDataFile('zip')">backup.zip 保存</button>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);">
+      <label><strong data-i18n="lbl_restore">データ復元 (.itsme / .indexeddb / backup.zip):</strong></label><br>
+      <input type="file" id="restoreFileInput" accept=".itsme,.indexeddb,.zip" style="margin-top: 8px;" onchange="handleRestoreFile(event)">
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="running-text" data-i18n="footer_running">飛行機でも遊べるゲーム ★ 快適な空の旅を！</div>
+</footer>
+
+<!-- 汎用モーダル -->
+<div class="modal-overlay" id="genericModal">
+  <div class="modal-card">
+    <h3 id="modalTitle"></h3>
+    <p id="modalBody" class="text-dark-adaptive" style="font-size: 14px; line-height: 1.6; margin: 10px 0;"></p>
+    <div id="modalActionArea"></div>
+    <button class="modal-close-btn" onclick="closeModal()" data-i18n="btn_close">閉じる</button>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   多言語辞書システム (7言語完全対応)
+   ========================================================================== */
+const I18N_DICTIONARY = {
+  site_title: {
+    ja: "飛行機でも遊べるゲーム",
+    en: "Airplane Playable Games",
+    hira: "ひこうきでも あそべる げーむ",
+    ko: "비행기에서도 즐기는 게임",
+    zh: "飞机上也能玩的游戏",
+    ar: "ألعاب قابلة للعب على متن الطائرة",
+    eo: "Ludoj Ludeblaj en Aviadilo"
+  },
+  site_desc: {
+    ja: "ネットが使えない飛行機でも遊べるオフライン対応ゲームです。",
+    en: "Offline compatible games playable on airplanes without internet.",
+    hira: "ねっとが つかえない ひこうきでも あそべる おふらいん たいおう げーむです。",
+    ko: "인터넷이 되지 않는 비행기에서도 즐길 수 있는 완전 오프라인 게임입니다.",
+    zh: "在没有网络的飞机上也能玩的完全离线游戏。",
+    ar: "ألعاب متوافقة مع وضع عدم الاتصال للعب في الطائرة دون إنترنت.",
+    eo: "Tute eksterretaj ludoj ludeblaj en aviadiloj sen interreto."
+  },
+  btn_show_header: { ja: "ヘッダー表示", en: "Show Header", hira: "へっだー ひょうじ", ko: "헤더 표시", zh: "显示顶栏", ar: "إظهار الرأس", eo: "Montri Kapon" },
+  tab_game: { ja: "ゲーム", en: "Games", hira: "げーむ", ko: "게임", zh: "游戏", ar: "الألعاب", eo: "Ludoj" },
+  tab_howto: { ja: "使い方", en: "How to Play", hira: "つかいかた", ko: "이용방법", zh: "玩法说明", ar: "كيفية اللعب", eo: "Kiel Ludi" },
+  tab_hide_header: { ja: "ヘッダー非表示", en: "Hide Header", hira: "へっだー ひひょうじ", ko: "헤더 숨기기", zh: "隐藏顶栏", ar: "إخفاء الرأس", eo: "Kaŝi Kapon" },
+  tab_settings: { ja: "設定", en: "Settings", hira: "せってい", ko: "설정", zh: "设置", ar: "الإعدادات", eo: "Agordoj" },
+  tab_profile: { ja: "プロフィール", en: "Profile", hira: "ぷろふぃーる", ko: "프로필", zh: "个人档案", ar: "الملف الشخصي", eo: "Profilo" },
+  tab_history: { ja: "更新履歴", en: "History", hira: "こうしん りれき", ko: "업데이트 내역", zh: "更新历史", ar: "سجل التحديثات", eo: "Historio" },
+  tab_data: { ja: "データ", en: "Data", hira: "でーた", ko: "데이터", zh: "数据", ar: "البيانات", eo: "Datumoj" },
+
+  game_stick: { ja: "棒とビ", en: "Stick & Jump", hira: "ぼうとび", ko: "봉 넘기", zh: "火柴人跳跃", ar: "القفز فوق العصي", eo: "Baston-Salto" },
+  game_block: { ja: "ブロック消し", en: "Block Breaker", hira: "ぶろっく けし", ko: "블록 깨기", zh: "消除方块", ar: "تكسير الكتل", eo: "Blok-Rompo" },
+  game_konjac: { ja: "こんにゃく切り", en: "Konjac Slicer", hira: "こんにゃく きり", ko: "곤약 자르기", zh: "切魔芋", ar: "تقطيع الكونجاك", eo: "Konjak-Tranĉo" },
+  game_blackboard: { ja: "黒板をお掃除しよう", en: "Clean Chalkboard", hira: "こくばん おそうじ", ko: "칠판 청소하기", zh: "黑板清理大作战", ar: "تنظيف السبورة", eo: "Purigi Tabulon" },
+  game_flag: { ja: "国旗クイズ", en: "Flag Quiz", hira: "こっき くいず", ko: "국기 퀴즈", zh: "国旗问答", ar: "اختبار الأعلام", eo: "Flaga Kviz" },
+
+  ph_search_game: { ja: "ゲームを検索...", en: "Search game...", hira: "げーむを けんさく...", ko: "게임 검색...", zh: "搜索游戏...", ar: "البحث عن لعبة...", eo: "Serĉi ludon..." },
+  lbl_timelimit: { ja: "制限時間: ", en: "Time Limit: ", hira: "じかん: ", ko: "제한시간: ", zh: "时间限制: ", ar: "الوقت المحدد: ", eo: "Templimo: " },
+  opt_custom: { ja: "自由入力", en: "Custom", hira: "じゆう", ko: "사용자 지정", zh: "自定义", ar: "مخصص", eo: "Propra" },
+  btn_start: { ja: "開始", en: "Start", hira: "すたーと", ko: "시작", zh: "开始", ar: "بدء", eo: "Starti" },
+  btn_stop: { ja: "終了", en: "Stop", hira: "おわり", ko: "종료", zh: "结束", ar: "إيقاف", eo: "Halti" },
+  lbl_stick_maxh: { ja: "棒の高さ上限", en: "Max Pole Height", hira: "たかさ じょうげん", ko: "봉 최대 높이", zh: "柱子高度上限", ar: "الحد الأقصى لارتفاع العمود", eo: "Maks Bastona Alto" },
+  lbl_stick_maxp: { ja: "棒の出現上限", en: "Max Pole Count", hira: "ほんすう じょうげん", ko: "봉 최대 개수", zh: "柱子数量上限", ar: "الحد الأقصى لعدد الأعمدة", eo: "Maks Bastona Nombro" },
+
+  howto_title: { ja: "サイトの使い方 & ゲーム詳細解説", en: "How to Use & Game Guide", hira: "つかいかた と げーむの せつめい", ko: "이용 방법 & 게임 가이드", zh: "使用方法及游戏指南", ar: "دليل الاستخدام والألعاب", eo: "Kiel Uzi kaj Luda Gvidilo" },
+  howto_h1: { ja: "1. 完全オフライン & 機内での楽しみ方", en: "1. Fully Offline & In-flight Gaming", hira: "1. おふらいん と ひこうきでの あそびかた", ko: "1. 완전 오프라인 및 기내 이용법", zh: "1. 完全离线与机内畅玩", ar: "1. العمل دون إنترنت على متن الطائرة", eo: "1. Tute Eksterrete en Aviadilo" },
+  howto_p1: {
+    ja: "本サイトは外部サーバ通信を一切行わない完全スタンドアロン型Webアプリです。機内モードやWi-Fiがない上空でも、ブラウザを開くだけで全ゲーム・全エクスポート・バックアップ機能が軽快に動作します。",
+    en: "This site runs completely standalone without any external server communications. Enjoy games, exports, and backup features smoothly in airplane mode mid-flight!",
+    hira: "このさいとは ねっとをつかわないで うごきます。ひこうきのなかでも ぜんぶのげーむが たのしくあそべます！",
+    ko: "본 사이트는 외부 통신을 전혀 하지 않는 완전 독립형 웹 애플리케이션입니다. 비행기 안에서도 모든 게임과 기능을 자유롭게 사용할 수 있습니다.",
+    zh: "本网站完全独立运行，无需联网。在飞行模式下也可尽享所有游戏与保存备份功能。",
+    ar: "هذا الموقع يعمل بالكامل دون الحاجة لأي اتصال بالإنترنت، مما يجعله مثاليًا للطيران.",
+    eo: "Ĉi tiu retejo funkcias tute sendepende sen interreto eĉ dum flugado."
+  },
+  howto_h2: { ja: "2. 5つのゲームルールと攻略のコツ", en: "2. Rules & Tips for 5 Games", hira: "2. 5つの げーむの あそびかた", ko: "2. 5가지 게임의 룰과 공략", zh: "2. 5款游戏的规则与技巧", ar: "2. قواعد ونظرة عامة على الألعاب الخمس", eo: "2. Reguloj por la 5 Ludoj" },
+  howto_h3: { ja: "3. スコア保存・画像書き出し・バックアップ", en: "3. Score Saving, Exports & Backups", hira: "3. すこあほぞん と ばっくあっぷ", ko: "3. 스코어 저장, 내보내기 및 백업", zh: "3. 分数记录与备份导出", ar: "3. حفظ النتائج والنسخ الاحتياطي", eo: "3. Konservado de Poentoj kaj Savkopio" },
+  howto_p3: {
+    ja: "遊んだ記録は自動で「データ」タブに蓄積されます。表はPNG/JPEG/AVIF/WebP/HTML/GIF形式で保存可能。背景色と文字色の同化防止フィルターが施されています。.itsmeや.indexeddb、ZIP形式で全データを一括バックアップ・復元できます。",
+    en: "Scores are logged automatically in the Data tab. Export table to PNG/JPEG/AVIF/WebP/HTML/GIF without contrast issues. Backup whole data as .itsme, .indexeddb, or ZIP.",
+    hira: "すこあは じどうで きろくされます。しゃしんや ほぞんふぁいるで ほぞんや ふくげんが できます。",
+    ko: "플레이 기록은 데이터 탭에 자동 보관됩니다. 다양한 포맷(PNG/JPEG/AVIF/WebP/HTML/GIF)으로 내보낼 수 있으며, 백업/복원을 지원합니다.",
+    zh: "游玩记录会自动存入数据标签页。支持导出多种格式，并具备完备的备份与还原系统。",
+    ar: "يتم حفظ السجلات تلقائيًا وتصديرها بصيغ متعددة مع ميزة النسخ الاحتياطي الكامل.",
+    eo: "Poentaroj estas aŭtomate registritaj en Datumoj kaj elporteblaj en multaj formatoj."
+  },
+
+  howto_stick_desc: {
+    ja: "クリックまたは十字キー「▲」でジャンプ。3回激突で終了。設定でバーの高さや本数をカスタマイズ可能です。",
+    en: "Click or press D-Pad '▲' to jump. 3 collisions = Game Over. Max height and pole counts are customizable.",
+    hira: "くりっく か じゅうじきー「▲」で じゃんぷ。3かい ぶつかったら おわり。たかさや ほんすうも かえられるよ。",
+    ko: "클릭 또는 십자키 '▲'로 점프합니다. 3번 충돌 시 종료됩니다. 설정에서 높이와 개수 제한을 조절할 수 있습니다.",
+    zh: "点击或按十字键【▲】跳跃。碰撞3次即结束。可在设置中自定义柱子的高度和出现数量上限。",
+    ar: "انقر أو اضغط على زر الاتجاهات '▲' للقفز. الاصطدام 3 مرات ينهي اللعبة. يمكن تخصيص الارتفاع وعدد الأعمدة.",
+    eo: "Alklaku aŭ premu kruc-klavon '▲' por salti. 3 kolizioj = Fino. Maksimuma alto kaj nombro estas agordeblaj."
+  },
+  howto_block_desc: {
+    ja: "星空から落下する立体キューブ・角錐・球体をタップして消去。連続タップでハイスコアを狙えます。",
+    en: "Tap falling 3D cubes, pyramids, and spheres to clear them. Chain taps quickly for a high score!",
+    hira: "おちてくる 3Dぶろっくを たっちして けそう。れんぞくで けすと たかい すこあに なるよ。",
+    ko: "밤하늘에서 떨어지는 3D 큐브, 각뿔, 구체를 탭하여 제거합니다. 연속 탭으로 높은 점수를 노려보세요.",
+    zh: "点击消除从星空飘落的各种立体立方体、锥体与球体。手速越快得分越高。",
+    ar: "المس المكعبات والأهرامات والكرات ثلاثية الأبعاد المتساقطة لإزالتها. النقر السريع يحقق نقاطًا أعلى.",
+    eo: "Frapetu falantajn 3D-kubojn, piramidojn kaj sferojn por forigi ilin. Rapida forigo donas altan poentaron."
+  },
+  howto_konjac_desc: {
+    ja: "制限時間∞。クリックやスワイプで包丁を入れ、超極細切りも可能。Web Audio APIによるリアルな切断音をお楽しみください。",
+    en: "Infinite time limit. Drag or tap to slice into ultra-thin pieces. Enjoy realistic cutting sounds generated via Web Audio API.",
+    hira: "じかんは むげん。くりっくや すわいぷで ざくざく きれるよ。ほんものみたいな おとが なるよ。",
+    ko: "제한시간 무제한(∞). 클릭이나 스와이프로 썰며, 초극세 썰기도 가능합니다. Web Audio API로 구현된 리얼한 사운드를 즐겨보세요.",
+    zh: "时间无限制(∞)。轻扫或点击挥刀，可切出超细切片。享受通过Web Audio API生成的真实切割音效。",
+    ar: "الوقت غير محدود(∞). اسحب أو انقر للتقطيع لشرائح دقيقة جدًا. استمتع بأصوات التقطيع الواقعية عبر Web Audio API.",
+    eo: "Senlima tempo (∞). Trenu aŭ frapetu por tranĉi eĉ tre maldikajn pecojn. Ĝuu realismajn tranĉsonojn per Web Audio API."
+  },
+  howto_blackboard_desc: {
+    ja: "制限時間∞。チョークの落書きをミニ黒板消しで消去します。すべて綺麗に消してリフレッシュできます。",
+    en: "Infinite time limit. Erase messy chalk graffiti using the mini eraser. Clear it all away to feel refreshed!",
+    hira: "じかんは むげん。ちょーくの らくがきを こくばんけしで けそう。ぴかぴかに してね。",
+    ko: "제한시간 무제한(∞). 낙서된 분필을 미니 칠판 지우개로 깨끗이 지워보세요. 모두 지우면 상쾌해집니다.",
+    zh: "时间无限制(∞)。使用真实迷你黑板擦清除杂乱的粉笔涂鸦。全部擦拭干净令人身心愉悦。",
+    ar: "الوقت غير محدود(∞). امسح رسومات الطباشير العشوائية بممحاة السبورة الصغيرة لتنظيفها بالكامل.",
+    eo: "Senlima tempo (∞). Forviŝu kretajn desegnojn per la miniatura tabulviŝilo por tute refreŝiĝi."
+  },
+  howto_flag_desc: {
+    ja: "190カ国の国旗から出題。正解で加算、誤答で減点。地理の知識を楽しく学べます。",
+    en: "Quizzes from 190 flags. Correct answers add points, misses deduct points. Fun way to master world geography!",
+    hira: "せかいの こっきから もんだいが でるよ。せいかいで ぷらす、まちがえると まいなす。たのしく おぼえよう。",
+    ko: "190개국 국기가 출제됩니다. 정답 시 가산, 오답 시 감점됩니다. 지리 상식을 즐겁게 배워보세요.",
+    zh: "涵盖190个国家的国旗问答。答对加分，答错扣分。在趣味游戏中轻松掌握世界地理。",
+    ar: "اختبارات من 190 علمًا لدول العالم. الإجابة الصحيحة تمنحك نقاطًا والخطأ يخصم منك. طريقة ممتعة لتعلّم الجغرافيا.",
+    eo: "Kvizoj el 190 naciaj flagoj. Ĝustaj respondoj aldonas poentojn, eraroj subtrahas. Amuza maniero lerni geografion."
+  },
+
+  settings_title: { ja: "各種設定 & カスタマイズ", en: "Settings & Customization", hira: "せってい", ko: "각종 설정", zh: "各项设置", ar: "الإعدادات والتخصيص", eo: "Agordoj" },
+  cfg_game_enable: { ja: "1. ゲーム機能のON/OFF", en: "1. Game Feature ON/OFF", hira: "1. げーむの おん・おふ", ko: "1. 게임 기능 켜기/끄기", zh: "1. 游戏功能 开/关", ar: "1. تشغيل/إيقاف الألعاب", eo: "1. Luda Funkcio Ŝaltita/Malŝaltita" },
+  val_enable: { ja: "有効", en: "Enabled", hira: "ゆうこう", ko: "활성화", zh: "启用", ar: "مفعل", eo: "Ŝaltita" },
+  cfg_score_save: { ja: "2. データタブにスコアを残す", en: "2. Save Scores to Data Tab", hira: "2. すこあを のこす", ko: "2. 스코어 기록하기", zh: "2. 记录游戏得分", ar: "2. حفظ النتائج", eo: "2. Konservi Poentojn" },
+  val_record: { ja: "記録する", en: "Record", hira: "きろくする", ko: "기록함", zh: "记录", ar: "تسجيل", eo: "Registri" },
+  cfg_indexeddb: { ja: "3. IndexedDBを使用", en: "3. Use IndexedDB", hira: "3. でーたべーすを つかう", ko: "3. IndexedDB 사용", zh: "3. 使用IndexedDB", ar: "3. استخدام IndexedDB", eo: "3. Uzi IndexedDB" },
+  val_indexeddb_note: { ja: "有効 (無効時はリロードですべて消失)", en: "Enabled (lost on reload if off)", hira: "ゆうこう", ko: "활성 (끄면 새로고침 시 초기화)", zh: "启用 (关闭时刷新后丢失)", ar: "مفعل (يُفقد عند التحديث إن عُطّل)", eo: "Ŝaltita" },
+  cfg_stalker: { ja: "4. マウスストーカー", en: "4. Mouse Stalker", hira: "4. まうすの あとをおう", ko: "4. 마우스 스토커", zh: "4. 鼠标跟随", ar: "4. متتبع الفأرة", eo: "4. Mus-Sekvanto" },
+  opt_image: { ja: "画像アップロード", en: "Upload Image", hira: "がぞう", ko: "이미지 업로드", zh: "上传图片", ar: "رفع صورة", eo: "Alŝuti Bildon" },
+  cfg_memory: { ja: "5. 不要なメモリ削除", en: "5. Clean Unused Memory", hira: "5. めもり そうじ", ko: "5. 불필요한 메모리 정리", zh: "5. 清理无用内存", ar: "5. تنظيف الذاكرة الزائدة", eo: "5. Forigi Senutilan Memoron" },
+  val_memory_note: { ja: "ON (即時解放し軽量化)", en: "ON (Faster)", hira: "おん", ko: "ON (가볍게 유지)", zh: "开启 (保持轻快)", ar: "تشغيل (خفيف وسريع)", eo: "Ŝaltita (Rapida)" },
+  cfg_colors: { ja: "6. 背景色 & 7. 文字色", en: "6. Background & 7. Text Color", hira: "6. はいけい と 7. もじのいろ", ko: "6. 배경색 & 7. 글자색", zh: "6. 背景色与 7. 文字颜色", ar: "6. لون الخلفية و 7. لون النص", eo: "6. Fona & 7. Teksta Koloro" },
+  val_bg: { ja: "背景:", en: "BG:", hira: "はいけい:", ko: "배경:", zh: "背景:", ar: "الخلفية:", eo: "Fono:" },
+  val_text: { ja: "文字:", en: "Text:", hira: "もじ:", ko: "글자:", zh: "文字:", ar: "النص:", eo: "Teksto:" },
+  cfg_font: { ja: "8. フォント設定", en: "8. Font Style", hira: "8. ふぉんと", ko: "8. 폰트 설정", zh: "8. 字体样式", ar: "8. نمط الخط", eo: "8. Tiparo" },
+  val_gothic: { ja: "ゴシック体", en: "Sans-Serif (Gothic)", hira: "ごしっく", ko: "고딕체", zh: "黑体/无衬线", ar: "بدون ترويسة", eo: "Sens-serifo" },
+  val_mincho: { ja: "明朝体", en: "Serif (Mincho)", hira: "みんちょう", ko: "명조체", zh: "宋体/明朝体", ar: "بترويسة", eo: "Serifo" },
+  cfg_size: { ja: "9. 文字サイズ", en: "9. Font Size", hira: "9. もじの おおきさ", ko: "9. 글자 크기", zh: "9. 文字大小", ar: "9. حجم الخط", eo: "9. Tipara Grando" },
+  cfg_search: { ja: "10. 検索バー表示", en: "10. Search Bar Visibility", hira: "10. けんさくばー", ko: "10. 검색창 표시", zh: "10. 显示搜索框", ar: "10. شريط البحث", eo: "10. Serĉbreto" },
+  val_show: { ja: "表示", en: "Show", hira: "ひょうじ", ko: "표시", zh: "显示", ar: "إظهار", eo: "Montri" },
+  cfg_header: { ja: "11. ヘッダー表示", en: "11. Header Visibility", hira: "11. へっだー", ko: "11. 헤더 표시", zh: "显示顶栏", ar: "11. إظهار الرأس", eo: "Montri Kapon" },
+  cfg_theme: { ja: "12. テーマ設定", en: "12. Theme Mode", hira: "12. てーま", ko: "12. 테마 설정", zh: "12. 主题设定", ar: "12. نمط المظهر", eo: "12. Etoso" },
+  val_light: { ja: "ライトモード", en: "Light Mode", hira: "らいと", ko: "라이트 모드", zh: "浅色模式", ar: "الوضع الفاتح", eo: "Luma Reĝimo" },
+  val_dark: { ja: "ダークモード", en: "Dark Mode", hira: "だーく", ko: "다크 모드", zh: "深色模式", ar: "الوضع الداكن", eo: "Malhela Reĝimo" },
+  val_device: { ja: "端末設定に従う", en: "Follow Device", hira: "たんまつに あわせる", ko: "기기 설정 따름", zh: "跟随系统", ar: "حسب إعدادات الجهاز", eo: "Sekvi Aparaton" },
+  cfg_shortcuts: { ja: "13. ショートカットキー無制限設定", en: "13. Unlimited Shortcut Keys", hira: "13. しょーとかっときー", ko: "13. 단축키 무제한 설정", zh: "13. 快捷键无限制设定", ar: "13. اختصارات لوحة المفاتيح غير المحدودة", eo: "13. Senlimaj Klavkombinoj" },
+  cfg_shortcuts_note: {
+    ja: "キー枠をクリックして任意のキーを押してください。何個でもアクションを追加・変更できます。",
+    en: "Click the key box and press any key. Add as many shortcuts as you like!",
+    hira: "わくを おして すきな きーをおしてね。いくつでも つくれるよ。",
+    ko: "키 상자를 클릭하고 원하는 키를 누르세요. 원하는 만큼 단축키를 추가할 수 있습니다.",
+    zh: "点击按键框并按下任意键盘键。可以无限制添加和修改快捷键。",
+    ar: "انقر فوق المربع واضغط على أي مفتاح لتعيينه. يمكنك إضافة اختصارات بلا حدود.",
+    eo: "Alklaku la klavujon kaj premu iun ajn klavon por ligi agon."
+  },
+  btn_add_shortcut: { ja: "+ ショートカットを追加", en: "+ Add Shortcut", hira: "+ しょーとかっとを ついか", ko: "+ 단축키 추가", zh: "+ 添加快捷键", ar: "+ إضافة اختصار", eo: "+ Aldoni Klavkombinon" },
+
+  profile_title: { ja: "管理者情報 & 自作プロフィール", en: "Author & Custom Profile", hira: "さくしゃ と ぷろふぃーる", ko: "제작자 및 커스텀 프로필", zh: "作者信息与自定义个人档案", ar: "معلومات المؤلف والملف المخصص", eo: "Aŭtoro kaj Propra Profilo" },
+  prof_author_info: { ja: "作者情報", en: "Author Information", hira: "つくったひと", ko: "제작자 정보", zh: "作者信息", ar: "معلومات المؤلف", eo: "Informoj pri Aŭtoro" },
+  prof_ai_note: { ja: "コードの一部はAIを使用して作成しています。", en: "Part of the code is created using AI.", hira: "こーどは AIも つかっています。", ko: "코드의 일부는 AI를 활용하여 작성되었습니다.", zh: "部分代码由AI辅助完成。", ar: "تم إنشاء جزء من الشيفرة البرمجية بالذكاء الاصطناعي.", eo: "Parto de la kodo estas kreita per AI." },
+  prof_name_lbl: { ja: "作者名", en: "Author", hira: "なまえ", ko: "작성자", zh: "作者名", ar: "اسم المؤلف", eo: "Aŭtora Nomo" },
+  prof_birth_lbl: { ja: "生年月", en: "Birth", hira: "たんじょうび", ko: "생년월", zh: "出生年月", ar: "تاريخ الميلاد", eo: "Naskiĝdato" },
+  prof_gender_lbl: { ja: "性別", en: "Gender", hira: "せいべつ", ko: "성별", zh: "性别", ar: "الجنس", eo: "Sekso" },
+  prof_origin_lbl: { ja: "出身地", en: "Origin", hira: "しゅっしん", ko: "출신지", zh: "出生地", ar: "مكان الولادة", eo: "Devenloko" },
+  prof_origin_val: { ja: "蝦夷", en: "Ezo (Hokkaido)", hira: "えぞ", ko: "에조", zh: "虾夷 (北海道)", ar: "إيزو", eo: "Ezo" },
+  prof_hobby_lbl: { ja: "趣味", en: "Hobbies", hira: "しゅみ", ko: "취미", zh: "爱好", ar: "الهوايات", eo: "Ŝatokupoj" },
+  prof_hobby_val: { ja: "サイト更新、HTMLを打ち込むこと", en: "Updating sites, coding HTML", hira: "ほーむぺーじづくり", ko: "사이트 업데이트, HTML 코딩", zh: "更新网站，编写HTML", ar: "تحديث المواقع وكتابة كود HTML", eo: "Ĝisdatigi retejojn, kodi HTML" },
+  prof_quote_lbl: { ja: "格言・好きな言葉", en: "Motto", hira: "すきなことば", ko: "좌우명", zh: "座右铭", ar: "المقولة المفضلة", eo: "Moto" },
+  prof_quote_val: {
+    ja: "「私たちは、たゆまず善を行いましょう。飽きずにいれば、時が来て刈り取ることになります。── ガラテヤ人への手紙 6章9節」",
+    en: "\"Let us not grow weary of doing good, for in due season we will reap, if we do not give up. — Galatians 6:9\"",
+    hira: "「よいことを あきらめずに つづけよう。」",
+    ko: "\"우리가 선을 행하되 낙심하지 말지니 포기하지 아니하면 때가 이르매 거두리라 ── 갈라디아서 6장 9절\"",
+    zh: "“我们行善，不可丧志；若不灰心，到了时候就要收成。── 加拉太书 6:9”",
+    ar: "«فَلَا نَفْشَلْ فِي عَمَلِ الْخَيْرِ لِأَنَّنَا سَنَحْصُدُ فِي وَقْتِهِ إِنْ كُنَّا لَا نَكِلُّ. ── غلاطية 6:9»",
+    eo: "\"Kaj ni ne laciĝu en bonfarado; ĉar ĝustatempe ni rikoltos, se ni ne senkuraĝiĝos. ── Galatoj 6:9\""
+  },
+  prof_msg_lbl: { ja: "一言", en: "Message", hira: "ひとこと", ko: "한마디", zh: "留言", ar: "كلمة", eo: "Mesaĝo" },
+  prof_msg_val: { ja: "更新するのがたのしい", en: "It's so fun to update!", hira: "こうしんが たのしい", ko: "업데이트하는 것이 즐겁습니다", zh: "更新非常有乐趣", ar: "التحديث ممتع للغاية", eo: "Ĝisdatigi estas tre amuze" },
+  prof_timer_h: { ja: "サイト開設(2026/09/18)からの歩み", en: "Time Since Opening (2026/09/18)", hira: "さいとが できてからの じかん", ko: "사이트 개설(2026/09/18) 이후 시간", zh: "自开站(2026/09/18)以来的历程", ar: "الوقت المنقضي منذ إطلاق الموقع (2026/09/18)", eo: "Tempo ekde Lanĉo (2026/09/18)" },
+  btn_record_video: { ja: "kaisetu.mp4 として動画録画・保存", en: "Record & Save as kaisetu.mp4", hira: "どうがで ほぞん", ko: "kaisetu.mp4 비디오로 녹화/저장", zh: "录制并保存为 kaisetu.mp4", ar: "تسجيل وحفظ كفيديو kaisetu.mp4", eo: "Registri kaj Konservi kiel kaisetu.mp4" },
+
+  prof_custom_title: { ja: "自作プロフィール", en: "Custom Profile", hira: "じぶんの ぷろふぃーる", ko: "나만의 프로필", zh: "自定义个人名片", ar: "الملف الشخصي المخصص", eo: "Propra Profilo" },
+  my_name: { ja: "表示名", en: "Name", hira: "なまえ", ko: "이름", zh: "显示昵称", ar: "الاسم", eo: "Nomo" },
+  my_birth: { ja: "生年月", en: "Birth", hira: "たんじょうび", ko: "생년월", zh: "出生年月", ar: "الميلاد", eo: "Naskiĝo" },
+  my_gender: { ja: "性別", en: "Gender", hira: "せいべつ", ko: "성별", zh: "性别", ar: "الجنس", eo: "Sekso" },
+  my_origin: { ja: "出身地", en: "Location", hira: "すんでいるところ", ko: "출신지", zh: "来自", ar: "الموقع", eo: "Loko" },
+  my_hobby: { ja: "趣味", en: "Hobby", hira: "しゅみ", ko: "취미", zh: "兴趣", ar: "الهواية", eo: "Ŝatokupo" },
+  my_quote: { ja: "格言・好きな言葉", en: "Quote", hira: "すきなことば", ko: "좌우명", zh: "格言", ar: "المقولة", eo: "Moto" },
+  my_msg: { ja: "一言", en: "Message", hira: "ひとこと", ko: "한마디", zh: "寄语", ar: "رسالة", eo: "Mesaĝo" },
+  btn_save: { ja: "保存", en: "Save", hira: "ほぞん", ko: "저장", zh: "保存", ar: "حفظ", eo: "Konservi" },
+  btn_reset: { ja: "初期化/リセット", en: "Reset", hira: "りせっと", ko: "초기화", zh: "重置", ar: "إعادة ضبط", eo: "Restarigi" },
+  lbl_export_format: { ja: "ダウンロード形式:", en: "Download Format:", hira: "ほぞんの かたち:", ko: "다운로드 형식:", zh: "下载格式:", ar: "صيغة التنزيل:", eo: "Elŝuta Formato:" },
+
+  history_title: { ja: "更新履歴", en: "Update History", hira: "こうしん りれき", ko: "업데이트 내역", zh: "更新历史", ar: "سجل التحديثات", eo: "Historio de Ĝisdatigoj" },
+  opt_newest: { ja: "最新順", en: "Newest", hira: "あたらしいじゅん", ko: "최신순", zh: "最新优先", ar: "الأحدث", eo: "Plej novaj" },
+  opt_oldest: { ja: "古い順", en: "Oldest", hira: "ふるいじゅん", ko: "오래된순", zh: "最早优先", ar: "الأقدم", eo: "Plej malnovaj" },
+  btn_copy_all: { ja: "一括コピー", en: "Copy All", hira: "ぜんぶ こぴー", ko: "전체 복사", zh: "复制全部", ar: "نسخ الكل", eo: "Kopii Ĉion" },
+  th_pin: { ja: "固定", en: "Pin", hira: "ぴん", ko: "고정", zh: "置顶", ar: "تثبيت", eo: "Fiksi" },
+  th_date: { ja: "日時", en: "Date", hira: "ひづけ", ko: "일시", zh: "日期时间", ar: "التاريخ", eo: "Dato" },
+  th_content: { ja: "内容", en: "Content", hira: "ないよう", ko: "내용", zh: "更新内容", ar: "المحتوى", eo: "Enhavo" },
+
+  data_title: { ja: "ゲームスコア & バックアップ・復元", en: "Game Scores & Backup/Restore", hira: "すこあ と でーた ほぞん", ko: "게임 스코어 & 백업/복원", zh: "游戏得分与备份还原", ar: "النتائج والنسخ الاحتياطي", eo: "Poentaroj kaj Savkopio" },
+  data_table_h: { ja: "ゲームスコア記録表", en: "Score Table", hira: "すこあ きろくひょう", ko: "스코어 기록표", zh: "得分记录表", ar: "جدول النتائج", eo: "Poentotabelo" },
+  th_game: { ja: "遊んだゲーム", en: "Game", hira: "げーむ", ko: "플레이한 게임", zh: "游戏名称", ar: "اللعبة", eo: "Ludo" },
+  th_timelimit: { ja: "制限時間", en: "Time Limit", hira: "じかん", ko: "제한시간", zh: "时间限制", ar: "الوقت", eo: "Templimo" },
+  th_score: { ja: "スコア", en: "Score", hira: "すこあ", ko: "점수", zh: "得分", ar: "النقاط", eo: "Poentaro" },
+  th_diff: { ja: "ハイスコアとの差", en: "High Score Diff", hira: "さいこう との さ", ko: "최고점 대비", zh: "与最高分差", ar: "الفرق عن الرقم القياسي", eo: "Diferenco de Rekordo" },
+  data_backup_h: { ja: "バックアップ & 復元", en: "Backup & Restore", hira: "ばっくあっぷ と ふくげん", ko: "백업 및 복원", zh: "备份与还原", ar: "النسخ الاحتياطي والاستعادة", eo: "Savkopio kaj Restarigo" },
+  lbl_restore: { ja: "データ復元 (.itsme / .indexeddb / backup.zip):", en: "Restore Data (.itsme / .indexeddb / backup.zip):", hira: "ふくげん:", ko: "데이터 복원:", zh: "数据还原:", ar: "استعادة البيانات:", eo: "Restarigi Datumojn:" },
+  footer_running: {
+    ja: "飛行機でも遊べるゲーム ★ 快適な空の旅を！",
+    en: "Airplane Playable Games ★ Have a nice flight!",
+    hira: "ひこうきでも あそべる げーむ ★ たのしい たびを！",
+    ko: "비행기에서도 즐기는 게임 ★ 쾌적하고 즐거운 비행 되세요!",
+    zh: "飞机上也能玩的游戏 ★ 祝您旅途愉快！",
+    ar: "ألعاب ممتعة على متن الطائرة ★ نتمنى لك رحلة سعيدة ومريحة!",
+    eo: "Ludoj Ludeblaj en Aviadilo ★ Bonan flugon al vi!"
+  },
+  btn_close: { ja: "閉じる", en: "Close", hira: "とじる", ko: "닫기", zh: "关闭", ar: "إغلاق", eo: "Fermi" }
+};
+
+const AUTHOR_NAMES = {
+  ja: "青井ソラマメ",
+  en: "Aoi Soramame",
+  hira: "あおい そらまめ",
+  ko: "아오이 소라마메",
+  zh: "青井空豆 (Aoi Soramame)",
+  ar: "أوي سورامامي (Aoi Soramame)",
+  eo: "Aoi Soramame"
+};
+
+const KOUSHIN_DATA = [
+  {
+    id: 1, pinned: true,
+    date: '2026/09/20 12:00',
+    desc: {
+      ja: '航空機内完全オフライン対応ゲーム集 正式リリース & 多言語(7言語)対応',
+      en: 'Official release of fully offline airplane games with 7-language support',
+      hira: 'ひこうきでも あそべる げーむしゅう せいしき りりーす (7つの ことば)',
+      ko: '기내 완전 오프라인 게임 모음 정식 출시 및 7개 언어 완벽 지원',
+      zh: '飞机内完全离线游戏集正式发布，支持7种多语言切换',
+      ar: 'الإطلاق الرسمي لمجموعة ألعاب الطائرات غير المتصلة مع دعم 7 لغات بالكامل',
+      eo: 'Oficiala lanĉo de tute eksterretaj aviadilaj ludoj kun subteno de 7 lingvoj'
+    }
+  },
+  {
+    id: 2, pinned: false,
+    date: '2026/09/19 18:30',
+    desc: {
+      ja: 'ショートカットキー無制限追加機能 & テーマ連動文字色補正システム搭載',
+      en: 'Added unlimited shortcut keys & automatic text contrast correction system',
+      hira: 'しょーとかっと むせいげん ついか ＆ もじのいろ じどう ちょうせい',
+      ko: '단축키 무제한 추가 기능 및 테마 연동 텍스트 대비 자동 보정 시스템 탑재',
+      zh: '搭载快捷键无限制设定与浅/深色主题文字颜色防同化补偿系统',
+      ar: 'إضافة اختصارات غير محدودة ونظام تصحيح تباين ألوان النصوص تلقائيًا',
+      eo: 'Aldonis senlimajn klavkombinojn kaj aŭtomatan tekstan kontrastan sistemon'
+    }
+  },
+  {
+    id: 3, pinned: false,
+    date: '2026/09/19 14:15',
+    desc: {
+      ja: '黒板をお掃除しよう・棒とビの物理演算およびカスタマイズ上限機能実装',
+      en: 'Implemented blackboard cleaning & obstacle jumping physics with custom limits',
+      hira: 'こくばんそうじ と ぼうとびの じゆう せっていを ついか',
+      ko: '칠판 청소 및 봉 넘기 물리 엔진과 커스텀 상한치 설정 구현',
+      zh: '实现清理黑板与火柴人跳跃的物理演算及自定义上限参数功能',
+      ar: 'تطبيق فيزياء تنظيف السبورة والقفز فوق الأعمدة مع خيارات التخصيص',
+      eo: 'Efektivigis purigadon de nigra tabulo kaj baston-salton kun propraj agordoj'
+    }
+  },
+  {
+    id: 4, pinned: false,
+    date: '2026/09/18 20:00',
+    desc: {
+      ja: '自作プロフィール保存＆多形式書き出し(PNG/AVIF/WebP/GIF等)対応',
+      en: 'Custom profile creator & multi-format exporter (PNG/AVIF/WebP/GIF/HTML)',
+      hira: 'じぶんの ぷろふぃーる ほぞん と がぞう ほぞんきのう',
+      ko: '커스텀 프로필 작성 및 다채로운 형식(PNG/AVIF/WebP/GIF 등) 내보내기 지원',
+      zh: '自定义个人档案保存与多格式(PNG/AVIF/WebP/GIF等)图片文件导出',
+      ar: 'إنشاء وحفظ الملف الشخصي مع التصدير بصيغ متعددة (PNG/AVIF/WebP/GIF)',
+      eo: 'Kreo de propra profilo kaj plurobla elporto (PNG/AVIF/WebP/GIF/HTML)'
+    }
+  },
+  {
+    id: 5, pinned: false,
+    date: '2026/09/18 12:00',
+    desc: {
+      ja: 'サイト開設と初期アーキテクチャの構築',
+      en: 'Initial release and architecture setup',
+      hira: 'さいとが できあがりました',
+      ko: '사이트 개설 및 초기 아키텍처 구축',
+      zh: '开站与初始架构搭建',
+      ar: 'إطلاق الموقع وتأسيس الهيكلية الأولية',
+      eo: 'Reteja malfermo kaj komenca arkitekturo'
+    }
+  }
+];
+
+let currentLang = 'ja';
+function t(key) {
+  if (I18N_DICTIONARY[key] && I18N_DICTIONARY[key][currentLang]) {
+    return I18N_DICTIONARY[key][currentLang];
+  }
+  return key;
+}
+
+/* ==========================================================================
+   全データ完全永続化管理システム (例外なし・LocalStorage & IndexedDB)
+   ========================================================================== */
+const CURRENT_DATA_VERSION = 2;
+let currentActiveTab = 'gameTab';
+let currentGame = 'stick';
+
+let memoryStore = {
+  scores: [],
+  myProfile: {
+    name: "旅の飛行士", birth: "2000/01", gender: "フリー",
+    location: "成田", hobby: "空を眺めること", quote: "翼は心にある", message: "フライト満喫中！"
+  }
+};
+let dbInstance = null;
+
+let shortcutData = [
+  { key: 'Space', action: 'jump' },
+  { key: 'KeyP', action: 'pause' }
+];
+
+const availableActions = [
+  { id: 'jump', name: { ja: 'ジャンプ / アクション', en: 'Jump / Action', hira: 'じゃんぷ', ko: '점프 / 액션', zh: '跳跃/动作', ar: 'قفز / تنفيذ', eo: 'Salto / Ago' } },
+  { id: 'pause', name: { ja: '開始 / 終了', en: 'Start / Stop', hira: 'すたーと・おわり', ko: '시작 / 종료', zh: '开始/结束', ar: 'بدء / إيقاف', eo: 'Starto / Halto' } },
+  { id: 'clean', name: { ja: '画面お掃除', en: 'Clean Blackboard', hira: 'そうじ', ko: '화면 청소', zh: '清理画面', ar: 'تنظيف الشاشة', eo: 'Purigi' } },
+  { id: 'sound', name: { ja: '効果音テスト', en: 'Sound Test', hira: 'おと', ko: '효과음 테스트', zh: '音效测试', ar: 'اختبار الصوت', eo: 'Son-Testo' } }
+];
+
+// 全データを漏らさず保存
+function saveAllConfig() {
+  const config = {
+    activeTab: currentActiveTab,
+    selectedGame: currentGame,
+    lang: currentLang,
+    gameEnabled: document.getElementById('cfgGameEnabled').checked,
+    saveScore: document.getElementById('cfgSaveScore').checked,
+    useIndexedDB: document.getElementById('cfgUseIndexedDB').checked,
+    mouseStalkerType: document.getElementById('cfgMouseStalkerType').value,
+    stalkerCustomText: document.getElementById('cfgStalkerCustomText').value,
+    stalkerImageData: localStorage.getItem('airplane_game_stalker_img') || '',
+    gcSimulation: document.getElementById('cfgGcSimulation').checked,
+    bgColor: document.getElementById('cfgBgColor').value,
+    bgColorText: document.getElementById('cfgBgColorText').value,
+    textColor: document.getElementById('cfgTextColor').value,
+    textColorText: document.getElementById('cfgTextColorText').value,
+    fontFamily: document.getElementById('cfgFontFamily').value,
+    fontSizeNum: document.getElementById('cfgFontSizeNum').value,
+    fontSizeUnit: document.getElementById('cfgFontSizeUnit').value,
+    showSearch: document.getElementById('cfgShowSearch').checked,
+    showHeader: document.getElementById('cfgShowHeader').checked,
+    colorTheme: document.getElementById('cfgColorTheme').value,
+    stickMaxHeight: document.getElementById('stickMaxHeight').value,
+    stickMaxPillars: document.getElementById('stickMaxPillars').value
+  };
+
+  localStorage.setItem('airplane_game_config', JSON.stringify(config));
+  localStorage.setItem('airplane_game_shortcuts', JSON.stringify(shortcutData));
+  localStorage.setItem('airplane_game_my_profile', JSON.stringify(memoryStore.myProfile));
+
+  const pinnedIds = KOUSHIN_DATA.filter(k => k.pinned).map(k => k.id);
+  localStorage.setItem('airplane_game_pinned_ids', JSON.stringify(pinnedIds));
+}
+
+function saveConfig() {
+  if (document.getElementById('cfgGcSimulation').checked) {
+    if (blocks3D.length > 20) blocks3D.splice(0, 5);
+    if (konjacSlices.length > 50) konjacSlices.splice(0, 10);
+  }
+  saveAllConfig();
+}
+
+function changeLanguage(lang) {
+  currentLang = lang;
+  document.getElementById('langSelector').value = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    el.textContent = t(k);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const k = el.getAttribute('data-i18n-ph');
+    el.placeholder = t(k);
+  });
+
+  document.getElementById('authorName').textContent = AUTHOR_NAMES[lang] || AUTHOR_NAMES.ja;
+  updateGameInstructionText();
+  renderHistoryTable();
+  renderShortcuts();
+  saveAllConfig();
+}
+
+function initIndexedDB() {
+  return new Promise((resolve) => {
+    if (!window.indexedDB || !document.getElementById('cfgUseIndexedDB').checked) {
+      resolve(null); return;
+    }
+    const req = indexedDB.open('AirplaneGamesDB_v2', 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
+    };
+    req.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
+    req.onerror = () => resolve(null);
+  });
+}
+
+function loadScoresFromIndexedDB() {
+  return new Promise((resolve) => {
+    if (!dbInstance || !document.getElementById('cfgUseIndexedDB').checked) {
+      memoryStore.scores = [];
+      resolve([]);
+      return;
+    }
+    try {
+      const tx = dbInstance.transaction('scores', 'readonly');
+      const store = tx.objectStore('scores');
+      const req = store.getAll();
+      req.onsuccess = () => {
+        memoryStore.scores = (req.result || []).reverse();
+        resolve(memoryStore.scores);
+      };
+      req.onerror = () => resolve([]);
+    } catch (e) { resolve([]); }
+  });
+}
+
+function saveScoreRecord(gameName, timeLimit, score) {
+  if (!document.getElementById('cfgSaveScore').checked) return;
+
+  const allScores = memoryStore.scores.filter(s => s.game === gameName);
+  const maxScore = allScores.length > 0 ? Math.max(...allScores.map(s => s.score)) : score;
+  const diff = score - maxScore;
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  const record = {
+    game: gameName,
+    date: dateStr,
+    limit: (gameName === t('game_konjac') || gameName === t('game_blackboard')) ? '∞' : `${timeLimit}s`,
+    score: score,
+    diff: (gameName === t('game_konjac') || gameName === t('game_blackboard')) ? '-' : (diff >= 0 ? `+${diff}` : `${diff}`)
+  };
+
+  memoryStore.scores.unshift(record);
+
+  if (dbInstance && document.getElementById('cfgUseIndexedDB').checked) {
+    try {
+      const tx = dbInstance.transaction('scores', 'readwrite');
+      tx.objectStore('scores').add(record);
+    } catch (e) {}
+  }
+  renderScoreTable();
+}
+
+/* ==========================================================================
+   Web Audio API 音響合成 (完全オフライン)
+   ========================================================================== */
+let audioCtx = null;
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) audioCtx = new AudioContextClass();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playClickSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.03);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.035);
+  } catch (e) {}
+}
+
+function playKonjacSliceSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const bufferSize = ctx.sampleRate * 0.08;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 800;
+    filter.Q.value = 1.5;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start();
+  } catch (e) {}
+}
+
+function playBlockPopSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.1);
+  } catch (e) {}
+}
+
+function playEraserSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const bufferSize = ctx.sampleRate * 0.04;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.15;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1200;
+    noise.connect(filter);
+    filter.connect(ctx.destination);
+    noise.start();
+  } catch (e) {}
+}
+
+/* ==========================================================================
+   ヘッダー 3Dタイトルアニメーション (Canvas)
+   ========================================================================== */
+const titleCanvas = document.getElementById('title3DCanvas');
+const titleCtx = titleCanvas.getContext('2d');
+let titleAngle = 0;
+
+function resizeTitleCanvas() {
+  titleCanvas.width = 240 * window.devicePixelRatio;
+  titleCanvas.height = 50 * window.devicePixelRatio;
+}
+resizeTitleCanvas();
+
+function draw3DTitle() {
+  titleCtx.clearRect(0, 0, titleCanvas.width, titleCanvas.height);
+  titleAngle += 0.03;
+  const floatY = Math.sin(titleAngle) * 4;
+
+  titleCtx.save();
+  titleCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  titleCtx.font = '900 18px sans-serif';
+  titleCtx.textAlign = 'center';
+  titleCtx.textBaseline = 'middle';
+
+  const text = t('site_title');
+  const cx = 120;
+  const cy = 25 + floatY;
+
+  for (let i = 6; i > 0; i--) {
+    titleCtx.fillStyle = `rgba(180, 0, 80, ${0.15 * i})`;
+    titleCtx.fillText(text, cx - i * 0.7, cy + i * 0.8);
+  }
+
+  const grad = titleCtx.createLinearGradient(0, cy - 10, 0, cy + 10);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(1, '#ffcdd2');
+  titleCtx.fillStyle = grad;
+  titleCtx.strokeStyle = '#c2185b';
+  titleCtx.lineWidth = 2;
+  titleCtx.strokeText(text, cx, cy);
+  titleCtx.fillText(text, cx, cy);
+
+  titleCtx.restore();
+  requestAnimationFrame(draw3DTitle);
+}
+draw3DTitle();
+
+/* ==========================================================================
+   タブ切り替え & モーダル
+   ========================================================================== */
+function switchTab(tabId, btnElement) {
+  currentActiveTab = tabId;
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  
+  const targetTab = document.getElementById(tabId);
+  if (targetTab) targetTab.classList.add('active');
+
+  if (btnElement) {
+    btnElement.classList.add('active');
+  } else {
+    const matchedBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
+    if (matchedBtn) matchedBtn.classList.add('active');
+  }
+
+  if (tabId === 'historyTab') renderHistoryTable();
+  if (tabId === 'dataTab') renderScoreTable();
+  if (tabId === 'howToTab') startHowToAnimation();
+
+  saveAllConfig();
+}
+
+function toggleHeader(show) {
+  const header = document.getElementById('mainHeader');
+  const btn = document.getElementById('headerShowBtn');
+  const cfg = document.getElementById('cfgShowHeader');
+  if (show) {
+    header.classList.remove('hidden');
+    btn.style.display = 'none';
+    if (cfg) cfg.checked = true;
+  } else {
+    header.classList.add('hidden');
+    btn.style.display = 'block';
+    if (cfg) cfg.checked = false;
+  }
+  saveAllConfig();
+}
+
+function showModal(title, message, actionHtml = '') {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = message;
+  document.getElementById('modalActionArea').innerHTML = actionHtml;
+  document.getElementById('genericModal').style.display = 'flex';
+}
+function closeModal() {
+  document.getElementById('genericModal').style.display = 'none';
+}
+
+/* ==========================================================================
+   ショートカットキー無制限追加システム
+   ========================================================================== */
+function renderShortcuts() {
+  const container = document.getElementById('shortcutListContainer');
+  container.innerHTML = '';
+
+  shortcutData.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.className = 'shortcut-item';
+
+    const keyBtn = document.createElement('input');
+    keyBtn.type = 'text';
+    keyBtn.readOnly = true;
+    keyBtn.className = 'key-input';
+    keyBtn.value = item.key;
+    keyBtn.onclick = () => recordKey(keyBtn, index);
+
+    const select = document.createElement('select');
+    select.style.flex = '1';
+    availableActions.forEach(act => {
+      const opt = document.createElement('option');
+      opt.value = act.id;
+      opt.textContent = act.name[currentLang] || act.name.ja;
+      if (act.id === item.action) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.onchange = (e) => {
+      shortcutData[index].action = e.target.value;
+      saveAllConfig();
+    };
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-del';
+    delBtn.textContent = '✕';
+    delBtn.onclick = () => {
+      shortcutData.splice(index, 1);
+      renderShortcuts();
+      saveAllConfig();
+    };
+
+    row.appendChild(keyBtn);
+    row.appendChild(select);
+    row.appendChild(delBtn);
+    container.appendChild(row);
+  });
+}
+
+function addShortcutItem() {
+  shortcutData.push({ key: 'KeyA', action: 'jump' });
+  renderShortcuts();
+  saveAllConfig();
+}
+
+function recordKey(inputElement, index) {
+  inputElement.value = '...';
+  inputElement.classList.add('recording');
+
+  const keyHandler = (e) => {
+    e.preventDefault();
+    shortcutData[index].key = e.code;
+    inputElement.value = e.code;
+    inputElement.classList.remove('recording');
+    window.removeEventListener('keydown', keyHandler);
+    saveAllConfig();
+  };
+  window.addEventListener('keydown', keyHandler, { once: true });
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' && !e.target.readOnly) return;
+  const match = shortcutData.find(s => s.key === e.code);
+  if (match) {
+    if (match.action === 'jump') triggerDpad('up');
+    else if (match.action === 'pause') toggleCurrentGame();
+    else if (match.action === 'clean' && currentGame === 'blackboard') cleanBlackboard(200, 200);
+    else if (match.action === 'sound') playClickSound();
+  }
+});
+
+/* ==========================================================================
+   ゲームエンジン本体 (全5種)
+   ========================================================================== */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let isGameRunning = false;
+let gameTimer = null;
+let timeLeft = 60;
+let currentScore = 0;
+let stars = [];
+
+function resizeGameCanvas() {
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth * window.devicePixelRatio;
+  canvas.height = 420 * window.devicePixelRatio;
+  initStars();
+}
+window.addEventListener('resize', resizeGameCanvas);
+
+function initStars() {
+  stars = [];
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+  for (let i = 0; i < 80; i++) {
+    stars.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      size: Math.random() * 2 + 1,
+      speed: Math.random() * 0.8 + 0.2
+    });
+  }
+}
+
+function renderStars() {
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+  ctx.fillStyle = '#fffae0';
+  for (let s of stars) {
+    s.y += s.speed;
+    if (s.y > h) { s.y = 0; s.x = Math.random() * w; }
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function updateGameInstructionText() {
+  const texts = {
+    stick: {
+      ja: "【棒とビ】十字キーの上、またはキャンバスクリックで棒人間がジャンプ！バーを飛び越えろ！3回接触で即アウト。",
+      en: "[Stick & Jump] Press Up or tap canvas to make Stickman jump! 3 hits = Out.",
+      hira: "【ぼうとび】うえのおすか、たっちで じゃんぷ！3かい ぶつかったら おわり。",
+      ko: "【봉 넘기】위쪽 키 또는 터치로 봉 인간이 점프! 3번 부딪히면 아웃.",
+      zh: "【火柴人跳跃】按上键或点击屏幕跳跃！碰撞3次游戏结束。",
+      ar: "【القفز فوق العصي】اضغط على زر لأعلى للقفز! الاصطدام 3 مرات يعني الخسارة.",
+      eo: "【Baston-Salto】Premu Supren aŭ frapetu por salti! 3 kolizioj = Fino."
+    },
+    block: {
+      ja: "【ブロック消し】星空から降ってくる多彩な3Dブロックをマウスやタップで次々に消していこう！",
+      en: "[Block Breaker] Click/tap colorful falling 3D blocks to clear them!",
+      hira: "【ぶろっくけし】おちてくる ぶろっくを たっちして けそう！",
+      ko: "【블록 깨기】하늘에서 떨어지는 다채로운 3D 블록을 탭하여 제거하세요!",
+      zh: "【消除方块】点击消除空落下的各种3D立体方块！",
+      ar: "【تكسير الكتل】انقر على الكتل ثلاثية الأبعاد المتساقطة لتحطيمها!",
+      eo: "【Blok-Rompo】Alklaku falantajn 3D-blokojn por detrui ilin!"
+    },
+    konjac: {
+      ja: "【こんにゃく切り】制限時間なし(∞)！クリックやドラッグで包丁を振り、こんにゃくを好きな細さにざく切りしよう。",
+      en: "[Konjac Slicer] Infinite time! Drag or tap to slice the konjac smoothly.",
+      hira: "【こんにゃくきり】じかんは むげん！なんかいでも ざくざく きれるよ。",
+      ko: "【곤약 자르기】제한시간 무제한(∞)! 자유롭게 곤약을 썰어보세요.",
+      zh: "【切魔芋】无限时间(∞)！挥动刀刃将立体魔芋切成各种细条。",
+      ar: "【تقطيع الكونجاك】وقت لا نهائي(∞)! اسحب لتقطيع قالب الكونجاك بحرية.",
+      eo: "【Konjak-Tranĉo】Senlima tempo (∞)! Tranĉu la konjakon laŭvole."
+    },
+    blackboard: {
+      ja: "【黒板をお掃除しよう】制限時間なし(∞)！指やマウスで黒板消しを動かし、チョークの落書きをピカピカに消そう。",
+      en: "[Clean Chalkboard] Infinite time! Wipe chalk drawings clean with mini eraser.",
+      hira: "【こくばんそうじ】こくばんけしで ちょーくを きれいに けそう！",
+      ko: "【칠판 청소하기】제한시간 무제한(∞)! 미니 칠판 지우개로 낙서를 말끔히 지우세요.",
+      zh: "【黑板清理大作战】无限时间(∞)！用黑板擦擦除粉笔涂鸦。",
+      ar: "【تنظيف السبورة】وقت لا نهائي(∞)! امسح رسومات الطباشير العشوائية بممحاة السبورة الصغيرة لتنظيفها بالكامل.",
+      eo: "【Purigi Tabulon】Senlima tempo (∞)! Viŝu la kretajn desegnojn tute pure."
+    },
+    flag: {
+      ja: "【国旗クイズ】表示される国旗の国名を4択から選んで答えよう！ミスは減点、正解でスコア加算！",
+      en: "[Flag Quiz] Guess country names from 4 choices! Misses subtract points.",
+      hira: "【こっきくいず】こっきをみて 4つのなかから こたえを えらんでね！",
+      ko: "【국기 퀴즈】표시되는 국기를 보고 4지선다에서 정답을 맞혀보세요!",
+      zh: "【国旗问答】看国旗并从4个选项中选出正确国名！答错扣分。",
+      ar: "【اختبار الأعلام】خمن الدولة الصحيحة من بين 4 خيارات!",
+      eo: "【Flaga Kviz】Divenu la landon el 4 elektoj! Eraroj subtrahos poentojn."
+    }
+  };
+  const inst = texts[currentGame];
+  document.getElementById('gameInstructionText').textContent = inst ? (inst[currentLang] || inst.ja) : '';
+}
+
+function selectGame(gameKey, btn) {
+  if (isGameRunning) stopGame();
+  currentGame = gameKey;
+  document.querySelectorAll('.game-select-btn').forEach(b => b.classList.remove('active'));
+  if (btn) {
+    btn.classList.add('active');
+  } else {
+    const matched = document.querySelector(`.game-select-btn[data-game="${gameKey}"]`);
+    if (matched) matched.classList.add('active');
+  }
+
+  document.getElementById('stickGameSettings').style.display = (gameKey === 'stick') ? 'flex' : 'none';
+  document.getElementById('flagQuizOverlay').style.display = 'none';
+
+  updateGameInstructionText();
+  initGameScene();
+  saveAllConfig();
+}
+
+function filterGames() {
+  const q = document.getElementById('gameSearchInput').value.toLowerCase();
+  document.querySelectorAll('.game-select-btn').forEach(b => {
+    b.style.display = b.textContent.toLowerCase().includes(q) ? 'inline-block' : 'none';
+  });
+}
+
+function onTimeLimitChange() {
+  const val = document.getElementById('timeLimitSelect').value;
+  document.getElementById('customTimeInput').style.display = (val === 'custom') ? 'inline-block' : 'none';
+}
+
+function getTimeLimit() {
+  const val = document.getElementById('timeLimitSelect').value;
+  if (val === 'custom') {
+    const num = parseInt(document.getElementById('customTimeInput').value, 10);
+    return isNaN(num) || num <= 0 ? 60 : num;
+  }
+  return parseInt(val, 10);
+}
+
+// 1. 棒とビ
+let stickMan = { x: 80, y: 300, vy: 0, jumping: false, width: 20, height: 45 };
+let pillars = [];
+let stickMissCount = 0;
+
+function initStickGame() {
+  stickMan = { x: 80, y: 300, vy: 0, jumping: false, width: 20, height: 45 };
+  pillars = [];
+  stickMissCount = 0;
+}
+
+function updateStickGame() {
+  stickMan.vy += 0.55;
+  stickMan.y += stickMan.vy;
+  const ground = (canvas.height / window.devicePixelRatio) - 70;
+  if (stickMan.y > ground) {
+    stickMan.y = ground;
+    stickMan.vy = 0;
+    stickMan.jumping = false;
+  }
+
+  const maxH = parseInt(document.getElementById('stickMaxHeight').value, 10) || 200;
+  const maxP = parseInt(document.getElementById('stickMaxPillars').value, 10) || 5;
+
+  if (pillars.length < maxP && (pillars.length === 0 || pillars[pillars.length - 1].x < (canvas.width / window.devicePixelRatio) - 160)) {
+    const h = Math.random() * (maxH - 50) + 50;
+    pillars.push({
+      x: canvas.width / window.devicePixelRatio + 40,
+      width: 40,
+      height: h,
+      passed: false,
+      color: `hsl(${Math.random() * 360}, 70%, 60%)`
+    });
+  }
+
+  for (let i = pillars.length - 1; i >= 0; i--) {
+    const p = pillars[i];
+    p.x -= 3.5;
+
+    const pTop = ground + 45 - p.height;
+    if (stickMan.x + stickMan.width > p.x && stickMan.x < p.x + p.width &&
+        stickMan.y + stickMan.height > pTop) {
+      stickMissCount++;
+      pillars.splice(i, 1);
+      playClickSound();
+      if (stickMissCount >= 3) {
+        showModal('GAME OVER', '3 Misses! Out.');
+        stopGame();
+        return;
+      }
+      continue;
+    }
+
+    if (!p.passed && p.x + p.width < stickMan.x) {
+      p.passed = true;
+      currentScore += 10;
+      updateScoreDisplay();
+    }
+    if (p.x + p.width < -50) pillars.splice(i, 1);
+  }
+}
+
+function renderStickGame() {
+  const ground = (canvas.height / window.devicePixelRatio) - 25;
+  ctx.fillStyle = '#2e7d32';
+  ctx.fillRect(0, ground, canvas.width, 100);
+  ctx.fillStyle = '#1b5e20';
+  ctx.fillRect(0, ground, canvas.width, 5);
+
+  for (let p of pillars) {
+    const pTop = ground - p.height;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, pTop, p.width, p.height);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.moveTo(p.x + p.width, pTop);
+    ctx.lineTo(p.x + p.width + 12, pTop - 8);
+    ctx.lineTo(p.x + p.width + 12, ground - 8);
+    ctx.lineTo(p.x + p.width, ground);
+    ctx.fill();
+  }
+
+  ctx.save();
+  ctx.translate(stickMan.x, stickMan.y);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(10, 10, 8, 0, Math.PI * 2);
+  ctx.moveTo(10, 18); ctx.lineTo(10, 32);
+  ctx.moveTo(0, 22); ctx.lineTo(20, 22);
+  ctx.moveTo(10, 32); ctx.lineTo(2, 45);
+  ctx.moveTo(10, 32); ctx.lineTo(18, 45);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.fillStyle = '#ff1744';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`MISS: ${stickMissCount} / 3`, 20, 75);
+}
+
+// 2. ブロック消し
+let blocks3D = [];
+function initBlockGame() { blocks3D = []; }
+
+function updateBlockGame() {
+  if (Math.random() < 0.05 && blocks3D.length < 15) {
+    const shapes = ['cube', 'pyramid', 'sphere'];
+    const w = canvas.width / window.devicePixelRatio;
+    blocks3D.push({
+      x: Math.random() * (w - 60) + 20,
+      y: -50,
+      size: Math.random() * 30 + 30,
+      speed: Math.random() * 2 + 1.5,
+      shape: shapes[Math.floor(Math.random() * shapes.length)],
+      color: `hsl(${Math.random() * 360}, 80%, 65%)`,
+      rot: Math.random() * Math.PI
+    });
+  }
+
+  const h = canvas.height / window.devicePixelRatio;
+  for (let i = blocks3D.length - 1; i >= 0; i--) {
+    const b = blocks3D[i];
+    b.y += b.speed;
+    b.rot += 0.02;
+    if (b.y > h + 50) blocks3D.splice(i, 1);
+  }
+}
+
+function renderBlockGame() {
+  for (let b of blocks3D) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(b.rot);
+    if (b.shape === 'cube') {
+      ctx.fillStyle = b.color;
+      ctx.fillRect(-b.size/2, -b.size/2, b.size, b.size);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.fillRect(-b.size/2, -b.size/2, b.size, b.size/3);
+    } else if (b.shape === 'pyramid') {
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.moveTo(0, -b.size/2);
+      ctx.lineTo(b.size/2, b.size/2);
+      ctx.lineTo(-b.size/2, b.size/2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, b.size/2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// 3. こんにゃく切り
+let konjacSlices = [];
+let konjacDots = [];
+
+function initKonjacGame() {
+  konjacSlices = [{ x: 60, width: 450 }];
+  konjacDots = [];
+  for (let i = 0; i < 200; i++) {
+    konjacDots.push({ x: Math.random() * 450, y: Math.random() * 120 });
+  }
+}
+
+function renderKonjacGame() {
+  const centerY = (canvas.height / window.devicePixelRatio) / 2 - 40;
+  ctx.fillStyle = '#d7ccc8';
+  ctx.fillRect(30, centerY + 100, canvas.width / window.devicePixelRatio - 60, 40);
+
+  for (let s of konjacSlices) {
+    if (s.width <= 2) continue;
+    ctx.fillStyle = '#78909c';
+    ctx.fillRect(s.x, centerY + 80, s.width, 20);
+    ctx.fillStyle = '#90a4ae';
+    ctx.fillRect(s.x, centerY, s.width, 80);
+    ctx.fillStyle = '#b0bec5';
+    ctx.fillRect(s.x, centerY, s.width, 15);
+
+    ctx.fillStyle = '#263238';
+    for (let d of konjacDots) {
+      if (d.x >= s.x - 60 && d.x <= s.x - 60 + s.width) {
+        ctx.beginPath();
+        ctx.arc(s.x + (d.x - (s.x - 60)), centerY + d.y * 0.65 + 10, 1.5, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+  }
+}
+
+function sliceKonjacAt(x) {
+  for (let i = 0; i < konjacSlices.length; i++) {
+    const s = konjacSlices[i];
+    if (x > s.x + 5 && x < s.x + s.width - 5) {
+      const w1 = x - s.x;
+      const w2 = s.width - w1;
+      konjacSlices.splice(i, 1, { x: s.x, width: w1 }, { x: x + 4, width: w2 - 4 });
+      currentScore += 5;
+      updateScoreDisplay();
+      playKonjacSliceSound();
+      break;
+    }
+  }
+}
+
+// 4. 黒板をお掃除しよう
+let blackboardCanvas = null;
+let bbCtx = null;
+let eraserPos = { x: -100, y: -100 };
+
+function initBlackboardGame() {
+  const w = Math.floor(canvas.width / window.devicePixelRatio);
+  const h = Math.floor(canvas.height / window.devicePixelRatio);
+  blackboardCanvas = document.createElement('canvas');
+  blackboardCanvas.width = w;
+  blackboardCanvas.height = h;
+  bbCtx = blackboardCanvas.getContext('2d');
+
+  bbCtx.fillStyle = '#1b3b22';
+  bbCtx.fillRect(0, 0, w, h);
+
+  bbCtx.strokeStyle = 'rgba(255,255,255,0.85)';
+  bbCtx.lineWidth = 6;
+  bbCtx.lineCap = 'round';
+  for (let i = 0; i < 40; i++) {
+    bbCtx.beginPath();
+    let cx = Math.random() * w;
+    let cy = Math.random() * h;
+    bbCtx.moveTo(cx, cy);
+    for (let j = 0; j < 5; j++) {
+      cx += (Math.random() - 0.5) * 150;
+      cy += (Math.random() - 0.5) * 150;
+      bbCtx.lineTo(cx, cy);
+    }
+    bbCtx.stroke();
+  }
+}
+
+function cleanBlackboard(x, y) {
+  if (!bbCtx) return;
+  eraserPos = { x, y };
+  bbCtx.save();
+  bbCtx.fillStyle = '#1b3b22';
+  bbCtx.beginPath();
+  bbCtx.arc(x, y, 28, 0, Math.PI * 2);
+  bbCtx.fill();
+  bbCtx.restore();
+  currentScore += 1;
+  updateScoreDisplay();
+  playEraserSound();
+}
+
+function renderBlackboardGame() {
+  if (blackboardCanvas) ctx.drawImage(blackboardCanvas, 0, 0);
+
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = '#8d6e63';
+  ctx.strokeRect(7, 7, w - 14, h - 14);
+
+  if (eraserPos.x > 0) {
+    ctx.save();
+    ctx.translate(eraserPos.x, eraserPos.y);
+    ctx.fillStyle = '#37474f';
+    ctx.fillRect(-22, -14, 44, 28);
+    ctx.fillStyle = '#ffb300';
+    ctx.fillRect(-22, -18, 44, 8);
+    ctx.restore();
+  }
+}
+
+// 5. 国旗クイズ (190カ国対応ベース)
+const FLAG_DATABASE = [
+  { name: { ja: '日本', en: 'Japan', hira: 'にほん', ko: '일본', zh: '日本', ar: 'اليابان', eo: 'Japanio' }, flag: '🇯🇵' },
+  { name: { ja: 'アメリカ', en: 'USA', hira: 'あめりか', ko: '미국', zh: '美国', ar: 'الولايات المتحدة', eo: 'Usono' }, flag: '🇺🇸' },
+  { name: { ja: 'イギリス', en: 'UK', hira: 'いぎりす', ko: '영국', zh: '英国', ar: 'المملكة المتحدة', eo: 'Britio' }, flag: '🇬🇧' },
+  { name: { ja: 'フランス', en: 'France', hira: 'ふらんす', ko: '프랑스', zh: '法国', ar: 'فرنسا', eo: 'Francio' }, flag: '🇫🇷' },
+  { name: { ja: 'ドイツ', en: 'Germany', hira: 'どいつ', ko: '독일', zh: '德国', ar: 'ألمانيا', eo: 'Germanio' }, flag: '🇩🇪' },
+  { name: { ja: 'イタリア', en: 'Italy', hira: 'いたりあ', ko: '이탈리아', zh: '意大利', ar: 'إيطاليا', eo: 'Italio' }, flag: '🇮🇹' },
+  { name: { ja: 'カナダ', en: 'Canada', hira: 'かなだ', ko: '캐나다', zh: '加拿大', ar: 'كندا', eo: 'Kanado' }, flag: '🇨🇦' },
+  { name: { ja: '韓国', en: 'South Korea', hira: 'かんこく', ko: '대한민국', zh: '韩国', ar: 'كوريا الجنوبية', eo: 'Sud-Koreio' }, flag: '🇰🇷' },
+  { name: { ja: '中国', en: 'China', hira: 'ちゅうごく', ko: '중국', zh: '中国', ar: 'الصين', eo: 'Ĉinio' }, flag: '🇨🇳' },
+  { name: { ja: 'ブラジル', en: 'Brazil', hira: 'ぶらじる', ko: '브라질', zh: '巴西', ar: 'البرازيل', eo: 'Brazilo' }, flag: '🇧🇷' },
+  { name: { ja: 'オーストラリア', en: 'Australia', hira: 'おーすとらりあ', ko: '호주', zh: '澳大利亚', ar: 'أستراليا', eo: 'Aŭstralio' }, flag: '🇦🇺' },
+  { name: { ja: 'スペイン', en: 'Spain', hira: 'すぺいん', ko: '스페인', zh: '西班牙', ar: 'إسبانيا', eo: 'Hispanio' }, flag: '🇪🇸' },
+  { name: { ja: 'エジプト', en: 'Egypt', hira: 'えじぷと', ko: '이집트', zh: '埃及', ar: 'مصر', eo: 'Egipto' }, flag: '🇪🇬' },
+  { name: { ja: 'サウジアラビア', en: 'Saudi Arabia', hira: 'さうじあらびあ', ko: '사우디아라비아', zh: '沙特阿拉伯', ar: 'المملكة العربية السعودية', eo: 'Sauda Arabio' }, flag: '🇸🇦' }
+];
+let currentFlagQuestion = null;
+let flagMissScore = 0;
+
+function nextFlagQuestion() {
+  const q = FLAG_DATABASE[Math.floor(Math.random() * FLAG_DATABASE.length)];
+  currentFlagQuestion = q;
+  document.getElementById('flagEmojiDisplay').textContent = q.flag;
+
+  const correctName = q.name[currentLang] || q.name.ja;
+  const options = [correctName];
+  while (options.length < 4) {
+    const r = FLAG_DATABASE[Math.floor(Math.random() * FLAG_DATABASE.length)];
+    const rName = r.name[currentLang] || r.name.ja;
+    if (!options.includes(rName)) options.push(rName);
+  }
+  options.sort(() => Math.random() - 0.5);
+
+  const grid = document.getElementById('flagOptionsGrid');
+  grid.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'flag-option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => answerFlagQuestion(opt);
+    grid.appendChild(btn);
+  });
+}
+
+function answerFlagQuestion(ans) {
+  if (!isGameRunning) return;
+  const correctName = currentFlagQuestion.name[currentLang] || currentFlagQuestion.name.ja;
+  if (ans === correctName) {
+    currentScore += 10;
+    playBlockPopSound();
+  } else {
+    flagMissScore += 5;
+    currentScore = Math.max(0, currentScore - 5);
+    playClickSound();
+  }
+  updateScoreDisplay();
+  nextFlagQuestion();
+}
+
+function initGameScene() {
+  currentScore = 0;
+  flagMissScore = 0;
+  updateScoreDisplay();
+  const isInf = (currentGame === 'konjac' || currentGame === 'blackboard');
+  document.getElementById('gameHudTimer').textContent = isInf ? 'TIME: ∞' : `TIME: ${getTimeLimit()}`;
+
+  if (currentGame === 'stick') initStickGame();
+  else if (currentGame === 'block') initBlockGame();
+  else if (currentGame === 'konjac') initKonjacGame();
+  else if (currentGame === 'blackboard') initBlackboardGame();
+
+  drawFrame();
+}
+
+function updateScoreDisplay() {
+  document.getElementById('gameHudScore').textContent = `SCORE: ${currentScore}`;
+}
+
+function toggleCurrentGame() {
+  if (!document.getElementById('cfgGameEnabled').checked) {
+    showModal(t('tab_settings'), 'Game is disabled in settings.');
+    return;
+  }
+  if (isGameRunning) stopGame();
+  else startGame();
+}
+
+function startGame() {
+  isGameRunning = true;
+  document.getElementById('gameActionBtn').textContent = t('btn_stop');
+  document.getElementById('gameActionBtn').classList.add('btn-secondary');
+
+  const isInfinite = (currentGame === 'konjac' || currentGame === 'blackboard');
+  timeLeft = isInfinite ? 999999 : getTimeLimit();
+
+  if (currentGame === 'flag') {
+    document.getElementById('flagQuizOverlay').style.display = 'block';
+    nextFlagQuestion();
+  } else {
+    document.getElementById('flagQuizOverlay').style.display = 'none';
+  }
+
+  if (gameTimer) clearInterval(gameTimer);
+  if (!isInfinite) {
+    gameTimer = setInterval(() => {
+      timeLeft--;
+      document.getElementById('gameHudTimer').textContent = `TIME: ${timeLeft}`;
+      if (timeLeft <= 0) {
+        clearInterval(gameTimer);
+        showModal('Time Up!', `Score: ${currentScore}`);
+        stopGame();
+      }
+    }, 1000);
+  } else {
+    document.getElementById('gameHudTimer').textContent = 'TIME: ∞';
+  }
+
+  loop();
+}
+
+function stopGame() {
+  isGameRunning = false;
+  if (gameTimer) clearInterval(gameTimer);
+  document.getElementById('gameActionBtn').textContent = t('btn_start');
+  document.getElementById('gameActionBtn').classList.remove('btn-secondary');
+  document.getElementById('flagQuizOverlay').style.display = 'none';
+
+  saveScoreRecord(
+    t(`game_${currentGame}`),
+    getTimeLimit(),
+    currentGame === 'flag' ? (currentScore - flagMissScore) : currentScore
+  );
+}
+
+function loop() {
+  if (!isGameRunning) return;
+  if (currentGame === 'stick') updateStickGame();
+  else if (currentGame === 'block') updateBlockGame();
+  drawFrame();
+  requestAnimationFrame(loop);
+}
+
+function drawFrame() {
+  ctx.save();
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.fillStyle = '#121212';
+  ctx.fillRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+
+  renderStars();
+  if (currentGame === 'stick') renderStickGame();
+  else if (currentGame === 'block') renderBlockGame();
+  else if (currentGame === 'konjac') renderKonjacGame();
+  else if (currentGame === 'blackboard') renderBlackboardGame();
+  ctx.restore();
+}
+
+function triggerDpad(dir) {
+  playClickSound();
+  const dpadBtn = document.querySelector(`.dpad-${dir}`);
+  if (dpadBtn) {
+    dpadBtn.classList.add('pressed');
+    setTimeout(() => dpadBtn.classList.remove('pressed'), 100);
+  }
+
+  if (currentGame === 'stick' && (dir === 'up' || dir === 'center')) {
+    if (!stickMan.jumping) {
+      stickMan.vy = -12;
+      stickMan.jumping = true;
+    }
+  }
+}
+
+function handleCanvasPointer(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left);
+  const y = (e.clientY - rect.top);
+
+  if (currentGame === 'stick') {
+    if (!stickMan.jumping) {
+      stickMan.vy = -12;
+      stickMan.jumping = true;
+      playClickSound();
+    }
+  } else if (currentGame === 'block') {
+    for (let i = blocks3D.length - 1; i >= 0; i--) {
+      const b = blocks3D[i];
+      if (Math.hypot(b.x - x, b.y - y) < b.size) {
+        blocks3D.splice(i, 1);
+        currentScore += 10;
+        updateScoreDisplay();
+        playBlockPopSound();
+        break;
+      }
+    }
+  } else if (currentGame === 'konjac') {
+    sliceKonjacAt(x);
+  } else if (currentGame === 'blackboard') {
+    cleanBlackboard(x, y);
+  }
+}
+
+canvas.addEventListener('mousedown', handleCanvasPointer);
+canvas.addEventListener('mousemove', (e) => { if (e.buttons === 1) handleCanvasPointer(e); });
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleCanvasPointer(e.touches[0]); }, { passive: false });
+canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleCanvasPointer(e.touches[0]); }, { passive: false });
+
+/* ==========================================================================
+   2. 使い方タブ アニメーション
+   ========================================================================== */
+let howToAnimId = null;
+function startHowToAnimation() {
+  const hCanvas = document.getElementById('howToAnimCanvas');
+  const hCtx = hCanvas.getContext('2d');
+  let angle = 0;
+  if (howToAnimId) cancelAnimationFrame(howToAnimId);
+
+  function renderHowTo() {
+    hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+    angle += 0.05;
+    const planeX = 100 + Math.cos(angle * 0.5) * 80;
+    const planeY = 90 + Math.sin(angle) * 20;
+
+    hCtx.fillStyle = '#ffffff';
+    hCtx.font = '44px sans-serif';
+    hCtx.fillText('✈️', planeX, planeY);
+
+    hCtx.fillStyle = '#00e676';
+    hCtx.font = 'bold 18px monospace';
+    hCtx.fillText('OFFLINE OK!', planeX + 60, planeY - 10);
+    howToAnimId = requestAnimationFrame(renderHowTo);
+  }
+  renderHowTo();
+}
+
+/* ==========================================================================
+   4. 設定 & マウスストーカー & スタイル反映
+   ========================================================================== */
+const mouseStalker = document.getElementById('mouseStalker');
+window.addEventListener('mousemove', (e) => {
+  const type = document.getElementById('cfgMouseStalkerType').value;
+  if (type === 'none') {
+    mouseStalker.style.display = 'none';
+    return;
+  }
+  mouseStalker.style.display = 'block';
+  mouseStalker.style.left = `${e.clientX + 10}px`;
+  mouseStalker.style.top = `${e.clientY + 10}px`;
+});
+
+function updateMouseStalker() {
+  const type = document.getElementById('cfgMouseStalkerType').value;
+  const customInput = document.getElementById('cfgStalkerCustomText');
+  const fileInput = document.getElementById('cfgStalkerImageFile');
+  customInput.style.display = (type === 'custom') ? 'block' : 'none';
+  fileInput.style.display = (type === 'image') ? 'block' : 'none';
+
+  if (type === 'none') mouseStalker.style.display = 'none';
+  else if (type === 'emoji') mouseStalker.textContent = '✈️';
+  else if (type === 'custom') mouseStalker.textContent = customInput.value || '★';
+  else if (type !== 'image') mouseStalker.textContent = type;
+}
+
+function loadStalkerImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    localStorage.setItem('airplane_game_stalker_img', dataUrl);
+    mouseStalker.innerHTML = `<img src="${dataUrl}" style="width:24px; height:24px; object-fit:contain;">`;
+    saveAllConfig();
+  };
+  reader.readAsDataURL(file);
+}
+
+function applyColors() {
+  const bg = document.getElementById('cfgBgColor').value;
+  const text = document.getElementById('cfgTextColor').value;
+  document.documentElement.style.setProperty('--bg-color', bg);
+  document.documentElement.style.setProperty('--text-color', text);
+  document.getElementById('cfgBgColorText').value = bg;
+  document.getElementById('cfgTextColorText').value = text;
+}
+
+function applyColorsText() {
+  const bg = document.getElementById('cfgBgColorText').value;
+  const text = document.getElementById('cfgTextColorText').value;
+  document.documentElement.style.setProperty('--bg-color', bg);
+  document.documentElement.style.setProperty('--text-color', text);
+  document.getElementById('cfgBgColor').value = bg;
+  document.getElementById('cfgTextColor').value = text;
+}
+
+function applyFontSettings() {
+  const family = document.getElementById('cfgFontFamily').value;
+  const sizeNum = document.getElementById('cfgFontSizeNum').value;
+  const sizeUnit = document.getElementById('cfgFontSizeUnit').value;
+  const fontStr = (family === 'mincho') ? '"Yu Mincho", "Hiragino Mincho ProN", serif' : '"Hiragino Sans", "Meiryo", sans-serif';
+  document.documentElement.style.setProperty('--font-family', fontStr);
+  document.documentElement.style.setProperty('--font-size', `${sizeNum}${sizeUnit}`);
+}
+
+function toggleSearchBarVisibility() {
+  document.getElementById('gameSearchInput').style.display = document.getElementById('cfgShowSearch').checked ? 'inline-block' : 'none';
+}
+
+function applyColorTheme(theme) {
+  if (theme === 'dark') {
+    document.body.classList.add('dark-mode');
+  } else if (theme === 'light') {
+    document.body.classList.remove('dark-mode');
+  } else {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.body.classList.toggle('dark-mode', isDark);
+  }
+}
+
+function toggleIndexedDBSetting() {
+  if (!document.getElementById('cfgUseIndexedDB').checked) {
+    showModal('Warning', 'IndexedDB disabled. Data will reset on reload.');
+    dbInstance = null;
+  } else {
+    initIndexedDB();
+  }
+  saveAllConfig();
+}
+
+/* ==========================================================================
+   5. プロフィール & 経過時間 & 動画録画
+   ========================================================================== */
+const SITE_OPEN_DATE = new Date('2026-09-18T00:00:00');
+
+function updateSiteTimeElapsed() {
+  const now = new Date();
+  const diffMs = Math.max(0, now - SITE_OPEN_DATE);
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
+  const seconds = Math.floor((diffMs / 1000) % 60);
+  const milliseconds = diffMs % 1000;
+
+  const years = (days / 365.25).toFixed(2);
+  const months = (days / 30.4375).toFixed(1);
+
+  const str = `Opening: 2026/09/18\n` +
+              `Years: ~${years} / Months: ~${months}\n` +
+              `Days: ${days} d\n` +
+              `Time: ${hours}h ${minutes}m ${seconds}s ${milliseconds}ms`;
+
+  const el = document.getElementById('timeElapsedDisplay');
+  if (el) el.textContent = str;
+}
+setInterval(updateSiteTimeElapsed, 50);
+
+async function recordAndDownloadKaisetuVideo() {
+  const recCanvas = document.createElement('canvas');
+  recCanvas.width = 640; recCanvas.height = 360;
+  const rCtx = recCanvas.getContext('2d');
+  const stream = recCanvas.captureStream(30);
+
+  let mediaRecorder;
+  try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' }); }
+  catch (e) { mediaRecorder = new MediaRecorder(stream); }
+
+  const chunks = [];
+  mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    downloadBlob(new Blob(chunks, { type: 'video/mp4' }), 'kaisetu.mp4');
+    showModal('Done', 'kaisetu.mp4 saved successfully!');
+  };
+
+  mediaRecorder.start();
+  let startT = Date.now();
+  const renderFrame = () => {
+    rCtx.fillStyle = '#fce4ec';
+    rCtx.fillRect(0, 0, 640, 360);
+    rCtx.fillStyle = '#ff4081';
+    rCtx.font = 'bold 22px sans-serif';
+    rCtx.fillText(t('site_title') + ' - Info', 30, 50);
+
+    rCtx.fillStyle = '#333';
+    rCtx.font = '14px monospace';
+    document.getElementById('timeElapsedDisplay').textContent.split('\n').forEach((l, idx) => {
+      rCtx.fillText(l, 30, 100 + idx * 26);
+    });
+
+    if (Date.now() - startT < 3000) requestAnimationFrame(renderFrame);
+    else mediaRecorder.stop();
+  };
+  renderFrame();
+}
+
+function updateMyProfileLive() {
+  memoryStore.myProfile = {
+    name: document.getElementById('myProfName').value,
+    birth: document.getElementById('myProfBirth').value,
+    gender: document.getElementById('myProfGender').value,
+    location: document.getElementById('myProfLocation').value,
+    hobby: document.getElementById('myProfHobby').value,
+    quote: document.getElementById('myProfQuote').value,
+    message: document.getElementById('myProfMessage').value
+  };
+  saveAllConfig();
+}
+
+function saveMyProfile() {
+  updateMyProfileLive();
+  saveAllConfig();
+  showModal(t('btn_save'), 'Profile saved!');
+}
+
+function resetMyProfile() {
+  document.getElementById('myProfName').value = '旅の飛行士';
+  document.getElementById('myProfBirth').value = '2000/01';
+  document.getElementById('myProfGender').value = 'フリー';
+  document.getElementById('myProfLocation').value = '成田';
+  document.getElementById('myProfHobby').value = '空を眺めること';
+  document.getElementById('myProfQuote').value = '翼は心にある';
+  document.getElementById('myProfMessage').value = 'フライト満喫中！';
+  updateMyProfileLive();
+}
+
+function exportProfileCard(format) {
+  const p = memoryStore.myProfile;
+  if (format === 'html') {
+    const htmlContent = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${p.name}</title>
+<style>body{background:#fce4ec;color:#333;font-family:sans-serif;padding:30px;}.card{background:#fff;padding:25px;border-radius:15px;max-width:500px;margin:auto;border:2px solid #ff80ab;}</style>
+</head><body><div class="card"><h2 style="color:#ff4081;">${p.name}</h2><p><strong>Birth:</strong> ${p.birth}</p><p><strong>Gender:</strong> ${p.gender}</p><p><strong>Location:</strong> ${p.location}</p><p><strong>Hobby:</strong> ${p.hobby}</p><p><strong>Quote:</strong> ${p.quote}</p><p><strong>Message:</strong> ${p.message}</p></div></body></html>`;
+    downloadBlob(new Blob([htmlContent], { type: 'text/html;charset=utf-8' }), 'profile.html');
+    return;
+  }
+
+  const expCanvas = document.createElement('canvas');
+  expCanvas.width = 600; expCanvas.height = 420;
+  const eCtx = expCanvas.getContext('2d');
+
+  eCtx.fillStyle = '#ffffff';
+  eCtx.fillRect(0, 0, 600, 420);
+  eCtx.strokeStyle = '#ff4081';
+  eCtx.lineWidth = 10;
+  eCtx.strokeRect(5, 5, 590, 410);
+
+  eCtx.fillStyle = '#ff4081';
+  eCtx.font = 'bold 24px sans-serif';
+  eCtx.fillText(`${p.name} Profile`, 40, 60);
+
+  eCtx.fillStyle = '#222222';
+  eCtx.font = '16px sans-serif';
+  const items = [
+    `Birth: ${p.birth}`, `Gender: ${p.gender}`, `Location: ${p.location}`,
+    `Hobby: ${p.hobby}`, `Quote: ${p.quote}`, `Message: ${p.message}`
+  ];
+  items.forEach((txt, i) => eCtx.fillText(txt, 40, 110 + i * 35));
+
+  const mime = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp', avif: 'image/avif', gif: 'image/gif' }[format] || 'image/png';
+  expCanvas.toBlob((blob) => {
+    if (!blob || (format === 'avif' && blob.type !== 'image/avif')) {
+      showModal('Format Notice', 'このブラウザや機種ではavifは使えません');
+      return;
+    }
+    downloadBlob(blob, `profile.${format}`);
+  }, mime);
+}
+
+/* ==========================================================================
+   6. 更新履歴システム
+   ========================================================================== */
+let historyPage = 1;
+
+function renderHistoryTable() {
+  const query = document.getElementById('historySearchInput').value.toLowerCase();
+  const sort = document.getElementById('historySortSelect').value;
+
+  let list = [...KOUSHIN_DATA].filter(item => {
+    const text = item.desc[currentLang] || item.desc.ja;
+    return item.date.toLowerCase().includes(query) || text.toLowerCase().includes(query);
+  });
+
+  list.sort((a, b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    return sort === 'newest' ? (b.id - a.id) : (a.id - b.id);
+  });
+
+  const perPage = 10;
+  const totalPages = Math.ceil(list.length / perPage) || 1;
+  const paged = list.slice((historyPage - 1) * perPage, historyPage * perPage);
+
+  const tbody = document.getElementById('historyTableBody');
+  tbody.innerHTML = '';
+  paged.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><button class="btn btn-outline" style="padding:2px 8px; font-size:11px;" onclick="toggleHistoryPin(${item.id})">${item.pinned ? '★' : '☆'}</button></td>
+      <td>${item.date}</td>
+      <td class="text-dark-adaptive">${item.desc[currentLang] || item.desc.ja}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const pagin = document.getElementById('historyPagination');
+  pagin.innerHTML = '';
+  for (let i = 1; i <= totalPages; i++) {
+    const b = document.createElement('button');
+    b.className = `page-btn ${i === historyPage ? 'active' : ''}`;
+    b.textContent = i;
+    b.onclick = () => { historyPage = i; renderHistoryTable(); };
+    pagin.appendChild(b);
+  }
+}
+
+function toggleHistoryPin(id) {
+  const target = KOUSHIN_DATA.find(k => k.id === id);
+  if (target) {
+    target.pinned = !target.pinned;
+    renderHistoryTable();
+    saveAllConfig();
+  }
+}
+
+function downloadHistoryTxt() {
+  let content = KOUSHIN_DATA.map(k => `[${k.date}] ${k.desc[currentLang] || k.desc.ja}`).join('\r\n');
+  downloadBlob(new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), content], { type: 'text/plain;charset=utf-8' }), 'log.txt');
+}
+
+function copyAllHistory() {
+  let content = KOUSHIN_DATA.map(k => `[${k.date}] ${k.desc[currentLang] || k.desc.ja}`).join('\n');
+  navigator.clipboard.writeText(content).then(() => showModal('Copied', 'All history copied!'));
+}
+
+function createSimpleZip(files) {
+  const fileEntries = [];
+  let offset = 0;
+
+  for (let f of files) {
+    const enc = new TextEncoder();
+    const nameBytes = enc.encode(f.name);
+    const dataBytes = (typeof f.content === 'string') ? enc.encode(f.content) : f.content;
+    const crc = crc32(dataBytes);
+
+    const header = new Uint8Array(30 + nameBytes.length);
+    const view = new DataView(header.buffer);
+    view.setUint32(0, 0x04034b50, true);
+    view.setUint16(4, 10, true);
+    view.setUint16(8, 0, true);
+    view.setUint32(14, crc, true);
+    view.setUint32(18, dataBytes.length, true);
+    view.setUint32(22, dataBytes.length, true);
+    view.setUint16(26, nameBytes.length, true);
+    header.set(nameBytes, 30);
+
+    fileEntries.push({ nameBytes, dataBytes, crc, offset, header });
+    offset += header.length + dataBytes.length;
+  }
+
+  const cdOffset = offset;
+  let cdSize = 0;
+  const cdEntries = [];
+
+  for (let e of fileEntries) {
+    const cdHeader = new Uint8Array(46 + e.nameBytes.length);
+    const view = new DataView(cdHeader.buffer);
+    view.setUint32(0, 0x02014b50, true);
+    view.setUint16(4, 10, true);
+    view.setUint16(6, 10, true);
+    view.setUint32(16, e.crc, true);
+    view.setUint32(20, e.dataBytes.length, true);
+    view.setUint32(24, e.dataBytes.length, true);
+    view.setUint16(28, e.nameBytes.length, true);
+    view.setUint32(42, e.offset, true);
+    cdHeader.set(e.nameBytes, 46);
+    cdEntries.push(cdHeader);
+    cdSize += cdHeader.length;
+  }
+
+  const eocd = new Uint8Array(22);
+  const eView = new DataView(eocd.buffer);
+  eView.setUint32(0, 0x06054b50, true);
+  eView.setUint16(8, fileEntries.length, true);
+  eView.setUint16(10, fileEntries.length, true);
+  eView.setUint32(12, cdSize, true);
+  eView.setUint32(16, cdOffset, true);
+
+  const parts = [];
+  fileEntries.forEach(e => { parts.push(e.header); parts.push(e.dataBytes); });
+  cdEntries.forEach(c => parts.push(c));
+  parts.push(eocd);
+
+  return new Blob(parts, { type: 'application/zip' });
+}
+
+function crc32(bytes) {
+  let crc = -1;
+  for (let i = 0; i < bytes.length; i++) {
+    crc ^= bytes[i];
+    for (let j = 0; j < 8; j++) crc = (crc >>> 1) ^ (-(crc & 1) & 0xEDB88320);
+  }
+  return (crc ^ -1) >>> 0;
+}
+
+function downloadHistoryZip() {
+  const files = KOUSHIN_DATA.map((k, idx) => ({
+    name: `log_${idx+1}.txt`,
+    content: `[${k.date}]\n${k.desc[currentLang] || k.desc.ja}`
+  }));
+  downloadBlob(createSimpleZip(files), 'log.zip');
+}
+
+/* ==========================================================================
+   7. データタブ & バックアップ / 復元 (.itsme, .indexeddb, backup.zip)
+   ========================================================================== */
+let scorePage = 1;
+function renderScoreTable() {
+  const list = memoryStore.scores;
+  const perPage = 10;
+  const totalPages = Math.ceil(list.length / perPage) || 1;
+  const paged = list.slice((scorePage - 1) * perPage, scorePage * perPage);
+
+  const tbody = document.getElementById('scoreTableBody');
+  tbody.innerHTML = '';
+  if (paged.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">No score record yet.</td></tr>';
+    return;
+  }
+
+  paged.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${row.game}</strong></td>
+      <td>${row.date}</td>
+      <td>${row.limit}</td>
+      <td>${row.score}</td>
+      <td style="color:${row.diff.startsWith('+') ? '#2e7d32' : (row.diff === '-' ? '#888' : '#c2185b')}; font-weight:bold;">${row.diff}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const pagin = document.getElementById('scorePagination');
+  pagin.innerHTML = '';
+  for (let i = 1; i <= totalPages; i++) {
+    const b = document.createElement('button');
+    b.className = `page-btn ${i === scorePage ? 'active' : ''}`;
+    b.textContent = i;
+    b.onclick = () => { scorePage = i; renderScoreTable(); };
+    pagin.appendChild(b);
+  }
+}
+
+function exportScoreTable(format) {
+  if (format === 'html') {
+    let rowsHtml = memoryStore.scores.map(s => `<tr><td>${s.game}</td><td>${s.date}</td><td>${s.limit}</td><td>${s.score}</td><td>${s.diff}</td></tr>`).join('');
+    let html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>Scores</title>
+<style>body{background:#fce4ec;font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;background:#fff;}th,td{border:1px solid #ccc;padding:8px;}</style>
+</head><body><h2>${t('data_table_h')}</h2><table><thead><tr><th>${t('th_game')}</th><th>${t('th_date')}</th><th>${t('th_timelimit')}</th><th>${t('th_score')}</th><th>${t('th_diff')}</th></tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
+    downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), 'scores.html');
+    return;
+  }
+
+  const expCanvas = document.createElement('canvas');
+  expCanvas.width = 800;
+  expCanvas.height = Math.max(300, 100 + memoryStore.scores.length * 35);
+  const sCtx = expCanvas.getContext('2d');
+
+  sCtx.fillStyle = '#ffffff';
+  sCtx.fillRect(0, 0, expCanvas.width, expCanvas.height);
+  sCtx.strokeStyle = '#ff4081';
+  sCtx.lineWidth = 6;
+  sCtx.strokeRect(3, 3, expCanvas.width - 6, expCanvas.height - 6);
+
+  sCtx.fillStyle = '#ff4081';
+  sCtx.font = 'bold 22px sans-serif';
+  sCtx.fillText(`${t('site_title')} - ${t('data_table_h')}`, 30, 45);
+
+  sCtx.font = '14px sans-serif';
+  sCtx.fillStyle = '#222';
+  sCtx.fillText(t('th_game'), 30, 85);
+  sCtx.fillText(t('th_date'), 220, 85);
+  sCtx.fillText(t('th_timelimit'), 420, 85);
+  sCtx.fillText(t('th_score'), 540, 85);
+  sCtx.fillText(t('th_diff'), 650, 85);
+
+  memoryStore.scores.forEach((s, idx) => {
+    const y = 120 + idx * 32;
+    sCtx.fillText(s.game, 30, y);
+    sCtx.fillText(s.date, 220, y);
+    sCtx.fillText(s.limit, 420, y);
+    sCtx.fillText(String(s.score), 540, y);
+    sCtx.fillText(s.diff, 650, y);
+  });
+
+  const mime = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp', avif: 'image/avif', gif: 'image/gif' }[format] || 'image/png';
+  expCanvas.toBlob((blob) => {
+    if (!blob || (format === 'avif' && blob.type !== 'image/avif')) {
+      showModal('Notice', 'このブラウザや機種ではavifは使えません');
+      return;
+    }
+    downloadBlob(blob, `scores.${format}`);
+  }, mime);
+}
+
+// .itsme への完全エクスポート（開いているタブとゲームも保存）
+function exportDataFile(type) {
+  const fullBackupData = {
+    activeTab: currentActiveTab,
+    selectedGame: currentGame,
+    scores: memoryStore.scores,
+    myProfile: memoryStore.myProfile,
+    shortcuts: shortcutData,
+    language: currentLang,
+    pinnedHistoryIds: KOUSHIN_DATA.filter(k => k.pinned).map(k => k.id),
+    config: {
+      gameEnabled: document.getElementById('cfgGameEnabled').checked,
+      saveScore: document.getElementById('cfgSaveScore').checked,
+      useIndexedDB: document.getElementById('cfgUseIndexedDB').checked,
+      mouseStalkerType: document.getElementById('cfgMouseStalkerType').value,
+      stalkerCustomText: document.getElementById('cfgStalkerCustomText').value,
+      stalkerImageData: localStorage.getItem('airplane_game_stalker_img') || '',
+      gcSimulation: document.getElementById('cfgGcSimulation').checked,
+      bgColor: document.getElementById('cfgBgColor').value,
+      bgColorText: document.getElementById('cfgBgColorText').value,
+      textColor: document.getElementById('cfgTextColor').value,
+      textColorText: document.getElementById('cfgTextColorText').value,
+      fontFamily: document.getElementById('cfgFontFamily').value,
+      fontSizeNum: document.getElementById('cfgFontSizeNum').value,
+      fontSizeUnit: document.getElementById('cfgFontSizeUnit').value,
+      showSearch: document.getElementById('cfgShowSearch').checked,
+      showHeader: document.getElementById('cfgShowHeader').checked,
+      colorTheme: document.getElementById('cfgColorTheme').value,
+      stickMaxHeight: document.getElementById('stickMaxHeight').value,
+      stickMaxPillars: document.getElementById('stickMaxPillars').value
+    }
+  };
+
+  const payload = {
+    app: "AirplaneGames",
+    version: CURRENT_DATA_VERSION,
+    timestamp: new Date().toISOString(),
+    data: fullBackupData
+  };
+
+  const jsonStr = JSON.stringify(payload, null, 2);
+
+  if (type === 'itsme') {
+    downloadBlob(new Blob([jsonStr], { type: 'application/json' }), 'data.itsme');
+  } else if (type === 'indexeddb') {
+    const idbPayload = { app: "AirplaneGames", store: "indexeddb", version: CURRENT_DATA_VERSION, scores: memoryStore.scores };
+    downloadBlob(new Blob([JSON.stringify(idbPayload, null, 2)], { type: 'application/json' }), 'data.indexeddb');
+  } else if (type === 'zip') {
+    const files = [
+      { name: 'backup.itsme', content: jsonStr },
+      { name: 'backup.indexeddb', content: JSON.stringify({ app: "AirplaneGames", scores: memoryStore.scores }, null, 2) }
+    ];
+    downloadBlob(createSimpleZip(files), 'backup.zip');
+  }
+}
+
+// 復元処理（例外なく全データを復元）
+function handleRestoreFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    try {
+      let rawJson = '';
+      if (file.name.endsWith('.zip')) {
+        rawJson = extractJsonFromZip(ev.target.result);
+      } else {
+        rawJson = ev.target.result;
+      }
+
+      const parsed = JSON.parse(rawJson);
+
+      if (!parsed || parsed.app !== "AirplaneGames") {
+        throw new Error('不審なファイル形式または互換性のないデータです。');
+      }
+      if (parsed.version && parsed.version > CURRENT_DATA_VERSION) {
+        throw new Error(`バージョン(v${parsed.version})はまだリリースされていない番号です。`);
+      }
+
+      const restored = parsed.data || parsed;
+      if (!restored.scores) restored.scores = [];
+      if (!restored.myProfile) restored.myProfile = memoryStore.myProfile;
+      if (!restored.shortcuts) restored.shortcuts = [
+        { key: 'Space', action: 'jump' },
+        { key: 'KeyP', action: 'pause' }
+      ];
+
+      // スコア復元
+      memoryStore.scores = restored.scores;
+      if (dbInstance && document.getElementById('cfgUseIndexedDB').checked) {
+        try {
+          const tx = dbInstance.transaction('scores', 'readwrite');
+          const store = tx.objectStore('scores');
+          store.clear();
+          restored.scores.forEach(s => store.add(s));
+        } catch (err) {}
+      }
+
+      // プロフィール復元
+      memoryStore.myProfile = restored.myProfile;
+      document.getElementById('myProfName').value = restored.myProfile.name || '';
+      document.getElementById('myProfBirth').value = restored.myProfile.birth || '';
+      document.getElementById('myProfGender').value = restored.myProfile.gender || '';
+      document.getElementById('myProfLocation').value = restored.myProfile.location || '';
+      document.getElementById('myProfHobby').value = restored.myProfile.hobby || '';
+      document.getElementById('myProfQuote').value = restored.myProfile.quote || '';
+      document.getElementById('myProfMessage').value = restored.myProfile.message || '';
+
+      // ショートカット復元
+      shortcutData = restored.shortcuts;
+      renderShortcuts();
+
+      // 設定復元
+      if (restored.config) {
+        const c = restored.config;
+        if (c.gameEnabled !== undefined) document.getElementById('cfgGameEnabled').checked = c.gameEnabled;
+        if (c.saveScore !== undefined) document.getElementById('cfgSaveScore').checked = c.saveScore;
+        if (c.useIndexedDB !== undefined) document.getElementById('cfgUseIndexedDB').checked = c.useIndexedDB;
+        if (c.mouseStalkerType) document.getElementById('cfgMouseStalkerType').value = c.mouseStalkerType;
+        if (c.stalkerCustomText !== undefined) document.getElementById('cfgStalkerCustomText').value = c.stalkerCustomText;
+        if (c.gcSimulation !== undefined) document.getElementById('cfgGcSimulation').checked = c.gcSimulation;
+        if (c.bgColor) {
+          document.getElementById('cfgBgColor').value = c.bgColor;
+          document.getElementById('cfgBgColorText').value = c.bgColorText || c.bgColor;
+        }
+        if (c.textColor) {
+          document.getElementById('cfgTextColor').value = c.textColor;
+          document.getElementById('cfgTextColorText').value = c.textColorText || c.textColor;
+        }
+        if (c.fontFamily) document.getElementById('cfgFontFamily').value = c.fontFamily;
+        if (c.fontSizeNum) document.getElementById('cfgFontSizeNum').value = c.fontSizeNum;
+        if (c.fontSizeUnit) document.getElementById('cfgFontSizeUnit').value = c.fontSizeUnit;
+        if (c.showSearch !== undefined) document.getElementById('cfgShowSearch').checked = c.showSearch;
+        if (c.showHeader !== undefined) document.getElementById('cfgShowHeader').checked = c.showHeader;
+        if (c.colorTheme) document.getElementById('cfgColorTheme').value = c.colorTheme;
+        if (c.stickMaxHeight) document.getElementById('stickMaxHeight').value = c.stickMaxHeight;
+        if (c.stickMaxPillars) document.getElementById('stickMaxPillars').value = c.stickMaxPillars;
+
+        if (c.stalkerImageData) {
+          localStorage.setItem('airplane_game_stalker_img', c.stalkerImageData);
+          if (c.mouseStalkerType === 'image') {
+            mouseStalker.innerHTML = `<img src="${c.stalkerImageData}" style="width:24px; height:24px; object-fit:contain;">`;
+          }
+        }
+      }
+
+      // ピン留め復元
+      if (restored.pinnedHistoryIds) {
+        KOUSHIN_DATA.forEach(k => {
+          k.pinned = restored.pinnedHistoryIds.includes(k.id);
+        });
+      }
+
+      // 言語復元
+      if (restored.language) {
+        changeLanguage(restored.language);
+      }
+
+      // 開いていたゲームとタブの復元
+      if (restored.selectedGame) {
+        const targetGameBtn = document.querySelector(`.game-select-btn[data-game="${restored.selectedGame}"]`);
+        selectGame(restored.selectedGame, targetGameBtn);
+      }
+      if (restored.activeTab) {
+        switchTab(restored.activeTab);
+      }
+
+      // スタイル反映 & LocalStorage保存同期
+      applyColors();
+      applyFontSettings();
+      applyColorTheme(document.getElementById('cfgColorTheme').value);
+      toggleSearchBarVisibility();
+      toggleHeader(document.getElementById('cfgShowHeader').checked);
+      updateMouseStalker();
+      saveAllConfig();
+
+      renderScoreTable();
+      renderHistoryTable();
+
+      showModal(t('data_title'), 'すべてのデータ（設定・ショートカット・プロフィール・スコア・開いていたタブ）が完全に復元されました！');
+    } catch (err) {
+      showModal(
+        '不審なファイル',
+        `${err.message}<br><br>壊れているか形式が不正です。修復用として現在の最新データから使える形式の新しい .itsme ファイルをダウンロードしますか？`,
+        `<button class="btn" onclick="exportDataFile('itsme'); closeModal();">使える形式で新規ダウンロード</button>`
+      );
+    }
+  };
+
+  if (file.name.endsWith('.zip')) {
+    reader.readAsArrayBuffer(file);
+  } else {
+    reader.readAsText(file);
+  }
+}
+
+function extractJsonFromZip(buffer) {
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.length - 4; i++) {
+    if (bytes[i] === 0x7b && bytes[i+1] === 0x22) {
+      const text = new TextDecoder('utf-8').decode(bytes.subarray(i));
+      const endIdx = text.lastIndexOf('}');
+      if (endIdx > 0) return text.substring(0, endIdx + 1);
+    }
+  }
+  throw new Error('ZIP内にデータが見つかりません。');
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ==========================================================================
+   初期ロード処理 (リロード時にも例外なく全復元)
+   ========================================================================== */
+window.addEventListener('load', async () => {
+  resizeGameCanvas();
+
+  // 1. 保存された設定の一括取得
+  const savedConfigStr = localStorage.getItem('airplane_game_config');
+  let config = null;
+  if (savedConfigStr) {
+    try { config = JSON.parse(savedConfigStr); } catch (e) {}
+  }
+
+  // 2. フォーム復元
+  if (config) {
+    if (config.gameEnabled !== undefined) document.getElementById('cfgGameEnabled').checked = config.gameEnabled;
+    if (config.saveScore !== undefined) document.getElementById('cfgSaveScore').checked = config.saveScore;
+    if (config.useIndexedDB !== undefined) document.getElementById('cfgUseIndexedDB').checked = config.useIndexedDB;
+    if (config.mouseStalkerType !== undefined) document.getElementById('cfgMouseStalkerType').value = config.mouseStalkerType;
+    if (config.stalkerCustomText !== undefined) document.getElementById('cfgStalkerCustomText').value = config.stalkerCustomText;
+    if (config.gcSimulation !== undefined) document.getElementById('cfgGcSimulation').checked = config.gcSimulation;
+    if (config.bgColor) document.getElementById('cfgBgColor').value = config.bgColor;
+    if (config.bgColorText) document.getElementById('cfgBgColorText').value = config.bgColorText;
+    if (config.textColor) document.getElementById('cfgTextColor').value = config.textColor;
+    if (config.textColorText) document.getElementById('cfgTextColorText').value = config.textColorText;
+    if (config.fontFamily) document.getElementById('cfgFontFamily').value = config.fontFamily;
+    if (config.fontSizeNum) document.getElementById('cfgFontSizeNum').value = config.fontSizeNum;
+    if (config.fontSizeUnit) document.getElementById('cfgFontSizeUnit').value = config.fontSizeUnit;
+    if (config.showSearch !== undefined) document.getElementById('cfgShowSearch').checked = config.showSearch;
+    if (config.showHeader !== undefined) document.getElementById('cfgShowHeader').checked = config.showHeader;
+    if (config.colorTheme) document.getElementById('cfgColorTheme').value = config.colorTheme;
+    if (config.stickMaxHeight) document.getElementById('stickMaxHeight').value = config.stickMaxHeight;
+    if (config.stickMaxPillars) document.getElementById('stickMaxPillars').value = config.stickMaxPillars;
+  }
+
+  // 3. IndexedDB初期化 & スコア復元
+  await initIndexedDB();
+  await loadScoresFromIndexedDB();
+
+  // 4. 言語復元
+  const savedLang = (config && config.lang) ? config.lang : (localStorage.getItem('airplane_game_lang') || 'ja');
+  changeLanguage(savedLang);
+
+  // 5. スタイル・表示反映
+  applyColors();
+  applyFontSettings();
+  applyColorTheme(document.getElementById('cfgColorTheme').value);
+  toggleSearchBarVisibility();
+  toggleHeader(document.getElementById('cfgShowHeader').checked);
+
+  // 6. マウスストーカー復元
+  if (config && config.mouseStalkerType === 'image' && config.stalkerImageData) {
+    mouseStalker.innerHTML = `<img src="${config.stalkerImageData}" style="width:24px; height:24px; object-fit:contain;">`;
+  }
+  updateMouseStalker();
+
+  // 7. ショートカットキー復元
+  const savedShortcuts = localStorage.getItem('airplane_game_shortcuts');
+  if (savedShortcuts) {
+    try { shortcutData = JSON.parse(savedShortcuts); } catch (e) {}
+  }
+  renderShortcuts();
+
+  // 8. 自作プロフィール復元
+  const savedProf = localStorage.getItem('airplane_game_my_profile');
+  if (savedProf) {
+    try {
+      memoryStore.myProfile = JSON.parse(savedProf);
+      document.getElementById('myProfName').value = memoryStore.myProfile.name || '';
+      document.getElementById('myProfBirth').value = memoryStore.myProfile.birth || '';
+      document.getElementById('myProfGender').value = memoryStore.myProfile.gender || '';
+      document.getElementById('myProfLocation').value = memoryStore.myProfile.location || '';
+      document.getElementById('myProfHobby').value = memoryStore.myProfile.hobby || '';
+      document.getElementById('myProfQuote').value = memoryStore.myProfile.quote || '';
+      document.getElementById('myProfMessage').value = memoryStore.myProfile.message || '';
+    } catch (e) {}
+  }
+
+  // 9. 更新履歴ピン留め復元
+  const savedPinnedIds = localStorage.getItem('airplane_game_pinned_ids');
+  if (savedPinnedIds) {
+    try {
+      const ids = JSON.parse(savedPinnedIds);
+      KOUSHIN_DATA.forEach(k => { k.pinned = ids.includes(k.id); });
+    } catch (e) {}
+  }
+
+  // 10. ゲーム・テーブル初期化
+  initGameScene();
+  renderHistoryTable();
+  renderScoreTable();
+
+  // 11. リロード直前に開いていた「タブ」と「ゲーム」を完全復元
+  if (config) {
+    if (config.selectedGame) {
+      const gBtn = document.querySelector(`.game-select-btn[data-game="${config.selectedGame}"]`);
+      selectGame(config.selectedGame, gBtn);
+    }
+    if (config.activeTab) {
+      switchTab(config.activeTab);
+    }
+  }
+});
+</script>
+</body>
+</html>
