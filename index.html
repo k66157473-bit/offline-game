@@ -878,8 +878,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       <h2 style="color: var(--accent-pink); margin:0;" data-i18n="settings_title">各種設定 & カスタマイズ</h2>
       <div style="display:flex; gap:8px;">
         <button class="btn btn-secondary" onclick="resetAllConfigToDefault()" data-i18n="btn_reset_config">設定を初期化</button>
-        <button class="btn btn-danger" onclick="startDataDeletionProcess()" data-i18n="btn_delete_all_data">データを削除</button>
-      </div>
+            </div>
     </div>
 
     <div class="config-grid">
@@ -1213,6 +1212,9 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       <label><strong data-i18n="lbl_restore">データ復元 (.itsme / .indexeddb / backup.zip):</strong></label><br>
       <input type="file" id="restoreFileInput" accept=".itsme,.indexeddb,.zip" style="margin-top: 8px;" onchange="handleRestoreFile(event)">
     </div>
+
+      <button class="btn btn-danger" onclick="startDataDeletionProcess()" data-i18n="btn_delete_all_data">データを削除</button>
+
   </section>
 </main>
 
@@ -1385,89 +1387,26 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
-  {
-    id: 1,
-    pinned: true,
-    date: '2026/09/20 16:28',
-    desc: {
-      ja: 'PWA化しました（ホーム画面追加・オフライン一発起動に対応）',
-      en: 'Enabled PWA support (installable to home screen & instant offline launch)',
-      hira: 'PWAかしました（ほーむがめんから すぐにあそべます）',
-      ko: 'PWA 지원 추가 (홈 화면 추가 및 오프라인 즉시 실행 지원)',
-      zh: '已实现PWA化（支持添加至主屏幕并离线一键启动）',
-      ar: 'تم تحويل التطبيق إلى PWA (يدعم التثبيت على الشاشة الرئيسية والتشغيل الفوري دون إنترنت)',
-      eo: 'PWA-igita (subtenas aldonon al hejmekrano kaj tujan eksterretan lanĉon)'
-    }
+  { pinned: false, date: '2026/09/20 19:13',
+    desc: { ja: 'データを削除ボタンを設定タブからデータタブに移動しました', en: 'Moved the Delete All Data button from Settings tab to Data tab', hira: 'でーたをけすぼたんを せっていから でーたのぺーじに うつしました', ko: '데이터 삭제 버튼을 설정 탭에서 데이터 탭으로 이동했습니다', zh: '将清除全部数据按钮从设置标签页移动至数据标签页', ar: 'تم نقل زر حذف البيانات من تبويب الإعدادات إلى تبويب البيانات', eo: 'Movis la butonon por forigi datumojn de Agordoj al Datumoj' }
   },
-  {
-    id: 2,
-    pinned: false,
-    date: '2026/09/20 12:00',
-    desc: {
-      ja: '2P画面分割対戦モード & 12種の機内特化新設定 追加',
-      en: 'Added 2P Split Battle mode & 12 in-flight custom settings',
-      hira: '2にんでたいせん もーど と べんりな せっていを ついか',
-      ko: '2인 화면분할 대전 모드 및 12가지 기내 특화 설정 추가',
-      zh: '新增双人分屏对战模式及12项机内深度专属设置',
-      ar: 'إضافة وضع المعركة الثنائية و12 إعدادًا مخصصًا للطيران',
-      eo: 'Aldonis 2-ludantan batalreĝimon kaj 12 flugajn agordojn'
-    }
+  { pinned: true, date: '2026/09/20 16:28',
+    desc: { ja: 'PWA化しました（ホーム画面追加・オフライン一発起動に対応）', en: 'Enabled PWA support (installable to home screen & instant offline launch)', hira: 'PWAかしました（ほーむがめんから すぐにあそべます）', ko: 'PWA 지원 추가 (홈 화면 추가 및 오프라인 즉시 실행 지원)', zh: '已实现PWA化（支持添加至主屏幕并离线一键启动）', ar: 'تم تحويل التطبيق إلى PWA (يدعم التثبيت على الشاشة الرئيسية والتشغيل الفوري دون إنترنت)', eo: 'PWA-igita (subtenas aldonon al hejmekrano kaj tujan eksterretan lanĉon)' }
   },
-  {
-    id: 3,
-    pinned: false,
-    date: '2026/09/19 18:30',
-    desc: {
-      ja: 'ショートカットキー無制限追加機能 & テーマ連動文字色補正システム搭載',
-      en: 'Added unlimited shortcut keys & automatic text contrast correction system',
-      hira: 'しょーとかっと むせいげん ついか ＆ もじのいろ じどう ちょうせい',
-      ko: '단축키 무제한 추가 기능 및 테마 연동 텍스트 대비 자동 보정 시스템 탑재',
-      zh: '搭载快捷键无限制设定与浅/深色主题文字颜色防同化补偿系统',
-      ar: 'إضافة اختصارات غير محدودة ونظام تصحيح تباين ألوان النصوص تلقائيًا',
-      eo: 'Aldonis senlimajn klavkombinojn kaj aŭtomatan tekstan kontrastan sistemon'
-    }
+  { pinned: false, date: '2026/09/20 12:00',
+    desc: { ja: '2P画面分割対戦モード & 12種の機内特化新設定 追加', en: 'Added 2P Split Battle mode & 12 in-flight custom settings', hira: '2にんでたいせん もーど と べんりな せっていを ついか', ko: '2인 화면분할 대전 모드 및 12가지 기내 특화 설정 추가', zh: '新增双人分屏对战模式及12项机内深度专属设置', ar: 'إضافة وضع المعركة الثنائية و12 إعدادًا مخصصًا للطيران', eo: 'Aldonis 2-ludantan batalreĝimon kaj 12 flugajn agordojn' }
   },
-  {
-    id: 4,
-    pinned: false,
-    date: '2026/09/19 14:15',
-    desc: {
-      ja: '黒板をお掃除しよう・棒とビの物理演算およびカスタマイズ上限機能実装',
-      en: 'Implemented blackboard cleaning & obstacle jumping physics with custom limits',
-      hira: 'こくばんそうじ と ぼうとびの じゆう せっていを ついか',
-      ko: '칠판 청소 및 봉 넘기 물리 엔진과 커스텀 상한치 설정 구현',
-      zh: '实现清理黑板与火柴人跳跃的物理演算及自定义上限参数功能',
-      ar: 'تطبيق فيزياء تنظيف السبورة والقفز فوق الأعمدة مع خيارات التخصيص',
-      eo: 'Efektivigis purigadon de nigra tabulo kaj baston-salton kun propraj agordoj'
-    }
+  { pinned: false, date: '2026/09/19 18:30',
+    desc: { ja: 'ショートカットキー無制限追加機能 & テーマ連動文字色補正システム搭載', en: 'Added unlimited shortcut keys & automatic text contrast correction system', hira: 'しょーとかっと むせいげん ついか ＆ もじのいろ じどう ちょうせい', ko: '단축키 무제한 추가 기능 및 테마 연동 텍스트 대비 자동 보정 시스템 탑재', zh: '搭载快捷键无限制设定与浅/深色主题文字颜色防同化补偿系统', ar: 'إضافة اختصارات غير محدودة ونظام تصحيح تباين ألوان النصوص تلقائيًا', eo: 'Aldonis senlimajn klavkombinojn kaj aŭtomatan tekstan kontrastan sistemon' }
   },
-  {
-    id: 5,
-    pinned: false,
-    date: '2026/09/18 20:00',
-    desc: {
-      ja: '自作プロフィール保存＆多形式書き出し(PNG/AVIF/WebP/GIF等)対応',
-      en: 'Custom profile creator & multi-format exporter (PNG/AVIF/WebP/GIF/HTML)',
-      hira: 'じぶんの ぷろふぃーる ほぞん と がぞう ほぞんきのう',
-      ko: '커스텀 프로필 작성 및 다채로운 형식(PNG/AVIF/WebP/GIF 등) 내보내기 지원',
-      zh: '自定义个人档案保存与多格式(PNG/AVIF/WebP/GIF等)图片文件导出',
-      ar: 'إنشاء وحفظ الملف الشخصي مع التصدير بصيغ متعددة (PNG/AVIF/WebP/GIF)',
-      eo: 'Kreo de propra profilo kaj plurobla elporto (PNG/AVIF/WebP/GIF/HTML)'
-    }
+  { pinned: false, date: '2026/09/19 14:15',
+    desc: { ja: '黒板をお掃除しよう・棒とビの物理演算およびカスタマイズ上限機能実装', en: 'Implemented blackboard cleaning & obstacle jumping physics with custom limits', hira: 'こくばんそうじ と ぼうとびの じゆう せっていを ついか', ko: '칠판 청소 및 봉 넘기 물리 엔진과 커스텀 상한치 설정 구현', zh: '实现清理黑板与火柴人跳跃的物理演算及自定义上限参数功能', ar: 'تطبيق فيزياء تنظيف السبورة والقفز فوق الأعمدة مع خيارات التخصيص', eo: 'Efektivigis purigadon de nigra tabulo kaj baston-salton kun propraj agordoj' }
   },
-  {
-    id: 6,
-    pinned: false,
-    date: '2026/09/18 12:00',
-    desc: {
-      ja: 'サイト開設と初期アーキテクチャの構築',
-      en: 'Initial release and architecture setup',
-      hira: 'さいとが できあがりました',
-      ko: '사이트 개설 및 초기 아키텍처 구축',
-      zh: '开站与初始架构搭建',
-      ar: 'إطلاق الموقع وتأسيس الهيكلية الأولية',
-      eo: 'Reteja malfermo kaj komenca arkitekturo'
-    }
+  { pinned: false, date: '2026/09/18 20:00',
+    desc: { ja: '自作プロフィール保存＆多形式書き出し(PNG/AVIF/WebP/GIF等)対応', en: 'Custom profile creator & multi-format exporter (PNG/AVIF/WebP/GIF/HTML)', hira: 'じぶんの ぷろふぃーる ほぞん と がぞう ほぞんきのう', ko: '커스텀 프로필 작성 및 다채로운 형식(PNG/AVIF/WebP/GIF 등) 내보내기 지원', zh: '自定义个人档案保存与多格式(PNG/AVIF/WebP/GIF等)图片文件导出', ar: 'إنشاء وحفظ الملف الشخصي مع التصدير بصيغ متعددة (PNG/AVIF/WebP/GIF)', eo: 'Kreo de propra profilo kaj plurobla elporto (PNG/AVIF/WebP/GIF/HTML)' }
+  },
+  { pinned: false, date: '2026/09/18 12:00',
+    desc: { ja: 'サイト開設と初期アーキテクチャの構築', en: 'Initial release and architecture setup', hira: 'さいとが できあがりました', ko: '사이트 개설 및 초기 아키텍처 구축', zh: '开站与初始架构搭建', ar: 'إطلاق الموقع وتأسيس الهيكلية الأولية', eo: 'Reteja malfermo kaj komenca arkitekturo' }
   }
 ];
 
@@ -3403,8 +3342,9 @@ function renderHistoryTable() {
   }
 }
 
-function toggleHistoryPin(id) {
-  const target = KOUSHIN_DATA.find(k => k.id === id);
+// ピン留め切り替え関数
+function toggleHistoryPin(date) {
+  const target = KOUSHIN_DATA.find(k => k.date === date);
   if (target) {
     target.pinned = !target.pinned;
     renderHistoryTable();
