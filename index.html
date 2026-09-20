@@ -892,16 +892,17 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <label data-i18n="cfg_memory">5. 不要なメモリ削除</label>
         <input type="checkbox" id="cfgGcSimulation" checked onchange="saveConfig()"> <span data-i18n="val_memory_note">ON (即時解放し軽量化)</span>
       </div>
-      <div class="config-item">
-        <label data-i18n="cfg_colors">6. 背景色 & 7. 文字色</label>
-        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
-          <span data-i18n="val_bg">背景:</span> <input type="color" id="cfgBgColor" value="#fce4ec" onchange="applyColors(); saveConfig();">
-          <input type="text" id="cfgBgColorText" value="#fce4ec" style="width: 85px;" onchange="applyColorsText(); saveConfig();">
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <span data-i18n="val_text">文字:</span> <input type="color" id="cfgTextColor" value="#333333" onchange="applyColors(); saveConfig();">
-          <input type="text" id="cfgTextColorText" value="#333333" style="width: 85px;" onchange="applyColorsText(); saveConfig();">
-        </div>
+     <div class="config-item">
+  <label data-i18n="cfg_colors">6. 背景色 & 7. 文字色</label>
+  <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+    <span data-i18n="val_bg">背景:</span> <input type="color" id="cfgBgColor" value="#fce4ec" oninput="applyColors(); saveConfig();">
+    <input type="text" id="cfgBgColorText" value="#fce4ec" style="width: 85px;" oninput="applyColorsText(); saveConfig();">
+  </div>
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <span data-i18n="val_text">文字:</span> <input type="color" id="cfgTextColor" value="#333333" oninput="applyColors(); saveConfig();">
+    <input type="text" id="cfgTextColorText" value="#333333" style="width: 85px;" oninput="applyColorsText(); saveConfig();">
+  </div>
+</div>
       </div>
       <div class="config-item">
         <label data-i18n="cfg_font">8. フォント設定</label>
@@ -3021,19 +3022,37 @@ function loadStalkerImage(e) {
 function applyColors() {
   const bg = document.getElementById('cfgBgColor').value;
   const text = document.getElementById('cfgTextColor').value;
-  document.documentElement.style.setProperty('--bg-color', bg);
-  document.documentElement.style.setProperty('--text-color', text);
+
+  // htmlとbody両方に直接セットしてダークモード等の上書きを防ぐ
+  [document.documentElement, document.body].forEach(el => {
+    el.style.setProperty('--bg-color', bg);
+    el.style.setProperty('--text-color', text);
+    el.style.setProperty('--text-black-adaptive', text);
+    el.style.setProperty('--text-white-adaptive', text);
+  });
+
   document.getElementById('cfgBgColorText').value = bg;
   document.getElementById('cfgTextColorText').value = text;
 }
 
 function applyColorsText() {
-  const bg = document.getElementById('cfgBgColorText').value;
-  const text = document.getElementById('cfgTextColorText').value;
-  document.documentElement.style.setProperty('--bg-color', bg);
-  document.documentElement.style.setProperty('--text-color', text);
-  document.getElementById('cfgBgColor').value = bg;
-  document.getElementById('cfgTextColor').value = text;
+  const bg = document.getElementById('cfgBgColorText').value.trim();
+  const text = document.getElementById('cfgTextColorText').value.trim();
+
+  [document.documentElement, document.body].forEach(el => {
+    el.style.setProperty('--bg-color', bg);
+    el.style.setProperty('--text-color', text);
+    el.style.setProperty('--text-black-adaptive', text);
+    el.style.setProperty('--text-white-adaptive', text);
+  });
+
+  // #ffffff 形式ならピッカー側にも同期
+  if (/^#[0-9A-Fa-f]{6}$/.test(bg)) {
+    document.getElementById('cfgBgColor').value = bg;
+  }
+  if (/^#[0-9A-Fa-f]{6}$/.test(text)) {
+    document.getElementById('cfgTextColor').value = text;
+  }
 }
 
 function applyFontSettings() {
