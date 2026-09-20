@@ -3300,11 +3300,13 @@ function exportProfileCard(format) {
 let historyPage = 1;
 
 function renderHistoryTable() {
-  const query = document.getElementById('historySearchInput').value.toLowerCase();
-  const sort = document.getElementById('historySortSelect').value;
+  const query = (document.getElementById('historySearchInput')?.value || '').toLowerCase();
+  const sort = document.getElementById('historySortSelect')?.value || 'newest';
 
   let list = [...KOUSHIN_DATA].filter(item => {
-    const text = item.desc[currentLang] || item.desc.ja;
+    const text = (typeof item.desc === 'string')
+      ? item.desc
+      : (item.desc ? (item.desc[currentLang] || item.desc.ja || Object.values(item.desc)[0] || '') : '');
     return item.date.toLowerCase().includes(query) || text.toLowerCase().includes(query);
   });
 
@@ -3320,26 +3322,36 @@ function renderHistoryTable() {
   const paged = list.slice((historyPage - 1) * perPage, historyPage * perPage);
 
   const tbody = document.getElementById('historyTableBody');
+  if (!tbody) return;
   tbody.innerHTML = '';
+
   paged.forEach(item => {
+    // 文字列でも多言語オブジェクトでも100%確実にテキストを取り出す
+    const descText = (typeof item.desc === 'string')
+      ? item.desc
+      : (item.desc ? (item.desc[currentLang] || item.desc.ja || Object.values(item.desc)[0] || '') : '');
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
-     <td><button class="btn btn-outline" style="padding:2px 8px; font-size:11px;" onclick="toggleHistoryPin('${item.date}')">${item.pinned ? '★' : '☆'}</button></td>
+      <td><button class="btn btn-outline" style="padding:2px 8px; font-size:11px;" onclick="toggleHistoryPin('${item.date}')">${item.pinned ? '★' : '☆'}</button></td>
+      <td>${item.date}</td>
+      <td>${descText}</td>
     `;
     tbody.appendChild(tr);
   });
 
   const pagin = document.getElementById('historyPagination');
-  pagin.innerHTML = '';
-  for (let i = 1; i <= totalPages; i++) {
-    const b = document.createElement('button');
-    b.className = `page-btn ${i === historyPage ? 'active' : ''}`;
-    b.textContent = i;
-    b.onclick = () => { historyPage = i; renderHistoryTable(); };
-    pagin.appendChild(b);
+  if (pagin) {
+    pagin.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      const b = document.createElement('button');
+      b.className = `page-btn ${i === historyPage ? 'active' : ''}`;
+      b.textContent = i;
+      b.onclick = () => { historyPage = i; renderHistoryTable(); };
+      pagin.appendChild(b);
+    }
   }
 }
-
 // ピン留め切り替え関数
 function toggleHistoryPin(date) {
   const target = KOUSHIN_DATA.find(k => k.date === date);
