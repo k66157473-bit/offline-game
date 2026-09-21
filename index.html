@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -743,7 +744,8 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       <option value="en">English</option>
       <option value="hira">にほんご (ひらがな)</option>
       <option value="ko">한국어</option>
-      <option value="zh">中文</option>
+      <option value="zh-CN">简体中文</option>
+      <option value="zh-TW">繁體中文</option>
       <option value="ar">العربية</option>
       <option value="eo">Esperanto</option>
     </select>
@@ -1194,6 +1196,15 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       </div>
     </div>
 
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
+      <input type="text" id="scoreSearchInput" class="search-input" data-i18n-ph="ph_search_score" placeholder="スコアを検索..." oninput="scorePage=1; renderScoreTable()">
+      <label style="display:flex; gap:5px; align-items:center;"><span data-i18n="lbl_score_date">日付</span><input type="date" id="scoreDateInput" onchange="scorePage=1; renderScoreTable()"></label>
+      <select id="scoreSortSelect" class="time-select" onchange="scorePage=1; renderScoreTable()">
+        <option value="newest" data-i18n="opt_newest">最新順</option>
+        <option value="oldest" data-i18n="opt_oldest">古い順</option>
+      </select>
+    </div>
+
     <div class="table-responsive" id="scoreTableWrapper">
       <table id="scoreTable">
         <thead>
@@ -1268,6 +1279,8 @@ const I18N_DICTIONARY = {
   game_vs: { ja: "⚔️ 2P分割対戦", en: "⚔️ 2P Split Battle", hira: "⚔️ 2にんで たいせん", ko: "⚔️ 2인 화면분할 대전", zh: "⚔️ 双人分屏对战", ar: "⚔️ معركة ثنائية مقسمة", eo: "⚔️ 2-Ludanta Batalo" },
 
   ph_search_game: { ja: "ゲームを検索...", en: "Search game...", hira: "げーむを けんさく...", ko: "게임 검색...", zh: "搜索游戏...", ar: "البحث عن لعبة...", eo: "Serĉi ludon..." },
+  ph_search_score: { ja: "スコアを検索...", en: "Search scores...", hira: "すこあを けんさく...", ko: "점수 검색...", zh: "搜索得分...", ar: "البحث في النتائج...", eo: "Serĉi poentarojn..." },
+  lbl_score_date: { ja: "日付", en: "Date", hira: "ひづけ", ko: "날짜", zh: "日期", ar: "التاريخ", eo: "Dato" },
   lbl_timelimit: { ja: "制限時間: ", en: "Time Limit: ", hira: "じかん: ", ko: "제한시간: ", zh: "时间限制: ", ar: "الوقت المحدد: ", eo: "Templimo: " },
   opt_custom: { ja: "自由入力", en: "Custom", hira: "じゆう", ko: "사용자 지정", zh: "自定义", ar: "مخصص", eo: "Propra" },
   btn_start: { ja: "開始", en: "Start", hira: "すたーと", ko: "시작", zh: "开始", ar: "بدء", eo: "Starti" },
@@ -1386,6 +1399,7 @@ const I18N_DICTIONARY = {
   th_timelimit: { ja: "制限時間", en: "Time Limit", hira: "じかん", ko: "제한시간", zh: "时间限制", ar: "الوقت", eo: "Templimo" },
   th_score: { ja: "スコア", en: "Score", hira: "すこあ", ko: "점수", zh: "得分", ar: "النقاط", eo: "Poentaro" },
   th_diff: { ja: "ハイスコアとの差", en: "High Score Diff", hira: "さいこう との さ", ko: "최고점 대비", zh: "与最高分差", ar: "الفرق عن الرقم القياسي", eo: "Diferenco de Rekordo" },
+  score_empty: { ja: "スコア記録はありません。", en: "No score records.", hira: "すこあの きろくは ありません。", ko: "점수 기록이 없습니다.", zh: "暂无得分记录。", ar: "لا توجد سجلات نتائج.", eo: "Neniuj poentaroj." },
   data_backup_h: { ja: "バックアップ & 復元", en: "Backup & Restore", hira: "ばっくあっぷ と ふくげん", ko: "백업 및 복원", zh: "备份与还原", ar: "النسخ الاحتياطي والاستعادة", eo: "Savkopio kaj Restarigo" },
   lbl_restore: { ja: "データ復元 (.itsme / .indexeddb / backup.zip):", en: "Restore Data (.itsme / .indexeddb / backup.zip):", hira: "ふくげん:", ko: "데이터 복원:", zh: "数据还原:", ar: "استعادة البيانات:", eo: "Restarigi Datumojn:" },
   footer_running: { ja: "飛行機でも遊べるゲーム ★ 快適な空の旅を！", en: "Airplane Playable Games ★ Have a nice flight!", hira: "ひこうきでも あそべる げーむ ★ たのしい たびを！", ko: "비행기에서도 즐기는 게임 ★ 쾌적하고 즐거운 비행 되세요!", zh: "飞机上也能玩的游戏 ★ 祝您旅途愉快！", ar: "ألعاب ممتعة على متن الطائرة ★ نتمنى لك رحلة سعيدة ومريحة!", eo: "Ludoj Ludeblaj en Aviadilo ★ Bonan flugon al vi!" },
@@ -1398,6 +1412,7 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+{ pinned: false, date: '2026/09/21 12:37', desc: { ja: 'ゲームスコア記録表の検索・日付指定・並び順切替、多言語対応を強化', en: 'Enhanced score table search, date filtering, sorting, and multilingual support', hira: 'すこあきろくひょうの けんさく・ひづけしてい・ならびじゅんきりかえ と たげんごたいおうを きょうか', ko: '게임 점수표 검색, 날짜 필터, 정렬 및 다국어 지원 강화', zh: '增强得分记录表的搜索、日期筛选、排序及多语言支持', ar: 'تعزيز البحث وتصفية التاريخ والفرز ودعم اللغات المتعددة في جدول النتائج', eo: 'Plibonigis serĉon, datan filtradon, ordigon kaj plurlingvan subtenon en la poentotabelo' } },
 { pinned: false, date: '2026/09/21 08:50',
     desc: { ja: 'ブロック消しに6種の特殊ブロック(💣⭐🧊🌈🧀🦄)追加＆飛ぶ力設定(上限98)を実装', en: 'Added 6 special blocks (💣⭐🧊🌈🧀🦄) & customizable jump force up to 98', hira: 'ぶろっくけしに とくしゅぶろっくを ついか＆とぶちから(98まで)を せっていできるようにしました', ko: '블록 깨기에 6종의 특수 블록 추가 및 점프력 설정(최대 98) 구현', zh: '方块消除新增6种特殊方块(💣⭐🧊🌈🧀🦄)并支持自定义跳跃力(上限98)', ar: 'إضافة 6 كتل خاصة في لعبة تكسير الكتل وخيار قوة القفز (بحد أقصى 98)', eo: 'Aldonis 6 specialajn blokojn (💣⭐🧊🌈🧀🦄) kaj agordon de salta forto (ĝis 98)' }
   },
@@ -1436,9 +1451,19 @@ const KOUSHIN_DATA = [
 ];
 
 let currentLang = 'ja';
+function toTraditionalChinese(text) {
+  const map = {'国':'國','学':'學','习':'習','数':'數','据':'據','游':'遊','戏':'戲','标':'標','签':'籤','记':'記','录':'錄','时':'時','间':'間','间':'間','开':'開','关':'關','闭':'閉','设':'設','置':'置','档':'檔','个':'個','人':'人','资':'資','料':'料','备':'備','份':'份','复':'復','还':'還','原':'原','语':'語','言':'言','简':'簡','体':'體','繁':'繁','对':'對','战':'戰','双':'雙','画':'畫','分':'分','屏':'屏','跳':'跳','跃':'躍','消':'消','除':'除','块':'塊','与':'與','最':'最','新':'新','旧':'舊','查':'查','询':'詢','搜':'搜','索':'索','日':'日','期':'期','名':'名','称':'稱','游':'遊','戏':'戲','时':'時','限':'限','制':'制','得':'得','分':'分','高':'高','差':'差','出':'出','生':'生','月':'月','性':'性','别':'別','兴':'興','趣':'趣','格':'格','言':'言','消':'消','息':'息','显':'顯','示':'示','页':'頁','面':'面','内':'內','容':'容','导':'導','出':'出','入':'入','历':'歷','史':'史','档':'檔','案':'案','保':'保','存':'存','复':'復','制':'製','数':'數','据':'據','时':'時','间':'間','项':'項','目':'目','游':'遊','戏':'戲','棒':'棒','高':'高','度':'度','现':'現','场':'場','数':'數','量':'量','上':'上','限':'限','双':'雙','方':'方','同':'同','时':'時','执':'執','行':'行','设':'設','置':'置','可':'可','以':'以'}
+  return String(text).replace(/[国学习数游戏标签记录时间开启关闭设置档个资备复还语简体繁对战双画跃块与旧查询日期称限制得差生别兴趣显页内导出历史案复制项现执行]/g, ch => map[ch] || ch);
+}
+
 function t(key) {
   if (I18N_DICTIONARY[key] && I18N_DICTIONARY[key][currentLang]) {
-    return I18N_DICTIONARY[key][currentLang];
+    const value = I18N_DICTIONARY[key][currentLang];
+    return currentLang === 'zh-TW' ? toTraditionalChinese(value) : value;
+  }
+  if (I18N_DICTIONARY[key] && (currentLang === 'zh-CN' || currentLang === 'zh-TW') && I18N_DICTIONARY[key].zh) {
+    const value = I18N_DICTIONARY[key].zh;
+    return currentLang === 'zh-TW' ? toTraditionalChinese(value) : value;
   }
   return key;
 }
@@ -1496,6 +1521,7 @@ function saveAllConfig() {
     colorTheme: document.getElementById('cfgColorTheme').value,
     stickMaxHeight: document.getElementById('stickMaxHeight').value,
     stickMaxPillars: document.getElementById('stickMaxPillars').value,
+    jumpForce: document.getElementById('cfgJumpForce').value,
 
     nightFlight: document.getElementById('cfgNightFlight').checked,
     reducedMotion: document.getElementById('cfgReducedMotion').checked,
@@ -1564,6 +1590,7 @@ function resetAllConfigToDefault() {
   document.getElementById('cfgColorTheme').value = 'light';
   document.getElementById('stickMaxHeight').value = '200';
   document.getElementById('stickMaxPillars').value = '5';
+  document.getElementById('cfgJumpForce').value = '12';
 
   document.getElementById('cfgNightFlight').checked = false;
   document.getElementById('cfgReducedMotion').checked = false;
@@ -1608,6 +1635,7 @@ function resetAllConfigToDefault() {
 }
 
 function changeLanguage(lang) {
+  if (lang === 'zh') lang = 'zh-CN';
   currentLang = lang;
   document.getElementById('langSelector').value = lang;
   document.documentElement.lang = lang;
@@ -1629,6 +1657,7 @@ function changeLanguage(lang) {
   document.getElementById('authorName').textContent = AUTHOR_NAMES[lang] || AUTHOR_NAMES.ja;
   updateGameInstructionText();
   renderHistoryTable();
+  renderScoreTable();
   renderShortcuts();
   updateMyProfileLive();
   saveAllConfig();
@@ -1669,35 +1698,29 @@ function loadScoresFromIndexedDB() {
   });
 }
 
-function saveScoreRecord(gameName, timeLimit, score) {
+function saveScoreRecord(gameKey, timeLimit, score) {
   if (!document.getElementById('cfgSaveScore').checked) return;
-
-  const allScores = memoryStore.scores.filter(s => s.game === gameName);
-  const maxScore = allScores.length > 0 ? Math.max(...allScores.map(s => s.score)) : score;
+  const stableKey = I18N_DICTIONARY[`game_${gameKey}`] ? gameKey : (['stick','block','konjac','blackboard','flag','vs'].find(k => Object.values(I18N_DICTIONARY[`game_${k}`] || {}).includes(gameKey)) || gameKey);
+  const allScores = memoryStore.scores.filter(s => getScoreGameKey(s) === stableKey);
+  const maxScore = allScores.length > 0 ? Math.max(...allScores.map(s => Number(s.score) || 0)) : score;
   const diff = score - maxScore;
-
   const now = new Date();
   const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
+  const isInfinite = ['konjac','blackboard','vs'].includes(stableKey);
   const record = {
-    game: gameName,
+    gameKey: stableKey,
+    game: t(`game_${stableKey}`),
     date: dateStr,
-    limit: (gameName === t('game_konjac') || gameName === t('game_blackboard') || gameName === t('game_vs')) ? '∞' : `${timeLimit}s`,
+    limit: isInfinite ? '∞' : `${timeLimit}s`,
     score: score,
-    diff: (gameName === t('game_konjac') || gameName === t('game_blackboard') || gameName === t('game_vs')) ? '-' : (diff >= 0 ? `+${diff}` : `${diff}`)
+    diff: isInfinite ? '-' : (diff >= 0 ? `+${diff}` : `${diff}`)
   };
-
   memoryStore.scores.unshift(record);
-
   if (dbInstance && document.getElementById('cfgUseIndexedDB').checked) {
-    try {
-      const tx = dbInstance.transaction('scores', 'readwrite');
-      tx.objectStore('scores').add(record);
-    } catch (e) {}
+    try { dbInstance.transaction('scores', 'readwrite').objectStore('scores').add(record); } catch (e) {}
   }
   renderScoreTable();
 }
-
 /* ==========================================================================
    データ削除処理 (5回連続 YES? or NO ＆ 3秒ホワイトアウト)
    ========================================================================== */
@@ -2062,6 +2085,12 @@ function recordKey(inputElement, index) {
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' && !e.target.readOnly) return;
 
+  if (currentGame === 'stick' && isGameRunning && (e.code === 'ArrowUp' || e.code === 'Space')) {
+    e.preventDefault();
+    jumpStickMan();
+    return;
+  }
+
   if (currentGame === 'vs' && isGameRunning) {
     if (e.code === 'KeyW' || e.code === 'KeyA') triggerVsJump(1);
     if (e.code === 'ArrowUp' || e.code === 'KeyL') triggerVsJump(2);
@@ -2159,7 +2188,7 @@ function selectGame(gameKey, btn) {
     if (matched) matched.classList.add('active');
   }
 
-  document.getElementById('stickGameSettings').style.display = (gameKey === 'stick') ? 'flex' : 'none';
+  document.getElementById('stickGameSettings').style.display = (gameKey === 'stick' || gameKey === 'vs') ? 'flex' : 'none';
 
   // 2P対戦UIの切り替え
   const isVs = (gameKey === 'vs');
@@ -2195,6 +2224,11 @@ function getTimeLimit() {
 
 function getGameSpeed() {
   return parseFloat(document.getElementById('cfgGameSpeed')?.value || '1.0');
+}
+
+function getJumpForce() {
+  const val = parseFloat(document.getElementById('cfgJumpForce')?.value || '12');
+  return Math.min(98, Math.max(1, isNaN(val) ? 12 : val));
 }
 
 // 1. 棒とビ
@@ -2742,8 +2776,10 @@ function updateVsGame() {
     if (vsP2.y > ground) { vsP2.y = ground; vsP2.vy = 0; vsP2.jumping = false; }
   }
 
-  if (vsPillars.length === 0 || vsPillars[vsPillars.length - 1].x < (canvas.width / window.devicePixelRatio) - 180) {
-    const h = Math.random() * 120 + 60;
+  const maxPillars = Math.max(2, Math.min(10, parseInt(document.getElementById('stickMaxPillars')?.value, 10) || 5));
+  const maxHeight = Math.max(50, Math.min(350, parseInt(document.getElementById('stickMaxHeight')?.value, 10) || 200));
+  if (vsPillars.length < maxPillars && (vsPillars.length === 0 || vsPillars[vsPillars.length - 1].x < (canvas.width / window.devicePixelRatio) - 180)) {
+    const h = Math.min(maxHeight, Math.random() * Math.max(10, maxHeight - 50) + 50);
     vsPillars.push({
       x: canvas.width / window.devicePixelRatio + 30,
       width: 35,
@@ -2925,7 +2961,7 @@ function stopGame() {
   document.getElementById('flagQuizOverlay').style.display = 'none';
 
   saveScoreRecord(
-    t(`game_${currentGame}`),
+    currentGame,
     getTimeLimit(),
     currentGame === 'flag' ? (currentScore - flagMissScore) : (currentGame === 'vs' ? Math.max(vsP1.score, vsP2.score) : currentScore)
   );
@@ -2971,6 +3007,16 @@ function drawFrame() {
 }
 
 
+function jumpStickMan() {
+  if (currentGame !== 'stick' || !isGameRunning || stickMan.jumping) return;
+
+  const force = getJumpForce();
+  const speed = Math.max(0.01, getGameSpeed());
+  stickMan.vy = -force * Math.min(1.2, speed);
+  stickMan.jumping = true;
+  playClickSound();
+}
+
 function triggerDpad(dir) {
   playClickSound();
 
@@ -2984,13 +3030,7 @@ function triggerDpad(dir) {
     }, 100);
   }
 
-  if (currentGame === 'stick') {
-    if (!stickMan.jumping) {
-      stickMan.vy = -getJumpForce() * Math.min(1.2, getGameSpeed());
-      stickMan.jumping = true;
-      playClickSound();
-    }
-  }
+  if (dir === 'up') jumpStickMan();
 }
 
 function handleCanvasPointer(e) {
@@ -3004,7 +3044,10 @@ function handleCanvasPointer(e) {
     return;
   }
 
-     else if (currentGame === 'block') {
+  if (currentGame === 'stick') {
+    jumpStickMan();
+    return;
+  } else if (currentGame === 'block') {
     for (let i = blocks3D.length - 1; i >= 0; i--) {
       const b = blocks3D[i];
       if (Math.hypot(b.x - x, b.y - y) < b.size) {
@@ -3408,9 +3451,9 @@ function resetMyProfile() {
 function exportProfileCard(format) {
   const p = memoryStore.myProfile;
   if (format === 'html') {
-    const htmlContent = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${p.name}</title>
+    const htmlContent = `<!DOCTYPE html><html lang="${currentLang}"><head><meta charset="UTF-8"><title>${escapeHtml(p.name)}</title>
 <style>body{background:#fce4ec;color:#333;font-family:sans-serif;padding:30px;}.card{background:#fff;padding:25px;border-radius:15px;max-width:500px;margin:auto;border:2px solid #ff80ab;}</style>
-</head><body><div class="card"><h2 style="color:#ff4081;">${p.name}</h2><p><strong>Birth:</strong> ${p.birth}</p><p><strong>Gender:</strong> ${p.gender}</p><p><strong>Location:</strong> ${p.location}</p><p><strong>Hobby:</strong> ${p.hobby}</p><p><strong>Quote:</strong> ${p.quote}</p><p><strong>Message:</strong> ${p.message}</p></div></body></html>`;
+</head><body><div class="card"><h2 style="color:#ff4081;">${p.name}</h2><p><strong>${t('my_birth')}:</strong> ${escapeHtml(p.birth)}</p><p><strong>${t('my_gender')}:</strong> ${escapeHtml(p.gender)}</p><p><strong>${t('my_origin')}:</strong> ${escapeHtml(p.location)}</p><p><strong>${t('my_hobby')}:</strong> ${escapeHtml(p.hobby)}</p><p><strong>${t('my_quote')}:</strong> ${escapeHtml(p.quote)}</p><p><strong>${t('my_msg')}:</strong> ${escapeHtml(p.message)}</p></div></body></html>`;
     downloadBlob(new Blob([htmlContent], { type: 'text/html;charset=utf-8' }), 'profile.html');
     return;
   }
@@ -3427,13 +3470,13 @@ function exportProfileCard(format) {
 
   eCtx.fillStyle = '#ff4081';
   eCtx.font = 'bold 24px sans-serif';
-  eCtx.fillText(`${p.name} Profile`, 40, 60);
+  eCtx.fillText(`${p.name} ${t('tab_profile')}`, 40, 60);
 
   eCtx.fillStyle = '#222222';
   eCtx.font = '16px sans-serif';
   const items = [
-    `Birth: ${p.birth}`, `Gender: ${p.gender}`, `Location: ${p.location}`,
-    `Hobby: ${p.hobby}`, `Quote: ${p.quote}`, `Message: ${p.message}`
+    `${t('my_birth')}: ${p.birth}`, `${t('my_gender')}: ${p.gender}`, `${t('my_origin')}: ${p.location}`,
+    `${t('my_hobby')}: ${p.hobby}`, `${t('my_quote')}: ${p.quote}`, `${t('my_msg')}: ${p.message}`
   ];
   items.forEach((txt, i) => eCtx.fillText(txt, 40, 110 + i * 35));
 
@@ -3629,32 +3672,63 @@ function downloadHistoryZip() {
    7. データタブ & バックアップ / 復元
    ========================================================================== */
 let scorePage = 1;
+function getScoreGameKey(row) {
+  if (row.gameKey && I18N_DICTIONARY[`game_${row.gameKey}`]) return row.gameKey;
+  const games = ['stick', 'block', 'konjac', 'blackboard', 'flag', 'vs'];
+  return games.find(key => Object.values(I18N_DICTIONARY[`game_${key}`] || {}).includes(row.game)) || null;
+}
+
+function getScoreGameName(row) {
+  const key = getScoreGameKey(row);
+  return key ? t(`game_${key}`) : (row.game || '');
+}
+
 function renderScoreTable() {
-  const list = memoryStore.scores;
+  const query = (document.getElementById('scoreSearchInput')?.value || '').trim().toLowerCase();
+  const dateFilter = document.getElementById('scoreDateInput')?.value || '';
+  const sort = document.getElementById('scoreSortSelect')?.value || 'newest';
+
+  let list = [...memoryStore.scores].filter(row => {
+    const gameName = getScoreGameName(row);
+    const gameKey = getScoreGameKey(row) || '';
+    const haystack = `${gameName} ${gameKey} ${row.date || ''} ${row.limit || ''} ${row.score ?? ''} ${row.diff || ''}`.toLowerCase();
+    const normalizedDate = String(row.date || '').slice(0, 10).replace(/\//g, '-');
+    return (!query || haystack.includes(query)) && (!dateFilter || normalizedDate === dateFilter);
+  });
+
+  list.sort((a, b) => {
+    const ta = new Date(String(a.date || '').replace(/\//g, '-')).getTime() || 0;
+    const tb = new Date(String(b.date || '').replace(/\//g, '-')).getTime() || 0;
+    return sort === 'oldest' ? ta - tb : tb - ta;
+  });
+
   const perPage = 10;
   const totalPages = Math.ceil(list.length / perPage) || 1;
+  if (scorePage > totalPages) scorePage = totalPages;
   const paged = list.slice((scorePage - 1) * perPage, scorePage * perPage);
 
   const tbody = document.getElementById('scoreTableBody');
+  if (!tbody) return;
   tbody.innerHTML = '';
   if (paged.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">No score record yet.</td></tr>';
-    return;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">${escapeHtml(t('score_empty'))}</td></tr>`;
+  } else {
+    paged.forEach(row => {
+      const tr = document.createElement('tr');
+      const diff = String(row.diff ?? '');
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(getScoreGameName(row))}</strong></td>
+        <td>${escapeHtml(row.date || '')}</td>
+        <td>${escapeHtml(row.limit || '')}</td>
+        <td>${escapeHtml(row.score ?? '')}</td>
+        <td style="color:${diff.startsWith('+') ? '#2e7d32' : (diff === '-' ? '#888' : '#c2185b')}; font-weight:bold;">${escapeHtml(diff)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
   }
 
-  paged.forEach(row => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${row.game}</strong></td>
-      <td>${row.date}</td>
-      <td>${row.limit}</td>
-      <td>${row.score}</td>
-      <td style="color:${row.diff.startsWith('+') ? '#2e7d32' : (row.diff === '-' ? '#888' : '#c2185b')}; font-weight:bold;">${row.diff}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
   const pagin = document.getElementById('scorePagination');
+  if (!pagin) return;
   pagin.innerHTML = '';
   for (let i = 1; i <= totalPages; i++) {
     const b = document.createElement('button');
@@ -3664,11 +3738,10 @@ function renderScoreTable() {
     pagin.appendChild(b);
   }
 }
-
 function exportScoreTable(format) {
   if (format === 'html') {
-    let rowsHtml = memoryStore.scores.map(s => `<tr><td>${s.game}</td><td>${s.date}</td><td>${s.limit}</td><td>${s.score}</td><td>${s.diff}</td></tr>`).join('');
-    let html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>Scores</title>
+    let rowsHtml = memoryStore.scores.map(s => `<tr><td>${escapeHtml(getScoreGameName(s))}</td><td>${escapeHtml(s.date)}</td><td>${escapeHtml(s.limit)}</td><td>${escapeHtml(s.score)}</td><td>${escapeHtml(s.diff)}</td></tr>`).join('');
+    let html = `<!DOCTYPE html><html lang="${currentLang}"><head><meta charset="UTF-8"><title>${t('data_table_h')}</title>
 <style>body{background:#fce4ec;font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;background:#fff;}th,td{border:1px solid #ccc;padding:8px;}</style>
 </head><body><h2>${t('data_table_h')}</h2><table><thead><tr><th>${t('th_game')}</th><th>${t('th_date')}</th><th>${t('th_timelimit')}</th><th>${t('th_score')}</th><th>${t('th_diff')}</th></tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
     downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), 'scores.html');
@@ -3700,7 +3773,7 @@ function exportScoreTable(format) {
 
   memoryStore.scores.forEach((s, idx) => {
     const y = 120 + idx * 32;
-    sCtx.fillText(s.game, 30, y);
+    sCtx.fillText(getScoreGameName(s), 30, y);
     sCtx.fillText(s.date, 220, y);
     sCtx.fillText(s.limit, 420, y);
     sCtx.fillText(String(s.score), 540, y);
@@ -3869,6 +3942,7 @@ function handleRestoreFile(e) {
         if (c.colorTheme) document.getElementById('cfgColorTheme').value = c.colorTheme;
         if (c.stickMaxHeight) document.getElementById('stickMaxHeight').value = c.stickMaxHeight;
         if (c.stickMaxPillars) document.getElementById('stickMaxPillars').value = c.stickMaxPillars;
+        if (c.jumpForce !== undefined) document.getElementById('cfgJumpForce').value = Math.min(98, Math.max(1, Number(c.jumpForce) || 12));
 
         if (c.nightFlight !== undefined) document.getElementById('cfgNightFlight').checked = c.nightFlight;
         if (c.reducedMotion !== undefined) document.getElementById('cfgReducedMotion').checked = c.reducedMotion;
@@ -4011,6 +4085,7 @@ window.addEventListener('load', async () => {
     if (config.colorTheme) document.getElementById('cfgColorTheme').value = config.colorTheme;
     if (config.stickMaxHeight) document.getElementById('stickMaxHeight').value = config.stickMaxHeight;
     if (config.stickMaxPillars) document.getElementById('stickMaxPillars').value = config.stickMaxPillars;
+    if (config.jumpForce !== undefined) document.getElementById('cfgJumpForce').value = Math.min(98, Math.max(1, Number(config.jumpForce) || 12));
 
     if (config.nightFlight !== undefined) document.getElementById('cfgNightFlight').checked = config.nightFlight;
     if (config.reducedMotion !== undefined) document.getElementById('cfgReducedMotion').checked = config.reducedMotion;
