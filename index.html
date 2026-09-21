@@ -2975,26 +2975,23 @@ function triggerDpad(dir) {
   playClickSound();
 
   const dpadBtn = document.querySelector(`.dpad-${dir}`);
+
   if (dpadBtn) {
     dpadBtn.classList.add('pressed');
-    setTimeout(() => dpadBtn.classList.remove('pressed'), 100);
+
+    setTimeout(() => {
+      dpadBtn.classList.remove('pressed');
+    }, 100);
   }
-}
 
-function getJumpForce() {
-  const val = parseFloat(
-    document.getElementById('cfgJumpForce')?.value || '12'
-  );
-  return Math.min(98, Math.max(1, isNaN(val) ? 12 : val));
-}
-
- if (currentGame === 'stick') {
+  if (currentGame === 'stick') {
     if (!stickMan.jumping) {
       stickMan.vy = -getJumpForce() * Math.min(1.2, getGameSpeed());
       stickMan.jumping = true;
       playClickSound();
     }
   }
+}
 
 function handleCanvasPointer(e) {
   const rect = canvas.getBoundingClientRect();
@@ -3007,19 +3004,6 @@ function handleCanvasPointer(e) {
     return;
   }
 
-
-function getJumpForce() {
-  const val = parseFloat(document.getElementById('cfgJumpForce')?.value || '12');
-  return Math.min(98, Math.max(1, isNaN(val) ? 12 : val));
-}
-
-if (currentGame === 'stick') {
-  if (!stickMan.jumping) {
-    stickMan.vy = -12 * Math.min(1.2, getGameSpeed());
-    stickMan.jumping = true;
-    playClickSound();
-  }
-}
      else if (currentGame === 'block') {
     for (let i = blocks3D.length - 1; i >= 0; i--) {
       const b = blocks3D[i];
