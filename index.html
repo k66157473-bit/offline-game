@@ -274,6 +274,39 @@ main {
 
 .tab-content.active { display: block; }
 
+.coin-fly-animation {
+  position: fixed;
+  z-index: 1000000;
+  left: 24px;
+  bottom: 80px;
+  font-size: 30px;
+  pointer-events: none;
+  animation: coinFlyToSky 900ms ease-in forwards;
+}
+@keyframes coinFlyToSky {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  70% { transform: translate(30px, -55vh) scale(1.15); opacity: .9; }
+  100% { transform: translate(70px, -100vh) scale(.45); opacity: 0; }
+}
+.coin-balance-hud {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 16px;
+  background: rgba(255,255,255,.9); color:#8a5a00; font-weight:bold;
+  border: 1px solid #e5b84b;
+}
+body.dark-mode .coin-balance-hud { background:#2a2a2a; color:#ffd54f; border-color:#8d6e20; }
+
+.pseudo-credit-card {
+  width: min(360px, 100%); min-height: 190px; padding: 20px; margin: 10px 0 18px;
+  border-radius: 18px; color: #fff; position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #263238, #546e7a 48%, #90a4ae);
+  box-shadow: 0 14px 28px rgba(0,0,0,.25);
+  transform: perspective(700px) rotateX(3deg) rotateY(-4deg);
+}
+.pseudo-credit-card::after { content:''; position:absolute; width:180px; height:180px; right:-55px; bottom:-70px; border-radius:50%; background:rgba(255,255,255,.14); }
+.pseudo-credit-card .card-chip { font-size:30px; }
+.pseudo-credit-card .card-balance { position:absolute; left:20px; bottom:20px; font-size:20px; font-weight:bold; }
+
 /* --- フッター --- */
 footer {
   background: var(--panel-bg);
@@ -739,6 +772,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     <button class="tab-btn" onclick="switchTab('profileTab', this)" data-i18n="tab_profile">プロフィール</button>
     <button class="tab-btn" onclick="switchTab('historyTab', this)" data-i18n="tab_history">更新履歴</button>
     <button class="tab-btn" onclick="switchTab('dataTab', this)" data-i18n="tab_data">データ</button>
+    <button class="tab-btn" onclick="switchTab('coinTab', this)" data-i18n="tab_coin">コイン</button>
     <select id="langSelector" class="lang-select-header" onchange="changeLanguage(this.value)">
       <option value="ja">日本語</option>
       <option value="en">English</option>
@@ -803,6 +837,8 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       <canvas id="gameCanvas"></canvas>
       <div class="game-hud-timer" id="gameHudTimer">TIME: --</div>
       <div class="game-hud-score" id="gameHudScore">SCORE: 0</div>
+      <div class="coin-balance-hud" id="gameCoinHud">🪙 myfinger: 10,000</div>
+      <button class="btn btn-outline" id="myFingerBtn" onclick="useMyFinger()" data-i18n="item_my_finger">my finger（2,000コイン）</button>
       <div class="flight-hud-clock" id="flightHudClock">FLIGHT: 00:00:00</div>
 
       <div id="flagQuizOverlay">
@@ -1238,6 +1274,55 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       <button class="btn btn-danger" onclick="startDataDeletionProcess()" data-i18n="btn_delete_all_data">データを削除</button>
 
   </section>
+  <!-- 8. コインタブ -->
+  <section id="coinTab" class="tab-content">
+    <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="coin_title">🪙 コイン</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+      <div class="coin-balance-hud" id="coinBalanceDisplay">🪙 10,000</div>
+      <div class="coin-balance-hud" id="coinBankDisplay">🏦 8,000,000</div>
+      <div class="coin-balance-hud" id="coinCardDisplay">💳 2,800,000,000</div>
+    </div>
+    <div class="pseudo-credit-card" aria-label="simulated 3D credit card">
+      <div class="card-chip">▣</div>
+      <div style="margin-top:8px; letter-spacing:3px;">SIMULATED 3D CARD</div>
+      <div class="card-balance" id="coinCardVisualBalance">2,800,000,000</div>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;">
+      <button class="btn" onclick="addCoinBalance()" data-i18n="coin_add_balance">残高追加</button>
+      <button class="btn btn-secondary" onclick="addCreditCardBalance()" data-i18n="coin_add_card">クレカ残高を増やす</button>
+    </div>
+
+    <h3 style="font-size:16px; margin-bottom:10px;" data-i18n="coin_item_title">アイテム購入</h3>
+    <div style="border:1px solid var(--border-color); padding:12px; border-radius:10px; margin-bottom:20px;">
+      <strong data-i18n="coin_title_item">サイトタイトル変更</strong>
+      <p style="margin:7px 0;" data-i18n="coin_title_item_desc">200,000コインでサイトタイトル（ブラウザのタブ名）を自分好みに変更できます。</p>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+        <input type="text" id="customSiteTitleInput" maxlength="80" data-i18n-ph="coin_title_placeholder" placeholder="新しいサイトタイトル">
+        <button class="btn" onclick="purchaseCustomSiteTitle()" data-i18n="coin_buy_title">200,000コインで購入</button>
+        <button class="btn btn-outline" onclick="resetCustomSiteTitle()" data-i18n="coin_reset_title">リセット</button>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px; margin-bottom:10px;" data-i18n="coin_history_title">使用履歴</h3>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
+      <input type="text" id="coinHistorySearchInput" class="search-input" data-i18n-ph="coin_history_search" placeholder="使用履歴を検索..." oninput="coinHistoryPage=1; renderCoinHistoryTable()">
+      <label style="display:flex; gap:5px; align-items:center;"><span data-i18n="lbl_score_date">日付</span><input type="date" id="coinHistoryDateInput" onchange="coinHistoryPage=1; renderCoinHistoryTable()"></label>
+      <select id="coinHistorySortSelect" class="time-select" onchange="coinHistoryPage=1; renderCoinHistoryTable()">
+        <option value="newest" data-i18n="opt_newest">最新順</option>
+        <option value="oldest" data-i18n="opt_oldest">古い順</option>
+      </select>
+      <button class="btn btn-outline" onclick="exportCoinHistory('txt')" data-i18n="coin_export_txt">TXT保存</button>
+      <button class="btn btn-outline" onclick="exportCoinHistory('html')" data-i18n="coin_export_html">HTML保存</button>
+    </div>
+    <div class="table-responsive">
+      <table id="coinHistoryTable">
+        <thead><tr><th data-i18n="coin_th_date">日時</th><th data-i18n="coin_th_action">内容</th><th data-i18n="coin_th_amount">金額</th><th data-i18n="coin_th_balance">残高</th></tr></thead>
+        <tbody id="coinHistoryTableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination-container" id="coinHistoryPagination"></div>
+  </section>
+
 </main>
 
 <footer>
@@ -1270,6 +1355,32 @@ const I18N_DICTIONARY = {
   tab_profile: { ja: "プロフィール", en: "Profile", hira: "ぷろふぃーる", ko: "프로필", zh: "个人档案", ar: "الملف الشخصي", eo: "Profilo" },
   tab_history: { ja: "更新履歴", en: "History", hira: "こうしん りれき", ko: "업데이트 내역", zh: "更新历史", ar: "سجل التحديثات", eo: "Historio" },
   tab_data: { ja: "データ", en: "Data", hira: "でーた", ko: "데이터", zh: "数据", ar: "البيانات", eo: "Datumoj" },
+  tab_coin: { ja: "コイン", en: "Coins", hira: "こいん", ko: "코인", zh: "金币", ar: "العملات", eo: "Moneroj" },
+  coin_title: { ja: "🪙 コイン", en: "🪙 Coins", hira: "🪙 こいん", ko: "🪙 코인", zh: "🪙 金币", ar: "🪙 العملات", eo: "🪙 Moneroj" },
+  coin_add_balance: { ja: "残高追加", en: "Add Balance", hira: "ざんだか ついか", ko: "잔액 추가", zh: "增加余额", ar: "إضافة الرصيد", eo: "Aldoni Saldo" },
+  coin_add_card: { ja: "クレカ残高を増やす", en: "Increase Card Balance", hira: "くれか ざんだかを ふやす", ko: "카드 잔액 늘리기", zh: "增加信用卡余额", ar: "زيادة رصيد البطاقة", eo: "Pliigi Kartan Saldon" },
+  coin_item_title: { ja: "アイテム購入", en: "Item Purchase", hira: "あいてむ こうにゅう", ko: "아이템 구매", zh: "购买物品", ar: "شراء العناصر", eo: "Aĉeto de Eroj" },
+  coin_title_item: { ja: "サイトタイトル変更", en: "Change Site Title", hira: "さいとたいとる へんこう", ko: "사이트 제목 변경", zh: "更改网站标题", ar: "تغيير عنوان الموقع", eo: "Ŝanĝi Titolo de Retejo" },
+  coin_title_item_desc: { ja: "200,000コインでサイトタイトル（ブラウザのタブ名）を自分好みに変更できます。", en: "Spend 200,000 coins to customize the site title (browser tab name).", hira: "200,000こいんで さいとの たいとるを すきな なまえに できます。", ko: "200,000코인으로 사이트 제목(브라우저 탭 이름)을 원하는 이름으로 바꿀 수 있습니다.", zh: "使用200,000金币即可自定义网站标题（浏览器标签页名称）。", ar: "أنفق 200000 عملة لتخصيص عنوان الموقع (اسم علامة تبويب المتصفح).", eo: "Elspezu 200 000 monerojn por agordi la retejan titolon (nomon de la retumila langeto)." },
+  coin_title_placeholder: { ja: "新しいサイトタイトル", en: "New site title", hira: "あたらしい さいとたいとる", ko: "새 사이트 제목", zh: "新的网站标题", ar: "عنوان الموقع الجديد", eo: "Nova reteja titolo" },
+  coin_buy_title: { ja: "200,000コインで購入", en: "Buy for 200,000 coins", hira: "200,000こいんで こうにゅう", ko: "200,000코인으로 구매", zh: "以200,000金币购买", ar: "شراء مقابل 200000 عملة", eo: "Aĉeti por 200 000 moneroj" },
+  coin_reset_title: { ja: "リセット", en: "Reset", hira: "りせっと", ko: "초기화", zh: "重置", ar: "إعادة ضبط", eo: "Restarigi" },
+  item_my_finger: { ja: "my finger（2,000コイン）", en: "my finger (2,000 coins)", hira: "my finger（2,000こいん）", ko: "my finger (2,000코인)", zh: "my finger（2,000金币）", ar: "my finger (2000 عملة)", eo: "my finger (2 000 moneroj)" },
+  coin_history_title: { ja: "使用履歴", en: "Usage History", hira: "しよう りれき", ko: "사용 기록", zh: "使用记录", ar: "سجل الاستخدام", eo: "Historio de Uzado" },
+  coin_history_search: { ja: "使用履歴を検索...", en: "Search usage history...", hira: "しようりれきを けんさく...", ko: "사용 기록 검색...", zh: "搜索使用记录...", ar: "البحث في سجل الاستخدام...", eo: "Serĉi historion de uzado..." },
+  coin_th_date: { ja: "日時", en: "Date/Time", hira: "にちじ", ko: "일시", zh: "日期时间", ar: "التاريخ والوقت", eo: "Dato/Horo" },
+  coin_th_action: { ja: "内容", en: "Action", hira: "ないよう", ko: "내용", zh: "内容", ar: "الإجراء", eo: "Ago" },
+  coin_th_amount: { ja: "金額", en: "Amount", hira: "きんがく", ko: "금액", zh: "金额", ar: "المبلغ", eo: "Kvanto" },
+  coin_th_balance: { ja: "残高", en: "Balance", hira: "ざんだか", ko: "잔액", zh: "余额", ar: "الرصيد", eo: "Saldo" },
+  coin_export_txt: { ja: "TXT保存", en: "Save TXT", hira: "TXTほぞん", ko: "TXT 저장", zh: "保存TXT", ar: "حفظ TXT", eo: "Konservi TXT" },
+  coin_export_html: { ja: "HTML保存", en: "Save HTML", hira: "HTMLほぞん", ko: "HTML 저장", zh: "保存HTML", ar: "حفظ HTML", eo: "Konservi HTML" },
+  coin_need_game: { ja: "ゲーム開始中だけmy fingerを使えます。", en: "my finger can be used only while a game is running.", hira: "げーむちゅうだけ my fingerを つかえます。", ko: "게임 실행 중에만 my finger를 사용할 수 있습니다.", zh: "只有游戏进行中才能使用my finger。", ar: "يمكن استخدام my finger أثناء تشغيل اللعبة فقط.", eo: "my finger uzeblas nur dum ludo funkcias." },
+  coin_insufficient: { ja: "コインが足りません。", en: "Not enough coins.", hira: "こいんが たりません。", ko: "코인이 부족합니다.", zh: "金币不足。", ar: "لا توجد عملات كافية.", eo: "Ne sufiĉas moneroj." },
+  coin_card_insufficient: { ja: "擬似3Dクレカの残高が足りません。", en: "Not enough simulated 3D credit card balance.", hira: "ぎじ3Dくれかの ざんだかが たりません。", ko: "모의 3D 신용카드 잔액이 부족합니다.", zh: "模拟3D信用卡余额不足。", ar: "لا يكفي رصيد البطاقة الافتراضية ثلاثية الأبعاد.", eo: "Ne sufiĉas la saldo de la imita 3D-karto." },
+  coin_title_required: { ja: "タイトルを入力してください。", en: "Enter a title.", hira: "たいとるを にゅうりょくしてね。", ko: "제목을 입력하세요.", zh: "请输入标题。", ar: "أدخل عنوانًا.", eo: "Enigu titolon." },
+  coin_title_changed: { ja: "サイトタイトルを変更しました。", en: "The site title has been changed.", hira: "さいとたいとるを へんこうしました。", ko: "사이트 제목을 변경했습니다.", zh: "网站标题已更改。", ar: "تم تغيير عنوان الموقع.", eo: "La reteja titolo estis ŝanĝita." },
+  coin_history_empty: { ja: "使用履歴はありません。", en: "No usage history.", hira: "しようりれきは ありません。", ko: "사용 기록이 없습니다.", zh: "暂无使用记录。", ar: "لا يوجد سجل استخدام.", eo: "Neniu uzhistorio." },
+  coin_hour_grant: { ja: "毎時間の自動付与", en: "Hourly automatic grant", hira: "まいじかんの じどうふよ", ko: "매시간 자동 지급", zh: "每小时自动发放", ar: "منحة تلقائية كل ساعة", eo: "Aŭtomata hora donaco" },
 
   game_stick: { ja: "棒とビ", en: "Stick & Jump", hira: "ぼうとび", ko: "봉 넘기", zh: "火柴人跳跃", ar: "القفز فوق العصي", eo: "Baston-Salto" },
   game_block: { ja: "ブロック消し", en: "Block Breaker", hira: "ぶろっく けし", ko: "블록 깨기", zh: "消除方块", ar: "تكسير الكتل", eo: "Blok-Rompo" },
@@ -1412,7 +1523,9 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+{ pinned: false, date: '2026/09/21 02:22', desc: { ja: 'コインシステム・使用履歴・疑似決済・タイトル変更を追加', en: 'Added the coin system, usage history, simulated payment, and title customization', hira: 'こいんしすてむ・しようりれき・ぎじけっさい・たいとるへんこうを ついか', ko: '코인 시스템, 사용 기록, 모의 결제 및 제목 변경 기능 추가', zh: '新增金币系统、使用记录、模拟支付和标题自定义', ar: 'إضافة نظام العملات وسجل الاستخدام والدفع التجريبي وتخصيص العنوان', eo: 'Aldonis moneran sistemon, uzhistorion, simulitan pagon kaj titolan agordon' } },
 { pinned: false, date: '2026/09/21 12:37', desc: { ja: 'ゲームスコア記録表の検索・日付指定・並び順切替、多言語対応を強化', en: 'Enhanced score table search, date filtering, sorting, and multilingual support', hira: 'すこあきろくひょうの けんさく・ひづけしてい・ならびじゅんきりかえ と たげんごたいおうを きょうか', ko: '게임 점수표 검색, 날짜 필터, 정렬 및 다국어 지원 강화', zh: '增强得分记录表的搜索、日期筛选、排序及多语言支持', ar: 'تعزيز البحث وتصفية التاريخ والفرز ودعم اللغات المتعددة في جدول النتائج', eo: 'Plibonigis serĉon, datan filtradon, ordigon kaj plurlingvan subtenon en la poentotabelo' } },
+{ pinned: false, date: '2026/09/21 14:36', desc: { ja: 'myfinger残高表示・使用履歴の保存形式・ミュート時の音量レンジ0化を追加', en: 'Added the myfinger balance display, usage history export format, and zeroed the volume range when muted', hira: 'myfingerざんだかひょうじ・しようりれきの ほぞんけいしき・みゅーとじの おんりょうれんじ0かを ついか', ko: 'myfinger 잔액 표시, 사용 기록 저장 형식 및 음소거 시 볼륨 범위를 0으로 설정하는 기능 추가', zh: '新增myfinger余额显示、使用记录保存格式以及静音时将音量滑块设为0的功能', ar: 'إضافة عرض رصيد myfinger وتنسيق حفظ سجل الاستخدام وضبط شريط مستوى الصوت على 0 عند الكتم', eo: 'Aldonis montron de saldo de myfinger, formaton de konservado de uzhistorio kaj agordon de la laŭteca glitilo al 0 dum silentigo' } },
 { pinned: false, date: '2026/09/21 08:50',
     desc: { ja: 'ブロック消しに6種の特殊ブロック(💣⭐🧊🌈🧀🦄)追加＆飛ぶ力設定(上限98)を実装', en: 'Added 6 special blocks (💣⭐🧊🌈🧀🦄) & customizable jump force up to 98', hira: 'ぶろっくけしに とくしゅぶろっくを ついか＆とぶちから(98まで)を せっていできるようにしました', ko: '블록 깨기에 6종의 특수 블록 추가 및 점프력 설정(최대 98) 구현', zh: '方块消除新增6种特殊方块(💣⭐🧊🌈🧀🦄)并支持自定义跳跃力(上限98)', ar: 'إضافة 6 كتل خاصة في لعبة تكسير الكتل وخيار قوة القفز (بحد أقصى 98)', eo: 'Aldonis 6 specialajn blokojn (💣⭐🧊🌈🧀🦄) kaj agordon de salta forto (ĝis 98)' }
   },
@@ -1457,6 +1570,7 @@ function toTraditionalChinese(text) {
 }
 
 function t(key) {
+  if (key === 'site_title' && typeof memoryStore !== 'undefined' && memoryStore.customSiteTitle) return memoryStore.customSiteTitle;
   if (I18N_DICTIONARY[key] && I18N_DICTIONARY[key][currentLang]) {
     const value = I18N_DICTIONARY[key][currentLang];
     return currentLang === 'zh-TW' ? toTraditionalChinese(value) : value;
@@ -1471,12 +1585,17 @@ function t(key) {
 /* ==========================================================================
    全データ完全永続化管理システム (LocalStorage & IndexedDB)
    ========================================================================== */
-const CURRENT_DATA_VERSION = 3;
+const CURRENT_DATA_VERSION = 4;
 let currentActiveTab = 'gameTab';
 let currentGame = 'stick';
 
 let memoryStore = {
   scores: [],
+  coins: 10000,
+  coinBankBalance: 8000000,
+  creditCardBalance: 2800000000,
+  coinHistory: [],
+  customSiteTitle: '',
   myProfile: {
     name: "旅の飛行士", birth: "2000/01", gender: "フリー",
     location: "成田", hobby: "空を眺めること", quote: "翼は心にある", message: "フライト満喫中！"
@@ -1545,11 +1664,144 @@ function saveAllConfig() {
   localStorage.setItem('airplane_game_config', JSON.stringify(config));
   localStorage.setItem('airplane_game_shortcuts', JSON.stringify(shortcutData));
   localStorage.setItem('airplane_game_my_profile', JSON.stringify(memoryStore.myProfile));
+  localStorage.setItem('airplane_game_coins', JSON.stringify({
+    coins: memoryStore.coins,
+    coinBankBalance: memoryStore.coinBankBalance,
+    creditCardBalance: memoryStore.creditCardBalance,
+    coinHistory: memoryStore.coinHistory,
+    customSiteTitle: memoryStore.customSiteTitle
+  }));
 
   const pinnedIds = KOUSHIN_DATA.filter(k => k.pinned).map(k => k.id);
   localStorage.setItem('airplane_game_pinned_ids', JSON.stringify(pinnedIds));
 }
 
+function formatCoinAmount(n) { return Number(n || 0).toLocaleString('ja-JP'); }
+function updateCoinDisplays() {
+  const coin = formatCoinAmount(memoryStore.coins);
+  const bank = formatCoinAmount(memoryStore.coinBankBalance);
+  const card = formatCoinAmount(memoryStore.creditCardBalance);
+  const gameHud = document.getElementById('gameCoinHud');
+  const coinDisplay = document.getElementById('coinBalanceDisplay');
+  const bankDisplay = document.getElementById('coinBankDisplay');
+  const cardDisplay = document.getElementById('coinCardDisplay');
+  if (gameHud) gameHud.textContent = `🪙 myfinger: ${coin}`;
+  if (coinDisplay) coinDisplay.textContent = `🪙 ${coin}`;
+  if (bankDisplay) bankDisplay.textContent = `🏦 ${bank}`;
+  if (cardDisplay) cardDisplay.textContent = `💳 ${card}`;
+  const cardVisual = document.getElementById('coinCardVisualBalance');
+  if (cardVisual) cardVisual.textContent = card;
+  const input = document.getElementById('customSiteTitleInput');
+  if (input && document.activeElement !== input) input.value = memoryStore.customSiteTitle || '';
+}
+function addCoinHistory(action, amount, balance) {
+  memoryStore.coinHistory.unshift({ id: Date.now() + Math.random(), date: new Date().toLocaleString('sv-SE').replace('T',' '), action, amount, balance });
+  if (memoryStore.coinHistory.length > 1000) memoryStore.coinHistory.length = 1000;
+}
+function saveCoinState() { updateCoinDisplays(); saveAllConfig(); renderCoinHistoryTable(); }
+function flyCoinToSky() {
+  const el = document.createElement('div');
+  el.className = 'coin-fly-animation';
+  el.textContent = '🪙';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 950);
+}
+function useMyFinger() {
+  const cost = 2000;
+  if (!isGameRunning) { showModal(t('tab_game'), t('coin_need_game')); return; }
+  if (memoryStore.coins < cost) { showModal(t('coin_title'), t('coin_insufficient')); return; }
+  memoryStore.coins -= cost;
+  addCoinHistory(t('item_my_finger'), -cost, memoryStore.coins);
+  flyCoinToSky();
+  saveCoinState();
+}
+function addCoinBalance() {
+  const add = 8000000;
+  const fee = 28000000;
+  if (memoryStore.creditCardBalance < fee) { showModal(t('coin_title'), t('coin_card_insufficient')); return; }
+  memoryStore.creditCardBalance -= fee;
+  memoryStore.coinBankBalance += add;
+  memoryStore.coins += add;
+  addCoinHistory(t('coin_add_balance'), add, memoryStore.coins);
+  saveCoinState();
+}
+function addCreditCardBalance() {
+  memoryStore.creditCardBalance += 2800000000;
+  addCoinHistory(t('coin_add_card'), 2800000000, memoryStore.creditCardBalance);
+  saveCoinState();
+}
+function purchaseCustomSiteTitle() {
+  const title = (document.getElementById('customSiteTitleInput')?.value || '').trim();
+  if (!title) { showModal(t('coin_title'), t('coin_title_required')); return; }
+  if (memoryStore.coins < 200000) { showModal(t('coin_title'), t('coin_insufficient')); return; }
+  memoryStore.coins -= 200000;
+  memoryStore.customSiteTitle = title;
+  document.title = title;
+  addCoinHistory(t('coin_title_item'), -200000, memoryStore.coins);
+  saveCoinState();
+  showModal(t('coin_title'), t('coin_title_changed'));
+}
+function resetCustomSiteTitle() {
+  memoryStore.customSiteTitle = '';
+  document.title = I18N_DICTIONARY.site_title[currentLang] || I18N_DICTIONARY.site_title.ja;
+  const input = document.getElementById('customSiteTitleInput');
+  if (input) input.value = '';
+  saveCoinState();
+}
+function renderCoinHistoryTable() {
+  const body = document.getElementById('coinHistoryTableBody');
+  if (!body) return;
+  const query = (document.getElementById('coinHistorySearchInput')?.value || '').trim().toLowerCase();
+  const dateFilter = document.getElementById('coinHistoryDateInput')?.value || '';
+  const sort = document.getElementById('coinHistorySortSelect')?.value || 'newest';
+  let list = memoryStore.coinHistory.filter(r => {
+    const hay = `${r.date || ''} ${r.action || ''} ${r.amount ?? ''} ${r.balance ?? ''}`.toLowerCase();
+    const d = String(r.date || '').slice(0,10);
+    return (!query || hay.includes(query)) && (!dateFilter || d === dateFilter);
+  });
+  list.sort((a,b) => { const ta=Date.parse(a.date)||0, tb=Date.parse(b.date)||0; return sort==='oldest'?ta-tb:tb-ta; });
+  const perPage=10, totalPages=Math.ceil(list.length/perPage)||1;
+  if (coinHistoryPage>totalPages) coinHistoryPage=totalPages;
+  const paged=list.slice((coinHistoryPage-1)*perPage,coinHistoryPage*perPage);
+  body.innerHTML=paged.length ? paged.map(r=>`<tr><td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.action)}</td><td>${escapeHtml(formatCoinAmount(r.amount))}</td><td>${escapeHtml(formatCoinAmount(r.balance))}</td></tr>`).join('') : `<tr><td colspan="4" style="text-align:center;color:#888;">${escapeHtml(t('coin_history_empty'))}</td></tr>`;
+  const pag=document.getElementById('coinHistoryPagination');
+  if (!pag) return;
+  pag.innerHTML='';
+  for(let i=1;i<=totalPages;i++){ const b=document.createElement('button'); b.className=`page-btn ${i===coinHistoryPage?'active':''}`; b.textContent=i; b.onclick=()=>{coinHistoryPage=i;renderCoinHistoryTable();}; pag.appendChild(b); }
+}
+function exportCoinHistory(format) {
+  const rows = memoryStore.coinHistory.map(r=>`<tr><td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.action)}</td><td>${escapeHtml(formatCoinAmount(r.amount))}</td><td>${escapeHtml(formatCoinAmount(r.balance))}</td></tr>`).join('');
+  if(format==='html'){
+    const html=`<!DOCTYPE html><html lang="${currentLang}"><head><meta charset="UTF-8"><title>${escapeHtml(t('coin_history_title'))}</title>
+<style>body{background:#fce4ec;color:#333;font-family:sans-serif;padding:30px;}.card{background:#fff;padding:25px;border-radius:15px;max-width:900px;margin:auto;border:2px solid #ff80ab;}h2{color:#ff4081;}table{width:100%;border-collapse:collapse;margin-top:15px;}th,td{border:1px solid #ccc;padding:8px;text-align:left;}</style>
+</head><body><div class="card"><h2>${escapeHtml(t('coin_history_title'))}</h2><table><thead><tr><th>${escapeHtml(t('coin_th_date'))}</th><th>${escapeHtml(t('coin_th_action'))}</th><th>${escapeHtml(t('coin_th_amount'))}</th><th>${escapeHtml(t('coin_th_balance'))}</th></tr></thead><tbody>${rows}</tbody></table></div></body></html>`;
+    downloadBlob(new Blob([html],{type:'text/html;charset=utf-8'}),'coin-history.html');
+  } else {
+    const content=memoryStore.coinHistory.map(r=>`[${r.date}] ${r.action} / ${formatCoinAmount(r.amount)} / ${formatCoinAmount(r.balance)}`).join('\r\n');
+    downloadBlob(new Blob([new Uint8Array([0xEF,0xBB,0xBF]),content],{type:'text/plain;charset=utf-8'}),'coin-history.txt');
+  }
+}
+function runCoinAutoGrants() {
+  const now=Date.now();
+  const last2=Number(localStorage.getItem('airplane_game_coin_bank_tick')||0);
+  const lastHour=Number(localStorage.getItem('airplane_game_coin_hour_tick')||0);
+  if (!last2) localStorage.setItem('airplane_game_coin_bank_tick',String(now));
+  if (!lastHour) localStorage.setItem('airplane_game_coin_hour_tick',String(now));
+  if (last2 && now-last2 >= 120000) {
+    const cycles=Math.floor((now-last2)/120000);
+    memoryStore.coinBankBalance = Math.max(memoryStore.coinBankBalance,8000000);
+    localStorage.setItem('airplane_game_coin_bank_tick',String(last2+cycles*120000));
+  }
+  if (lastHour && now-lastHour >= 3600000) {
+    const cycles=Math.floor((now-lastHour)/3600000);
+    const grant=2000000*cycles; memoryStore.coins += grant;
+    addCoinHistory(t('coin_hour_grant'),grant,memoryStore.coins);
+    localStorage.setItem('airplane_game_coin_hour_tick',String(lastHour+cycles*3600000));
+    saveCoinState();
+  }
+  updateCoinDisplays();
+}
+let coinHistoryPage = 1;
 function saveConfig() {
   if (document.getElementById('cfgGcSimulation').checked) {
     if (blocks3D.length > 20) blocks3D.splice(0, 5);
@@ -1801,9 +2053,12 @@ function getAudioContext() {
 }
 
 function updateMasterVolume() {
+  const muteControl = document.getElementById('cfgMuteAudio');
+  const volumeControl = document.getElementById('cfgMasterVolume');
+  const isMute = !!muteControl?.checked;
+  if (isMute && volumeControl) volumeControl.value = '0';
   if (!masterGainNode || !audioCtx) return;
-  const isMute = document.getElementById('cfgMuteAudio').checked;
-  const vol = parseFloat(document.getElementById('cfgMasterVolume').value);
+  const vol = parseFloat(volumeControl?.value || '0');
   masterGainNode.gain.setValueAtTime(isMute ? 0 : vol, audioCtx.currentTime);
 }
 
@@ -2094,6 +2349,7 @@ window.addEventListener('keydown', (e) => {
   if (currentGame === 'vs' && isGameRunning) {
     if (e.code === 'KeyW' || e.code === 'KeyA') triggerVsJump(1);
     if (e.code === 'ArrowUp' || e.code === 'KeyL') triggerVsJump(2);
+    if (e.code === 'Space') { triggerVsJump(1); triggerVsJump(2); }
   }
 
   const match = shortcutData.find(s => s.key === e.code);
@@ -3795,6 +4051,11 @@ function exportDataFile(type) {
     activeTab: currentActiveTab,
     selectedGame: currentGame,
     scores: memoryStore.scores,
+    coins: memoryStore.coins,
+    coinBankBalance: memoryStore.coinBankBalance,
+    creditCardBalance: memoryStore.creditCardBalance,
+    coinHistory: memoryStore.coinHistory,
+    customSiteTitle: memoryStore.customSiteTitle,
     myProfile: memoryStore.myProfile,
     shortcuts: shortcutData,
     language: currentLang,
@@ -3890,6 +4151,11 @@ function handleRestoreFile(e) {
       const restored = parsed.data || parsed;
       if (!restored.scores) restored.scores = [];
       if (!restored.myProfile) restored.myProfile = memoryStore.myProfile;
+      if (restored.coins !== undefined) memoryStore.coins = Number(restored.coins) || 0;
+      if (restored.coinBankBalance !== undefined) memoryStore.coinBankBalance = Number(restored.coinBankBalance) || 0;
+      if (restored.creditCardBalance !== undefined) memoryStore.creditCardBalance = Number(restored.creditCardBalance) || 0;
+      if (Array.isArray(restored.coinHistory)) memoryStore.coinHistory = restored.coinHistory;
+      if (typeof restored.customSiteTitle === 'string') memoryStore.customSiteTitle = restored.customSiteTitle;
       if (!restored.shortcuts) restored.shortcuts = [
         { key: 'Space', action: 'jump' },
         { key: 'KeyP', action: 'pause' }
@@ -4007,6 +4273,9 @@ function handleRestoreFile(e) {
 
       renderScoreTable();
       renderHistoryTable();
+      updateCoinDisplays();
+      renderCoinHistoryTable();
+      if (memoryStore.customSiteTitle) document.title = memoryStore.customSiteTitle;
 
       showModal(t('data_title'), 'すべてのデータ（設定・ショートカット・プロフィール・スコア・開いていたタブ）が完全に復元されました！');
     } catch (err) {
@@ -4124,8 +4393,24 @@ window.addEventListener('load', async () => {
   await initIndexedDB();
   await loadScoresFromIndexedDB();
 
+  const savedCoinState = localStorage.getItem('airplane_game_coins');
+  if (savedCoinState) {
+    try {
+      const c = JSON.parse(savedCoinState);
+      memoryStore.coins = Number.isFinite(Number(c.coins)) ? Number(c.coins) : 10000;
+      memoryStore.coinBankBalance = Number.isFinite(Number(c.coinBankBalance)) ? Number(c.coinBankBalance) : 8000000;
+      memoryStore.creditCardBalance = Number.isFinite(Number(c.creditCardBalance)) ? Number(c.creditCardBalance) : 2800000000;
+      memoryStore.coinHistory = Array.isArray(c.coinHistory) ? c.coinHistory : [];
+      memoryStore.customSiteTitle = typeof c.customSiteTitle === 'string' ? c.customSiteTitle : '';
+    } catch(e) {}
+  }
   const savedLang = (config && config.lang) ? config.lang : (localStorage.getItem('airplane_game_lang') || 'ja');
   changeLanguage(savedLang);
+  if (memoryStore.customSiteTitle) document.title = memoryStore.customSiteTitle;
+  updateCoinDisplays();
+  runCoinAutoGrants();
+  setInterval(runCoinAutoGrants, 30000);
+  renderCoinHistoryTable();
 
   applyColors();
   applyFontSettings();
