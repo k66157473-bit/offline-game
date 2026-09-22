@@ -1326,7 +1326,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 
     <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);">
       <label><strong data-i18n="lbl_restore">データ復元 (.itsme / .indexeddb / backup.zip):</strong></label><br>
-      <input type="file" id="restoreFileInput" accept=".itsme,.indexeddb,.zip" style="margin-top: 8px;" onchange="handleRestoreFile(event)">
+      <input type="file" id="restoreFileInput" accept=".itsme,.indexeddb,.zip" style="margin-top: 8px;" onclick="this.value=''" onchange="handleRestoreFile(event)">
     </div>
 
       <button class="btn btn-danger" onclick="startDataDeletionProcess()" data-i18n="btn_delete_all_data">データを削除</button>
@@ -4610,46 +4610,122 @@ async function snapshotIndexedDB(){
 async function restoreIndexedDB(snapshot){
   const result={restored:0,errors:[],databases:0};
   if(!window.indexedDB||!Array.isArray(snapshot))return result;
+
+  // 重要: 復元時に deleteDatabase() は絶対に実行しない。
+  // 既存DB・既存レコードは保持し、バックアップにあるレコードだけを put() で
+  // 上書き/追加する。バックアップに存在しないレコードはそのまま残す。
   for(const spec of snapshot){
     if(!spec?.name)continue;
     try{
-      if(dbInstance&&dbInstance.name===spec.name)dbInstance.close();
-      try{await idbDeleteDatabase(spec.name);}catch(e){throw e;}
-      const version=Math.max(1,Number(spec.version)||1);
+      const dbName=String(spec.name);
+      let currentDb=null;
+
+      // アプリ自身が保持している接続だけ閉じる。DBそのものは削除しない。
+      if(dbInstance&&dbInstance.name===dbName){
+        try{dbInstance.close();}catch(e){}
+        dbInstance=null;
+      }
+
+      // まず現在のDBを開いて、既存のストア/インデックス構成を確認する。
+      let exists=false;
+      try{
+        currentDb=await idbOpenForSnapshot(dbName);
+        exists=true;
+      }catch(e){
+        // DBがまだ存在しない場合だけ、後続のopen(..., version)で新規作成する。
+        exists=false;
+      }
+
+      const stores=Array.isArray(spec.stores)?spec.stores:[];
+      let needsUpgrade=!exists;
+      let currentVersion=0;
+
+      if(exists&&currentDb){
+        currentVersion=currentDb.version||1;
+        for(const st of stores){
+          if(!currentDb.objectStoreNames.contains(st.name)){
+            needsUpgrade=true;
+            break;
+          }
+          const existingStore=currentDb.transaction(st.name,'readonly').objectStore(st.name);
+          const existingIndexes=new Set(Array.from(existingStore.indexNames));
+          for(const idx of (st.indexes||[])){
+            if(!existingIndexes.has(idx.name)){
+              needsUpgrade=true;
+              break;
+            }
+          }
+          if(needsUpgrade)break;
+        }
+        try{currentDb.close();}catch(e){}
+        currentDb=null;
+      }
+
+      // DBが存在しない場合はバックアップのバージョンで新規作成。
+      // 既存DBの場合は、必要なスキーマ追加があるときだけバージョンを1つ上げる。
+      let targetVersion=exists ? currentVersion : Math.max(1,Number(spec.version)||1);
+      if(exists&&needsUpgrade)targetVersion=Math.max(currentVersion+1,Number(spec.version)||1);
+
       await new Promise((resolve,reject)=>{
-        const r=indexedDB.open(spec.name,version);
+        const r=indexedDB.open(dbName,targetVersion);
         r.onupgradeneeded=e=>{
           const db=e.target.result;
-          for(const st of (spec.stores||[])){
-            if(db.objectStoreNames.contains(st.name))continue;
-            const opts={autoIncrement:!!st.autoIncrement};
-            if(st.keyPath!==null&&st.keyPath!==undefined)opts.keyPath=st.keyPath;
-            const store=db.createObjectStore(st.name,opts);
-            for(const idx of (st.indexes||[])){try{store.createIndex(idx.name,idx.keyPath,{unique:!!idx.unique,multiEntry:!!idx.multiEntry});}catch(err){}}
+          for(const st of stores){
+            let store=null;
+            if(db.objectStoreNames.contains(st.name)){
+              store=e.target.transaction.objectStore(st.name);
+            }else{
+              const opts={autoIncrement:!!st.autoIncrement};
+              if(st.keyPath!==null&&st.keyPath!==undefined)opts.keyPath=st.keyPath;
+              try{store=db.createObjectStore(st.name,opts);}catch(err){continue;}
+            }
+            // 既存インデックスは維持し、不足しているものだけ追加する。
+            for(const idx of (st.indexes||[])){
+              try{
+                if(!store.indexNames.contains(idx.name)){
+                  store.createIndex(idx.name,idx.keyPath,{unique:!!idx.unique,multiEntry:!!idx.multiEntry});
+                }
+              }catch(err){
+                // 既存データを守るため、インデックス追加失敗だけではDB復元全体を破棄しない。
+              }
+            }
           }
         };
         r.onerror=()=>reject(r.error||new Error('IndexedDB restore open failed'));
-        r.onblocked=()=>reject(new Error(`IndexedDB '${spec.name}' restore is blocked by an open connection.`));
+        r.onblocked=()=>reject(new Error(`IndexedDB '${dbName}' restore is blocked by another open connection.`));
         r.onsuccess=async()=>{
           const db=r.result;
           try{
-            for(const st of (spec.stores||[])){
+            // put() のみを使用。clear/delete/remove は行わない。
+            for(const st of stores){
               if(!db.objectStoreNames.contains(st.name))continue;
-              const tx=db.transaction(st.name,'readwrite');const store=tx.objectStore(st.name);
+              const tx=db.transaction(st.name,'readwrite');
+              const store=tx.objectStore(st.name);
               for(const rec of (st.records||[])){
-                const refs=new Map();const val=decodeBackupValue(rec.value,refs);const key=decodeBackupValue(rec.key,refs);
-                if(store.keyPath===null||store.keyPath===undefined)store.put(val,key);else store.put(val);
+                const refs=new Map();
+                const val=decodeBackupValue(rec.value,refs);
+                const key=decodeBackupValue(rec.key,refs);
+                if(store.keyPath===null||store.keyPath===undefined)store.put(val,key);
+                else store.put(val);
               }
               await idbTxDone(tx);
             }
-            db.close();resolve();
-          }catch(err){try{db.close();}catch(e){}reject(err);}
+            db.close();
+            resolve();
+          }catch(err){
+            try{db.close();}catch(e){}
+            reject(err);
+          }
         };
       });
+
       result.restored++;
       result.databases++;
-    }catch(e){result.errors.push(`${spec.name}: ${e.message}`);}
+    }catch(e){
+      result.errors.push(`${spec.name}: ${e.message}`);
+    }
   }
+
   try{await initIndexedDB();await loadScoresFromIndexedDB();}catch(e){}
   return result;
 }
@@ -4709,24 +4785,76 @@ function validateBackupPayload(parsed){
   if(data.indexedDB&&!Array.isArray(data.indexedDB))throw new Error('IndexedDBデータが壊れています。');
   return data;
 }
+function restoreInputReset(input){
+  try{if(input)input.value='';}catch(_){ }
+}
+function showRestoreModal(title,html,buttons){
+  try{
+    if(typeof showModal==='function'){
+      showModal(title,html,buttons||'');
+      return true;
+    }
+  }catch(err){
+    console.error('復元モーダル表示エラー:',err);
+  }
+  try{
+    const tmp=document.createElement('div');
+    tmp.innerHTML=String(html||'').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g,'');
+    window.alert(`${title||'復元'}\n\n${tmp.textContent||tmp.innerText||''}`);
+    return true;
+  }catch(_){return false;}
+}
+function setRestoreBusy(isBusy){
+  const input=document.getElementById('restoreFileInput');
+  if(input)input.disabled=!!isBusy;
+}
 async function handleRestoreFile(e){
-  const file=e.target.files[0];if(!file)return;
-  // 復元中に呼ばれる自動保存(changeLanguage/switchTab/updateMyProfileLive等)を止め、
-  // 復元したStorageを古いDOM状態で上書きしない。
-  window.__itsmeRestoreInProgress = true;
+  const input=e?.target||document.getElementById('restoreFileInput');
+  const file=input?.files?.[0];
+  // 同じファイルを連続選択できるよう、Fileオブジェクトを退避して直ちにinputを空にする。
+  restoreInputReset(input);
+  if(!file){
+    showRestoreModal('復元','ファイルが選択されていません。');
+    return;
+  }
+
+  window.__itsmeRestoreInProgress=true;
+  setRestoreBusy(true);
+  showRestoreModal('バックアップを読み込み中',`「${String(file.name).replace(/[<>&"']/g,'')}」を読み込んでいます。<br><br>ファイル容量: ${Math.max(0,file.size||0).toLocaleString()} bytes<br>完了するまでこのページを閉じないでください。`);
+
   const reader=new FileReader();
+  const finish=()=>{
+    setRestoreBusy(false);
+    restoreInputReset(input);
+  };
+  reader.onerror=()=>{
+    window.__itsmeRestoreInProgress=false;
+    finish();
+    showRestoreModal('復元できませんでした','バックアップファイルの読み込みに失敗しました。<br><br>ファイルが壊れているか、端末・ブラウザがファイル読み込みを拒否した可能性があります。');
+  };
+  reader.onabort=()=>{
+    window.__itsmeRestoreInProgress=false;
+    finish();
+    showRestoreModal('復元を中止しました','バックアップファイルの読み込みが中止されました。');
+  };
   reader.onload=async ev=>{
     try{
-      const rawJson=file.name.endsWith('.zip')?extractJsonFromZip(ev.target.result):ev.target.result;
-      const parsed=JSON.parse(rawJson);
+      const rawJson=file.name.toLowerCase().endsWith('.zip')?extractJsonFromZip(ev.target.result):String(ev.target.result||'');
+      if(!rawJson.trim())throw new Error('バックアップファイルが空です。');
+      let parsed;
+      try{parsed=JSON.parse(rawJson);}catch(err){throw new Error(`JSONを解析できませんでした: ${err.message}`);}
       const restored=validateBackupPayload(parsed);
       const report={storage:0,session:0,indexedDB:0,errors:[]};
-      // まずファイル全体の構造を検証してから、復元処理を開始する。
+
       if(restored.storage){
         const r1=storageRestore(localStorage,restored.storage.localStorage);report.storage=r1.restored;report.errors.push(...r1.errors);
         const r2=storageRestore(sessionStorage,restored.storage.sessionStorage);report.session=r2.restored;report.errors.push(...r2.errors);
       }
-      if(Array.isArray(restored.indexedDB)){const r=await restoreIndexedDB(restored.indexedDB);report.indexedDB=r.databases;report.errors.push(...r.errors);}
+      if(Array.isArray(restored.indexedDB)){
+        const r=await restoreIndexedDB(restored.indexedDB);
+        report.indexedDB=r.databases;
+        report.errors.push(...r.errors);
+      }
 
       if(Array.isArray(restored.updateHistory)){
         try{
@@ -4740,25 +4868,39 @@ async function handleRestoreFile(e){
             if(src.desc&&typeof src.desc==='object')k.desc=src.desc;
             k.pinned=!!src.pinned;
           });
-          try{localStorage.setItem('airplane_game_pinned_ids',JSON.stringify(KOUSHIN_DATA.filter(k=>k.pinned).map(k=>k.id)));}catch(e){report.errors.push('更新履歴ピン保存: '+e.message);}
+          try{localStorage.setItem('airplane_game_pinned_ids',JSON.stringify(KOUSHIN_DATA.filter(k=>k.pinned).map(k=>k.id)));}catch(err){report.errors.push('更新履歴ピン保存: '+err.message);}
           renderHistoryTable();
-        }catch(e){report.errors.push('更新履歴: '+e.message);}
+        }catch(err){report.errors.push('更新履歴: '+err.message);}
       }
+
       if(Array.isArray(restored.scores)){
         memoryStore.scores=restored.scores;
-        // IndexedDBを使わない設定でも、.itsmeに含まれるスコアを再読み込み後に失わないための一時復元領域。
-        try{sessionStorage.setItem('airplane_game_itsme_pending_scores',JSON.stringify(restored.scores));}catch(e){report.errors.push('スコア一時復元: '+e.message);}
+        try{sessionStorage.setItem('airplane_game_itsme_pending_scores',JSON.stringify(restored.scores));}catch(err){report.errors.push('スコア一時復元: '+err.message);}
       }
       if(restored.coins!==undefined)memoryStore.coins=Number(restored.coins)||0;
       if(restored.coinBankBalance!==undefined)memoryStore.coinBankBalance=Number(restored.coinBankBalance)||0;
       if(restored.creditCardBalance!==undefined)memoryStore.creditCardBalance=Number(restored.creditCardBalance)||0;
       if(Array.isArray(restored.coinHistory))memoryStore.coinHistory=restored.coinHistory;
       if(typeof restored.customSiteTitle==='string')memoryStore.customSiteTitle=restored.customSiteTitle;
-      if(Array.isArray(restored.customQuestions)&&restored.customQuestions.length===100){customQuestions=restored.customQuestions;try{localStorage.setItem('airplane_game_100_questions_v5',JSON.stringify(customQuestions));const restoredCleared=restored.storage?.localStorage?.airplane_game_100_questions_cleared;customQuestionsExplicitlyCleared=restoredCleared==='1';localStorage.setItem('airplane_game_100_questions_cleared',customQuestionsExplicitlyCleared?'1':'0');}catch(e){report.errors.push('100問自作版: '+e.message);}}
+      if(Array.isArray(restored.customQuestions)&&restored.customQuestions.length===100){
+        customQuestions=restored.customQuestions;
+        try{
+          localStorage.setItem('airplane_game_100_questions_v5',JSON.stringify(customQuestions));
+          const restoredCleared=restored.storage?.localStorage?.airplane_game_100_questions_cleared;
+          customQuestionsExplicitlyCleared=restoredCleared==='1';
+          localStorage.setItem('airplane_game_100_questions_cleared',customQuestionsExplicitlyCleared?'1':'0');
+        }catch(err){report.errors.push('100問自作版: '+err.message);}
+      }
       if(Array.isArray(restored.shortcuts)){shortcutData=restored.shortcuts;renderShortcuts();}
-      if(restored.myProfile){memoryStore.myProfile=restored.myProfile;const mp=restored.myProfile;[['myProfName','name'],['myProfBirth','birth'],['myProfGender','gender'],['myProfLocation','location'],['myProfHobby','hobby'],['myProfQuote','quote'],['myProfMessage','message']].forEach(([id,k])=>{const el=document.getElementById(id);if(el)el.value=mp[k]||'';});}
-      if(restored.config){const c=restored.config;const set=(id,v,prop='value')=>{const el=document.getElementById(id);if(el&&v!==undefined)el[prop]=v;};
-        set('cfgGameEnabled',c.gameEnabled,'checked');set('cfgSaveScore',c.saveScore,'checked');set('cfgUseIndexedDB',c.useIndexedDB,'checked');set('cfgMouseStalkerType',c.mouseStalkerType);set('cfgStalkerCustomText',c.stalkerCustomText);set('cfgGcSimulation',c.gcSimulation,'checked');set('cfgBgColor',c.bgColor);set('cfgBgColorText',c.bgColorText);set('cfgTextColor',c.textColor);set('cfgTextColorText',c.textColorText);set('cfgFontFamily',c.fontFamily);set('cfgFontSizeNum',c.fontSizeNum);set('cfgFontSizeUnit',c.fontSizeUnit);set('cfgShowSearchGame',c.showSearchGame,'checked');set('cfgShowSearchOther',c.showSearchOther,'checked');set('cfgShowHeader',c.showHeader,'checked');set('cfgColorTheme',c.colorTheme);set('stickMaxHeight',c.stickMaxHeight);set('stickMaxPillars',c.stickMaxPillars);set('cfgNightFlight',c.nightFlight,'checked');set('cfgReducedMotion',c.reducedMotion,'checked');set('cfgBatterySaver',c.batterySaver,'checked');set('cfgMasterVolume',c.masterVolume);set('cfgMuteAudio',c.muteAudio,'checked');set('cfgDpadPosition',c.dpadPosition);set('cfgDpadSize',c.dpadSize);set('cfgDpadOpacity',c.dpadOpacity);set('cfgVibrate',c.vibrate,'checked');set('cfgGameSpeed',c.gameSpeed);set('cfgInvincible',c.invincible,'checked');set('cfgKonjacMaterial',c.konjacMaterial);set('cfgKonjacKnife',c.konjacKnife);set('cfgFlagRegion',c.flagRegion);set('cfgFlightHours',c.flightHours);set('cfgFlightMinutes',c.flightMinutes);set('cfgTimezoneDiff',c.timezoneDiff);
+      if(restored.myProfile){
+        memoryStore.myProfile=restored.myProfile;
+        const mp=restored.myProfile;
+        [['myProfName','name'],['myProfBirth','birth'],['myProfGender','gender'],['myProfLocation','location'],['myProfHobby','hobby'],['myProfQuote','quote'],['myProfMessage','message']].forEach(([id,k])=>{const el=document.getElementById(id);if(el)el.value=mp[k]||'';});
+      }
+      if(restored.config){
+        const c=restored.config;
+        const set=(id,v,prop='value')=>{const el=document.getElementById(id);if(el&&v!==undefined)el[prop]=v;};
+        set('cfgGameEnabled',c.gameEnabled,'checked');set('cfgSaveScore',c.saveScore,'checked');set('cfgUseIndexedDB',c.useIndexedDB,'checked');set('cfgMouseStalkerType',c.mouseStalkerType);set('cfgStalkerCustomText',c.stalkerCustomText);set('cfgGcSimulation',c.gcSimulation,'checked');set('cfgBgColor',c.bgColor);set('cfgBgColorText',c.bgColorText);set('cfgTextColor',c.textColor);set('cfgTextColorText',c.textColorText);set('cfgFontFamily',c.fontFamily);set('cfgFontSizeNum',c.fontSizeNum);set('cfgFontSizeUnit',c.fontSizeUnit);set('cfgShowSearchGame',c.showSearchGame,'checked');set('cfgShowSearchOther',c.showSearchOther,'checked');set('cfgShowHeader',c.showHeader,'checked');set('cfgColorTheme',c.colorTheme);set('stickMaxHeight',c.stickMaxHeight);set('stickMaxPillars',c.stickMaxPillars);set('cfgJumpForce',c.jumpForce);set('cfgNightFlight',c.nightFlight,'checked');set('cfgReducedMotion',c.reducedMotion,'checked');set('cfgBatterySaver',c.batterySaver,'checked');set('cfgMasterVolume',c.masterVolume);set('cfgMuteAudio',c.muteAudio,'checked');set('cfgDpadPosition',c.dpadPosition);set('cfgDpadSize',c.dpadSize);set('cfgDpadOpacity',c.dpadOpacity);set('cfgVibrate',c.vibrate,'checked');set('cfgGameSpeed',c.gameSpeed);set('cfgInvincible',c.invincible,'checked');set('cfgKonjacMaterial',c.konjacMaterial);set('cfgKonjacKnife',c.konjacKnife);set('cfgFlagRegion',c.flagRegion);set('cfgFlightHours',c.flightHours);set('cfgFlightMinutes',c.flightMinutes);set('cfgTimezoneDiff',c.timezoneDiff);
         if(c.stalkerImageData)localStorage.setItem('airplane_game_stalker_img',c.stalkerImageData);
       }
       restoreFormState(restored.formState);
@@ -4768,26 +4910,29 @@ async function handleRestoreFile(e){
       if(restored.activeTab)switchTab(restored.activeTab);
       if(restored.uiState&&Number.isFinite(restored.uiState.scrollX)&&Number.isFinite(restored.uiState.scrollY))window.scrollTo(restored.uiState.scrollX,restored.uiState.scrollY);
       renderScoreTable();renderHistoryTable();updateCoinDisplays();renderCoinHistoryTable();if(memoryStore.customSiteTitle)document.title=memoryStore.customSiteTitle;
+
+      window.__itsmeRestoreInProgress=false;
+      window.__itsmeRestoreReloadPending=true;
       const partial=report.errors.length>0;
-      // Storage / IndexedDB を実際の起動処理にも反映させるため、復元成功後はページを再読み込みする。
-      // 再読み込み前に現在のアプリ側状態を保存してしまうとバックアップ内容を上書きするため、saveAllConfig() は呼ばない。
-      window.__itsmeRestoreInProgress = false;
-      if(!partial){
-        window.__itsmeRestoreReloadPending = true;
-        showModal(t('data_title'),`バックアップを復元しました。<br><br>Storage ${report.storage}件、sessionStorage ${report.session}件、IndexedDB ${report.indexedDB}DBを復元しました。<br><br>復元した保存状態を確実に読み込むため、このページを再読み込みします。<br><br>※更新履歴もバックアップに含まれています。`,`<button class="btn" onclick="closeModal();location.reload();">復元した状態を反映する</button>`);
-      }else{
-        window.__itsmeRestoreReloadPending = true;
-        showModal(t('data_title'),`復元は部分成功しました。Storage ${report.storage}件、sessionStorage ${report.session}件、IndexedDB ${report.indexedDB}DBを復元しました。<br><br>復元できなかった項目:<br>${report.errors.slice(0,20).join('<br>')}<br><br>復元できた保存状態を読み込むため、再読み込みできます。`,`<button class="btn" onclick="closeModal();location.reload();">復元した状態を反映する</button>`);
-      }
-      try{e.target.value='';}catch(_){}
+      const details=`Storage ${report.storage}件、sessionStorage ${report.session}件、IndexedDB ${report.indexedDB}DBを処理しました。<br><br>${partial?'一部の項目でエラーが発生しました。':'すべての復元処理が完了しました。'}<br><br>復元した状態を確実に読み込むため、再読み込みしてください。`;
+      const errors=partial?`<br><br><b>復元できなかった項目:</b><br>${report.errors.slice(0,20).map(x=>String(x).replace(/[<>&"']/g,'')).join('<br>')}`:'';
+      finish();
+      showRestoreModal(partial?'復元（一部成功）':'復元完了',details+errors,`<button class="btn" onclick="closeModal();location.reload();">復元した状態を反映する</button>`);
     }catch(err){
-      window.__itsmeRestoreInProgress = false;
-      showModal('不審なファイル',`${err.message}<br><br>壊れているか形式が不正です。修復用として現在の最新データから新しい .itsme ファイルをダウンロードしますか？`,`<button class="btn" onclick="exportDataFile('itsme'); closeModal();">使える形式で新規ダウンロード</button>`);
+      window.__itsmeRestoreInProgress=false;
+      window.__itsmeRestoreReloadPending=false;
+      finish();
+      showRestoreModal('復元できませんでした',`${String(err?.message||err).replace(/[<>&"']/g,'')}<br><br>バックアップファイルは変更されていません。もう一度選択して試せます。`);
     }
   };
-  if(file.name.endsWith('.zip'))reader.readAsArrayBuffer(file);else reader.readAsText(file);
+  try{
+    if(file.name.toLowerCase().endsWith('.zip'))reader.readAsArrayBuffer(file);else reader.readAsText(file);
+  }catch(err){
+    window.__itsmeRestoreInProgress=false;
+    finish();
+    showRestoreModal('復元できませんでした',`ファイルの読み込み開始に失敗しました。<br><br>${String(err?.message||err).replace(/[<>&"']/g,'')}`);
+  }
 }
-
 function extractJsonFromZip(buffer) {
   const bytes = new Uint8Array(buffer);
   for (let i = 0; i < bytes.length - 4; i++) {
