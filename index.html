@@ -4459,7 +4459,141 @@ async function exportScoreTable(format) {
   downloadBlob(createSimpleZip(files),'score.zip');
 }
 
-function exportDataFile(type) {
+/* ==========================================================================
+   完全バックアップ (.itsme)
+   - localStorage / sessionStorage を動的に全列挙
+   - IndexedDB を動的に全DB・全objectStore・全record列挙
+   - Blob / File / ArrayBuffer / TypedArray / Date / BigInt / Map / Set 等を
+     型情報付きでJSON化し、外部通信なしで復元
+   ========================================================================== */
+function backupBase64FromBytes(bytes){
+  let binary='';
+  const chunk=0x8000;
+  for(let i=0;i<bytes.length;i+=chunk) binary+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));
+  return btoa(binary);
+}
+function backupBytesFromBase64(base64){
+  const binary=atob(base64||'');
+  const bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+  return bytes;
+}
+async function encodeBackupValue(value, seen=new Map()){
+  if(value===null||value===undefined)return value;
+  const type=typeof value;
+  if(type==='string'||type==='number'||type==='boolean')return value;
+  if(type==='bigint')return {__backupType:'BigInt',value:value.toString()};
+  if(type==='function'||type==='symbol')return {__backupType:'Unsupported',value:String(value)};
+  if(seen.has(value))return {__backupType:'Ref',id:seen.get(value)};
+  const id=seen.size+1; seen.set(value,id);
+  if(typeof Blob!=='undefined' && value instanceof Blob){
+    const bytes=new Uint8Array(await value.arrayBuffer());
+    return {__backupType:'Blob',id,type:value.type||'',size:value.size,data:backupBase64FromBytes(bytes),name:value instanceof File?value.name:'',lastModified:value instanceof File?value.lastModified:undefined};
+  }
+  if(value instanceof ArrayBuffer)return {__backupType:'ArrayBuffer',id,data:backupBase64FromBytes(new Uint8Array(value))};
+  if(typeof ArrayBuffer!=='undefined' && ArrayBuffer.isView(value))return {__backupType:'TypedArray',id,name:value.constructor.name,data:backupBase64FromBytes(new Uint8Array(value.buffer,value.byteOffset,value.byteLength))};
+  if(value instanceof Date)return {__backupType:'Date',id,value:value.toISOString()};
+  if(value instanceof RegExp)return {__backupType:'RegExp',id,source:value.source,flags:value.flags};
+  if(value instanceof Map){const entries=[];for(const [k,v] of value)entries.push([await encodeBackupValue(k,seen),await encodeBackupValue(v,seen)]);return {__backupType:'Map',id,entries};}
+  if(value instanceof Set){const values=[];for(const v of value)values.push(await encodeBackupValue(v,seen));return {__backupType:'Set',id,values};}
+  if(Array.isArray(value)){const out=[];for(const v of value)out.push(await encodeBackupValue(v,seen));return {__backupType:'Array',id,value:out};}
+  const out={};
+  for(const key of Object.keys(value)){try{out[key]=await encodeBackupValue(value[key],seen);}catch(e){out[key]={__backupType:'Unsupported',value:String(value[key])};}}
+  return {__backupType:'Object',id,value:out};
+}
+function decodeBackupValue(value, refs=new Map()){
+  if(value===null||value===undefined||typeof value==='string'||typeof value==='number'||typeof value==='boolean')return value;
+  if(Array.isArray(value))return value.map(v=>decodeBackupValue(v,refs));
+  if(!value.__backupType)return value;
+  if(value.__backupType==='Ref')return refs.get(value.id);
+  let out;
+  switch(value.__backupType){
+    case 'BigInt': out=BigInt(value.value); break;
+    case 'Unsupported': out=value.value; break;
+    case 'Blob': { const bytes=backupBytesFromBase64(value.data); out=value.name?new File([bytes],value.name,{type:value.type||'',lastModified:value.lastModified||Date.now()}):new Blob([bytes],{type:value.type||''}); break; }
+    case 'ArrayBuffer': out=backupBytesFromBase64(value.data).buffer; break;
+    case 'TypedArray': { const bytes=backupBytesFromBase64(value.data); const C=globalThis[value.name]||Uint8Array; try{out=new C(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));}catch(e){out=bytes;} break; }
+    case 'Date': out=new Date(value.value); break;
+    case 'RegExp': out=new RegExp(value.source,value.flags); break;
+    case 'Map': out=new Map(); refs.set(value.id,out); value.entries.forEach(([k,v])=>out.set(decodeBackupValue(k,refs),decodeBackupValue(v,refs))); return out;
+    case 'Set': out=new Set(); refs.set(value.id,out); value.values.forEach(v=>out.add(decodeBackupValue(v,refs))); return out;
+    case 'Array': out=[]; refs.set(value.id,out); value.value.forEach(v=>out.push(decodeBackupValue(v,refs))); return out;
+    case 'Object': out={}; refs.set(value.id,out); Object.keys(value.value||{}).forEach(k=>out[k]=decodeBackupValue(value.value[k],refs)); return out;
+    default:return value.value;
+  }
+  if(value.id)refs.set(value.id,out);
+  return out;
+}
+function storageSnapshot(storage){
+  const out={};
+  try{for(let i=0;i<storage.length;i++){const k=storage.key(i);out[k]=storage.getItem(k);}}catch(e){}
+  return out;
+}
+function storageRestore(storage,data){
+  if(!storage||!data)return;
+  try{storage.clear();Object.keys(data).forEach(k=>storage.setItem(k,String(data[k]??'')));}catch(e){}
+}
+function idbRequest(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('IndexedDB request failed'));});}
+function idbTxDone(tx){return new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error('IndexedDB transaction failed'));tx.onabort=()=>reject(tx.error||new Error('IndexedDB transaction aborted'));});}
+async function snapshotIndexedDB(){
+  const result=[];
+  if(!window.indexedDB)return result;
+  let dbInfos=[];
+  try{if(typeof indexedDB.databases==='function')dbInfos=await indexedDB.databases();}catch(e){return result;}
+  for(const info of dbInfos){
+    if(!info?.name)continue;
+    let db=null;
+    try{
+      db=await new Promise((resolve,reject)=>{const r=indexedDB.open(info.name);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+      const stores=[];
+      for(const storeName of Array.from(db.objectStoreNames)){
+        const tx=db.transaction(storeName,'readonly');const store=tx.objectStore(storeName);
+        const keys=await idbRequest(store.getAllKeys());const vals=await idbRequest(store.getAll());
+        const records=[];const sharedSeen=new Map();
+        for(let i=0;i<vals.length;i++)records.push({key:await encodeBackupValue(keys[i],sharedSeen),value:await encodeBackupValue(vals[i],sharedSeen)});
+        const indexes=[];
+        for(const indexName of Array.from(store.indexNames)){const idx=store.index(indexName);indexes.push({name:indexName,keyPath:idx.keyPath,multiEntry:idx.multiEntry,unique:idx.unique});}
+        stores.push({name:storeName,keyPath:store.keyPath,autoIncrement:store.autoIncrement,indexes,records});
+      }
+      result.push({name:info.name,version:db.version,stores});
+    }catch(e){result.push({name:info.name,version:info.version||1,stores:[],error:String(e)});}finally{try{db?.close();}catch(e){}}
+  }
+  return result;
+}
+async function restoreIndexedDB(snapshot){
+  if(!window.indexedDB||!Array.isArray(snapshot))return;
+  for(const spec of snapshot){
+    if(!spec?.name)continue;
+    try{if(dbInstance&&dbInstance.name===spec.name)dbInstance.close();}catch(e){}
+    await new Promise(resolve=>{const r=indexedDB.deleteDatabase(spec.name);r.onsuccess=r.onerror=r.onblocked=()=>resolve();});
+    const version=Math.max(1,Number(spec.version)||1);
+    await new Promise((resolve,reject)=>{
+      const r=indexedDB.open(spec.name,version);
+      r.onupgradeneeded=e=>{const db=e.target.result;for(const st of (spec.stores||[])){
+        if(db.objectStoreNames.contains(st.name))continue;
+        const store=db.createObjectStore(st.name,{keyPath:st.keyPath??null,autoIncrement:!!st.autoIncrement});
+        (st.indexes||[]).forEach(idx=>{try{store.createIndex(idx.name,idx.keyPath,{unique:!!idx.unique,multiEntry:!!idx.multiEntry});}catch(err){}});
+      }};
+      r.onerror=()=>reject(r.error);r.onsuccess=async()=>{
+        const db=r.result;
+        try{
+          for(const st of (spec.stores||[])){
+            if(!db.objectStoreNames.contains(st.name))continue;
+            const tx=db.transaction(st.name,'readwrite');const store=tx.objectStore(st.name);const refs=new Map();
+            for(const rec of (st.records||[])){
+              const val=decodeBackupValue(rec.value,refs);const key=decodeBackupValue(rec.key,refs);
+              if(store.keyPath===null||store.keyPath===undefined)store.put(val,key);else store.put(val);
+            }
+            await idbTxDone(tx);
+          }
+          db.close();resolve();
+        }catch(err){try{db.close();}catch(e){}reject(err);}
+      };
+    }).catch(()=>{});
+  }
+  try{await initIndexedDB();await loadScoresFromIndexedDB();}catch(e){}
+}
+async function buildCompleteBackupPayload(){
   const fullBackupData = {
     activeTab: currentActiveTab,
     selectedGame: currentGame,
@@ -4475,68 +4609,25 @@ function exportDataFile(type) {
     language: currentLang,
     pinnedHistoryIds: KOUSHIN_DATA.filter(k => k.pinned).map(k => k.id),
     config: {
-      gameEnabled: document.getElementById('cfgGameEnabled').checked,
-      saveScore: document.getElementById('cfgSaveScore').checked,
-      useIndexedDB: document.getElementById('cfgUseIndexedDB').checked,
-      mouseStalkerType: document.getElementById('cfgMouseStalkerType').value,
-      stalkerCustomText: document.getElementById('cfgStalkerCustomText').value,
-      stalkerImageData: localStorage.getItem('airplane_game_stalker_img') || '',
-      gcSimulation: document.getElementById('cfgGcSimulation').checked,
-      bgColor: document.getElementById('cfgBgColor').value,
-      bgColorText: document.getElementById('cfgBgColorText').value,
-      textColor: document.getElementById('cfgTextColor').value,
-      textColorText: document.getElementById('cfgTextColorText').value,
-      fontFamily: document.getElementById('cfgFontFamily').value,
-      fontSizeNum: document.getElementById('cfgFontSizeNum').value,
-      fontSizeUnit: document.getElementById('cfgFontSizeUnit').value,
-      showSearchGame: document.getElementById('cfgShowSearchGame').checked,
-      showSearchOther: document.getElementById('cfgShowSearchOther').checked,
-      showHeader: document.getElementById('cfgShowHeader').checked,
-      colorTheme: document.getElementById('cfgColorTheme').value,
-      stickMaxHeight: document.getElementById('stickMaxHeight').value,
-      stickMaxPillars: document.getElementById('stickMaxPillars').value,
-
-      nightFlight: document.getElementById('cfgNightFlight').checked,
-      reducedMotion: document.getElementById('cfgReducedMotion').checked,
-      batterySaver: document.getElementById('cfgBatterySaver').checked,
-      masterVolume: document.getElementById('cfgMasterVolume').value,
-      muteAudio: document.getElementById('cfgMuteAudio').checked,
-      dpadPosition: document.getElementById('cfgDpadPosition').value,
-      dpadSize: document.getElementById('cfgDpadSize').value,
-      dpadOpacity: document.getElementById('cfgDpadOpacity').value,
-      vibrate: document.getElementById('cfgVibrate').checked,
-      gameSpeed: document.getElementById('cfgGameSpeed').value,
-      invincible: document.getElementById('cfgInvincible').checked,
-      konjacMaterial: document.getElementById('cfgKonjacMaterial').value,
-      konjacKnife: document.getElementById('cfgKonjacKnife').value,
-      flagRegion: document.getElementById('cfgFlagRegion').value,
-      flightHours: document.getElementById('cfgFlightHours').value,
-      flightMinutes: document.getElementById('cfgFlightMinutes').value,
-      timezoneDiff: document.getElementById('cfgTimezoneDiff').value
-    }
+      gameEnabled: document.getElementById('cfgGameEnabled').checked, saveScore: document.getElementById('cfgSaveScore').checked, useIndexedDB: document.getElementById('cfgUseIndexedDB').checked,
+      mouseStalkerType: document.getElementById('cfgMouseStalkerType').value, stalkerCustomText: document.getElementById('cfgStalkerCustomText').value, stalkerImageData: localStorage.getItem('airplane_game_stalker_img') || '',
+      gcSimulation: document.getElementById('cfgGcSimulation').checked, bgColor: document.getElementById('cfgBgColor').value, bgColorText: document.getElementById('cfgBgColorText').value, textColor: document.getElementById('cfgTextColor').value, textColorText: document.getElementById('cfgTextColorText').value,
+      fontFamily: document.getElementById('cfgFontFamily').value, fontSizeNum: document.getElementById('cfgFontSizeNum').value, fontSizeUnit: document.getElementById('cfgFontSizeUnit').value, showSearchGame: document.getElementById('cfgShowSearchGame').checked, showSearchOther: document.getElementById('cfgShowSearchOther').checked, showHeader: document.getElementById('cfgShowHeader').checked, colorTheme: document.getElementById('cfgColorTheme').value,
+      stickMaxHeight: document.getElementById('stickMaxHeight').value, stickMaxPillars: document.getElementById('stickMaxPillars').value, nightFlight: document.getElementById('cfgNightFlight').checked, reducedMotion: document.getElementById('cfgReducedMotion').checked, batterySaver: document.getElementById('cfgBatterySaver').checked, masterVolume: document.getElementById('cfgMasterVolume').value, muteAudio: document.getElementById('cfgMuteAudio').checked,
+      dpadPosition: document.getElementById('cfgDpadPosition').value, dpadSize: document.getElementById('cfgDpadSize').value, dpadOpacity: document.getElementById('cfgDpadOpacity').value, vibrate: document.getElementById('cfgVibrate').checked, gameSpeed: document.getElementById('cfgGameSpeed').value, invincible: document.getElementById('cfgInvincible').checked, konjacMaterial: document.getElementById('cfgKonjacMaterial').value, konjacKnife: document.getElementById('cfgKonjacKnife').value, flagRegion: document.getElementById('cfgFlagRegion').value, flightHours: document.getElementById('cfgFlightHours').value, flightMinutes: document.getElementById('cfgFlightMinutes').value, timezoneDiff: document.getElementById('cfgTimezoneDiff').value
+    },
+    // 個別キーを追加しておくことで、将来新しい設定が増えても .itsme に自動収録される。
+    storage: { localStorage: storageSnapshot(localStorage), sessionStorage: storageSnapshot(sessionStorage) },
+    indexedDB: await snapshotIndexedDB()
   };
-
-  const payload = {
-    app: "AirplaneGames",
-    version: CURRENT_DATA_VERSION,
-    timestamp: new Date().toISOString(),
-    data: fullBackupData
-  };
-
-  const jsonStr = JSON.stringify(payload, null, 2);
-
-  if (type === 'itsme') {
-    downloadBlob(new Blob([jsonStr], { type: 'application/json' }), 'backup.itsme');
-  } else if (type === 'indexeddb') {
-    const idbPayload = { app: "AirplaneGames", store: "indexeddb", version: CURRENT_DATA_VERSION, scores: memoryStore.scores };
-    downloadBlob(new Blob([JSON.stringify(idbPayload, null, 2)], { type: 'application/json' }), 'backup.indexeddb');
-  } else if (type === 'zip') {
-    const files = [
-      { name: 'backup.itsme', content: jsonStr },
-      { name: 'backup.indexeddb', content: JSON.stringify({ app: "AirplaneGames", scores: memoryStore.scores }, null, 2) }
-    ];
-    downloadBlob(createSimpleZip(files), 'backup.zip');
-  }
+  return {app:'AirplaneGames',version:CURRENT_DATA_VERSION,timestamp:new Date().toISOString(),data:fullBackupData};
+}
+async function exportDataFile(type) {
+  const payload=await buildCompleteBackupPayload();
+  const jsonStr=JSON.stringify(payload,null,2);
+  if(type==='itsme') downloadBlob(new Blob([jsonStr],{type:'application/json'}),'backup.itsme');
+  else if(type==='indexeddb') downloadBlob(new Blob([JSON.stringify({app:'AirplaneGames',store:'indexeddb',version:CURRENT_DATA_VERSION,indexedDB:payload.data.indexedDB},null,2)],{type:'application/json'}),'backup.indexeddb');
+  else if(type==='zip') downloadBlob(createSimpleZip([{name:'backup.itsme',content:jsonStr},{name:'backup.indexeddb',content:JSON.stringify({app:'AirplaneGames',version:CURRENT_DATA_VERSION,indexedDB:payload.data.indexedDB},null,2)}]),'backup.zip');
 }
 
 function handleRestoreFile(e) {
@@ -4563,6 +4654,9 @@ function handleRestoreFile(e) {
       }
 
       const restored = parsed.data || parsed;
+      // .itsme の動的バックアップを先に復元。既存の個別復元処理は互換性のため後続で実行する。
+      if (restored.storage) { storageRestore(localStorage, restored.storage.localStorage); storageRestore(sessionStorage, restored.storage.sessionStorage); }
+      if (Array.isArray(restored.indexedDB)) { await restoreIndexedDB(restored.indexedDB); }
       if (!restored.scores) restored.scores = [];
       if (!restored.myProfile) restored.myProfile = memoryStore.myProfile;
       if (restored.coins !== undefined) memoryStore.coins = Number(restored.coins) || 0;
