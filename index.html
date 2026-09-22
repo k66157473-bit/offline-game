@@ -1716,6 +1716,9 @@ const availableActions = [
 ];
 
 function saveAllConfig() {
+  // .itsme復元中は、画面更新系関数(changeLanguage/switchTab等)からの自動保存で
+  // 復元済みStorageを現在の古い画面状態に上書きしない。
+  if (window.__itsmeRestoreInProgress) return;
   const config = {
     activeTab: currentActiveTab,
     selectedGame: currentGame,
@@ -4461,11 +4464,14 @@ async function exportScoreTable(format) {
 
 /* ==========================================================================
    完全バックアップ (.itsme)
-   - localStorage / sessionStorage を動的に全列挙
-   - IndexedDB を動的に全DB・全objectStore・全record列挙
-   - Blob / File / ArrayBuffer / TypedArray / Date / BigInt / Map / Set 等を
-     型情報付きでJSON化し、外部通信なしで復元
+   - 保存対象を動的にスナップショット化
+   - 更新履歴は意図的に除外
+   - localStorage / sessionStorage / IndexedDB / フォーム状態を復元
+   - 外部通信なし
    ========================================================================== */
+const ITSMe_BACKUP_SCHEMA = 3;
+// 更新履歴もバックアップ対象に含める。
+
 function backupBase64FromBytes(bytes){
   let binary='';
   const chunk=0x8000;
@@ -4478,82 +4484,123 @@ function backupBytesFromBase64(base64){
   for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
   return bytes;
 }
-async function encodeBackupValue(value, seen=new Map()){
-  if(value===null||value===undefined)return value;
+async function encodeBackupValue(value, seen=new Map()) {
+  if(value===undefined) return {__backupType:'Undefined'};
+  if(value===null) return null;
   const type=typeof value;
-  if(type==='string'||type==='number'||type==='boolean')return value;
-  if(type==='bigint')return {__backupType:'BigInt',value:value.toString()};
-  if(type==='function'||type==='symbol')return {__backupType:'Unsupported',value:String(value)};
-  if(seen.has(value))return {__backupType:'Ref',id:seen.get(value)};
-  const id=seen.size+1; seen.set(value,id);
-  if(typeof Blob!=='undefined' && value instanceof Blob){
-    const bytes=new Uint8Array(await value.arrayBuffer());
-    return {__backupType:'Blob',id,type:value.type||'',size:value.size,data:backupBase64FromBytes(bytes),name:value instanceof File?value.name:'',lastModified:value instanceof File?value.lastModified:undefined};
+  if(type==='string'||type==='number'||type==='boolean') {
+    if(type==='number' && Number.isNaN(value)) return {__backupType:'Number',value:'NaN'};
+    if(type==='number' && value===Infinity) return {__backupType:'Number',value:'Infinity'};
+    if(type==='number' && value===-Infinity) return {__backupType:'Number',value:'-Infinity'};
+    if(type==='number' && Object.is(value,-0)) return {__backupType:'Number',value:'-0'};
+    return value;
   }
-  if(value instanceof ArrayBuffer)return {__backupType:'ArrayBuffer',id,data:backupBase64FromBytes(new Uint8Array(value))};
-  if(typeof ArrayBuffer!=='undefined' && ArrayBuffer.isView(value))return {__backupType:'TypedArray',id,name:value.constructor.name,data:backupBase64FromBytes(new Uint8Array(value.buffer,value.byteOffset,value.byteLength))};
-  if(value instanceof Date)return {__backupType:'Date',id,value:value.toISOString()};
-  if(value instanceof RegExp)return {__backupType:'RegExp',id,source:value.source,flags:value.flags};
-  if(value instanceof Map){const entries=[];for(const [k,v] of value)entries.push([await encodeBackupValue(k,seen),await encodeBackupValue(v,seen)]);return {__backupType:'Map',id,entries};}
-  if(value instanceof Set){const values=[];for(const v of value)values.push(await encodeBackupValue(v,seen));return {__backupType:'Set',id,values};}
-  if(Array.isArray(value)){const out=[];for(const v of value)out.push(await encodeBackupValue(v,seen));return {__backupType:'Array',id,value:out};}
-  const out={};
-  for(const key of Object.keys(value)){try{out[key]=await encodeBackupValue(value[key],seen);}catch(e){out[key]={__backupType:'Unsupported',value:String(value[key])};}}
-  return {__backupType:'Object',id,value:out};
+  if(type==='bigint') return {__backupType:'BigInt',value:value.toString()};
+  if(type==='function'||type==='symbol') return {__backupType:'Unsupported',value:String(value)};
+  if(seen.has(value)) return {__backupType:'Ref',id:seen.get(value)};
+  const id=seen.size+1;
+  seen.set(value,id);
+  try {
+    if(typeof Blob!=='undefined' && value instanceof Blob){
+      const bytes=new Uint8Array(await value.arrayBuffer());
+      return {__backupType:value instanceof File?'File':'Blob',id,type:value.type||'',size:value.size,data:backupBase64FromBytes(bytes),name:value instanceof File?value.name:'',lastModified:value instanceof File?value.lastModified:undefined};
+    }
+    if(value instanceof ArrayBuffer) return {__backupType:'ArrayBuffer',id,data:backupBase64FromBytes(new Uint8Array(value))};
+    if(typeof ArrayBuffer!=='undefined' && ArrayBuffer.isView(value)){
+      return {__backupType:value instanceof DataView?'DataView':'TypedArray',id,name:value.constructor.name,data:backupBase64FromBytes(new Uint8Array(value.buffer,value.byteOffset,value.byteLength))};
+    }
+    if(value instanceof Date) return {__backupType:'Date',id,value:value.toISOString()};
+    if(value instanceof RegExp) return {__backupType:'RegExp',id,source:value.source,flags:value.flags};
+    if(value instanceof Map){const entries=[];for(const [k,v] of value)entries.push([await encodeBackupValue(k,seen),await encodeBackupValue(v,seen)]);return {__backupType:'Map',id,entries};}
+    if(value instanceof Set){const values=[];for(const v of value)values.push(await encodeBackupValue(v,seen));return {__backupType:'Set',id,values};}
+    if(Array.isArray(value)){const out=[];for(const v of value)out.push(await encodeBackupValue(v,seen));return {__backupType:'Array',id,value:out};}
+    const out={};
+    for(const key of Object.keys(value)){try{out[key]=await encodeBackupValue(value[key],seen);}catch(e){out[key]={__backupType:'Unsupported',value:String(e)}}}
+    return {__backupType:'Object',id,value:out};
+  } catch(e) {
+    return {__backupType:'Unsupported',id,value:String(e)};
+  }
 }
 function decodeBackupValue(value, refs=new Map()){
-  if(value===null||value===undefined||typeof value==='string'||typeof value==='number'||typeof value==='boolean')return value;
+  if(value===null||value===undefined||typeof value==='string'||typeof value==='boolean')return value;
+  if(typeof value==='number')return value;
   if(Array.isArray(value))return value.map(v=>decodeBackupValue(v,refs));
   if(!value.__backupType)return value;
   if(value.__backupType==='Ref')return refs.get(value.id);
   let out;
   switch(value.__backupType){
+    case 'Undefined': return undefined;
     case 'BigInt': out=BigInt(value.value); break;
+    case 'Number': out=value.value==='NaN'?NaN:value.value==='Infinity'?Infinity:value.value==='-Infinity'?-Infinity:value.value==='-0'?-0:Number(value.value); break;
     case 'Unsupported': out=value.value; break;
-    case 'Blob': { const bytes=backupBytesFromBase64(value.data); out=value.name?new File([bytes],value.name,{type:value.type||'',lastModified:value.lastModified||Date.now()}):new Blob([bytes],{type:value.type||''}); break; }
+    case 'Blob': {const bytes=backupBytesFromBase64(value.data);out=new Blob([bytes],{type:value.type||''});break;}
+    case 'File': {const bytes=backupBytesFromBase64(value.data);out=new File([bytes],value.name||'file',{type:value.type||'',lastModified:value.lastModified||Date.now()});break;}
     case 'ArrayBuffer': out=backupBytesFromBase64(value.data).buffer; break;
-    case 'TypedArray': { const bytes=backupBytesFromBase64(value.data); const C=globalThis[value.name]||Uint8Array; try{out=new C(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));}catch(e){out=bytes;} break; }
+    case 'TypedArray': {const bytes=backupBytesFromBase64(value.data);const C=globalThis[value.name]||Uint8Array;try{out=new C(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));}catch(e){out=bytes;}break;}
+    case 'DataView': {const bytes=backupBytesFromBase64(value.data);out=new DataView(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));break;}
     case 'Date': out=new Date(value.value); break;
     case 'RegExp': out=new RegExp(value.source,value.flags); break;
-    case 'Map': out=new Map(); refs.set(value.id,out); value.entries.forEach(([k,v])=>out.set(decodeBackupValue(k,refs),decodeBackupValue(v,refs))); return out;
-    case 'Set': out=new Set(); refs.set(value.id,out); value.values.forEach(v=>out.add(decodeBackupValue(v,refs))); return out;
-    case 'Array': out=[]; refs.set(value.id,out); value.value.forEach(v=>out.push(decodeBackupValue(v,refs))); return out;
-    case 'Object': out={}; refs.set(value.id,out); Object.keys(value.value||{}).forEach(k=>out[k]=decodeBackupValue(value.value[k],refs)); return out;
+    case 'Map': out=new Map();refs.set(value.id,out);(value.entries||[]).forEach(([k,v])=>out.set(decodeBackupValue(k,refs),decodeBackupValue(v,refs)));return out;
+    case 'Set': out=new Set();refs.set(value.id,out);(value.values||[]).forEach(v=>out.add(decodeBackupValue(v,refs)));return out;
+    case 'Array': out=[];refs.set(value.id,out);(value.value||[]).forEach(v=>out.push(decodeBackupValue(v,refs)));return out;
+    case 'Object': out={};refs.set(value.id,out);Object.keys(value.value||{}).forEach(k=>out[k]=decodeBackupValue(value.value[k],refs));return out;
     default:return value.value;
   }
   if(value.id)refs.set(value.id,out);
   return out;
 }
+function shouldExcludeBackupStorageKey(key){
+  return false;
+}
 function storageSnapshot(storage){
   const out={};
-  try{for(let i=0;i<storage.length;i++){const k=storage.key(i);out[k]=storage.getItem(k);}}catch(e){}
+  if(!storage)return out;
+  try{for(let i=0;i<storage.length;i++){const k=storage.key(i);if(k!==null&&!shouldExcludeBackupStorageKey(k))out[k]=storage.getItem(k);}}catch(e){}
   return out;
 }
 function storageRestore(storage,data){
-  if(!storage||!data)return;
-  try{storage.clear();Object.keys(data).forEach(k=>storage.setItem(k,String(data[k]??'')));}catch(e){}
+  if(!storage||!data||typeof data!=='object')return {restored:0,errors:[]};
+  const errors=[];let restored=0;
+  try{
+    // 更新履歴を含むバックアップ対象のStorageを、バックアップ時点の状態へ同期する。
+    const backupKeys=new Set(Object.keys(data).filter(k=>!shouldExcludeBackupStorageKey(k)));
+    const existingKeys=[];
+    for(let i=0;i<storage.length;i++){const k=storage.key(i);if(k!==null)existingKeys.push(k);}
+    for(const k of existingKeys){
+      if(shouldExcludeBackupStorageKey(k))continue;
+      if(!backupKeys.has(k)){
+        try{storage.removeItem(k);}catch(e){errors.push(`${k}: ${e.message}`);}
+      }
+    }
+    for(const k of backupKeys){
+      try{storage.setItem(k,String(data[k]??''));restored++;}
+      catch(e){errors.push(`${k}: ${e.message}`);}
+    }
+  }catch(e){errors.push(e.message);}
+  return {restored,errors};
 }
 function idbRequest(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('IndexedDB request failed'));});}
 function idbTxDone(tx){return new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error('IndexedDB transaction failed'));tx.onabort=()=>reject(tx.error||new Error('IndexedDB transaction aborted'));});}
+function idbDeleteDatabase(name){return new Promise((resolve,reject)=>{const r=indexedDB.deleteDatabase(name);r.onsuccess=()=>resolve(true);r.onerror=()=>reject(r.error||new Error('IndexedDB delete failed'));r.onblocked=()=>reject(new Error(`IndexedDB '${name}' is blocked by an open connection.`));});}
+function idbOpenForSnapshot(name){return new Promise((resolve,reject)=>{const r=indexedDB.open(name);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('IndexedDB open failed'));});}
 async function snapshotIndexedDB(){
   const result=[];
-  if(!window.indexedDB)return result;
+  if(!window.indexedDB||typeof indexedDB.databases!=='function')return result;
   let dbInfos=[];
-  try{if(typeof indexedDB.databases==='function')dbInfos=await indexedDB.databases();}catch(e){return result;}
+  try{dbInfos=(await indexedDB.databases()).filter(x=>x&&x.name);}catch(e){return result;}
   for(const info of dbInfos){
-    if(!info?.name)continue;
     let db=null;
     try{
-      db=await new Promise((resolve,reject)=>{const r=indexedDB.open(info.name);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+      db=await idbOpenForSnapshot(info.name);
       const stores=[];
       for(const storeName of Array.from(db.objectStoreNames)){
         const tx=db.transaction(storeName,'readonly');const store=tx.objectStore(storeName);
         const keys=await idbRequest(store.getAllKeys());const vals=await idbRequest(store.getAll());
-        const records=[];const sharedSeen=new Map();
-        for(let i=0;i<vals.length;i++)records.push({key:await encodeBackupValue(keys[i],sharedSeen),value:await encodeBackupValue(vals[i],sharedSeen)});
+        const records=[];
+        for(let i=0;i<vals.length;i++){const seen=new Map();try{records.push({key:await encodeBackupValue(keys[i],seen),value:await encodeBackupValue(vals[i],seen)});}catch(e){records.push({key:await encodeBackupValue(keys[i]),value:{__backupType:'Unsupported',value:String(e)}});}}
         const indexes=[];
         for(const indexName of Array.from(store.indexNames)){const idx=store.index(indexName);indexes.push({name:indexName,keyPath:idx.keyPath,multiEntry:idx.multiEntry,unique:idx.unique});}
-        stores.push({name:storeName,keyPath:store.keyPath,autoIncrement:store.autoIncrement,indexes,records});
+        stores.push({name:storeName,keyPath:store.keyPath===undefined?null:store.keyPath,autoIncrement:store.autoIncrement,indexes,records});
       }
       result.push({name:info.name,version:db.version,stores});
     }catch(e){result.push({name:info.name,version:info.version||1,stores:[],error:String(e)});}finally{try{db?.close();}catch(e){}}
@@ -4561,247 +4608,184 @@ async function snapshotIndexedDB(){
   return result;
 }
 async function restoreIndexedDB(snapshot){
-  if(!window.indexedDB||!Array.isArray(snapshot))return;
+  const result={restored:0,errors:[],databases:0};
+  if(!window.indexedDB||!Array.isArray(snapshot))return result;
   for(const spec of snapshot){
     if(!spec?.name)continue;
-    try{if(dbInstance&&dbInstance.name===spec.name)dbInstance.close();}catch(e){}
-    await new Promise(resolve=>{const r=indexedDB.deleteDatabase(spec.name);r.onsuccess=r.onerror=r.onblocked=()=>resolve();});
-    const version=Math.max(1,Number(spec.version)||1);
-    await new Promise((resolve,reject)=>{
-      const r=indexedDB.open(spec.name,version);
-      r.onupgradeneeded=e=>{const db=e.target.result;for(const st of (spec.stores||[])){
-        if(db.objectStoreNames.contains(st.name))continue;
-        const store=db.createObjectStore(st.name,{keyPath:st.keyPath??null,autoIncrement:!!st.autoIncrement});
-        (st.indexes||[]).forEach(idx=>{try{store.createIndex(idx.name,idx.keyPath,{unique:!!idx.unique,multiEntry:!!idx.multiEntry});}catch(err){}});
-      }};
-      r.onerror=()=>reject(r.error);r.onsuccess=async()=>{
-        const db=r.result;
-        try{
+    try{
+      if(dbInstance&&dbInstance.name===spec.name)dbInstance.close();
+      try{await idbDeleteDatabase(spec.name);}catch(e){throw e;}
+      const version=Math.max(1,Number(spec.version)||1);
+      await new Promise((resolve,reject)=>{
+        const r=indexedDB.open(spec.name,version);
+        r.onupgradeneeded=e=>{
+          const db=e.target.result;
           for(const st of (spec.stores||[])){
-            if(!db.objectStoreNames.contains(st.name))continue;
-            const tx=db.transaction(st.name,'readwrite');const store=tx.objectStore(st.name);const refs=new Map();
-            for(const rec of (st.records||[])){
-              const val=decodeBackupValue(rec.value,refs);const key=decodeBackupValue(rec.key,refs);
-              if(store.keyPath===null||store.keyPath===undefined)store.put(val,key);else store.put(val);
-            }
-            await idbTxDone(tx);
+            if(db.objectStoreNames.contains(st.name))continue;
+            const opts={autoIncrement:!!st.autoIncrement};
+            if(st.keyPath!==null&&st.keyPath!==undefined)opts.keyPath=st.keyPath;
+            const store=db.createObjectStore(st.name,opts);
+            for(const idx of (st.indexes||[])){try{store.createIndex(idx.name,idx.keyPath,{unique:!!idx.unique,multiEntry:!!idx.multiEntry});}catch(err){}}
           }
-          db.close();resolve();
-        }catch(err){try{db.close();}catch(e){}reject(err);}
-      };
-    }).catch(()=>{});
+        };
+        r.onerror=()=>reject(r.error||new Error('IndexedDB restore open failed'));
+        r.onblocked=()=>reject(new Error(`IndexedDB '${spec.name}' restore is blocked by an open connection.`));
+        r.onsuccess=async()=>{
+          const db=r.result;
+          try{
+            for(const st of (spec.stores||[])){
+              if(!db.objectStoreNames.contains(st.name))continue;
+              const tx=db.transaction(st.name,'readwrite');const store=tx.objectStore(st.name);
+              for(const rec of (st.records||[])){
+                const refs=new Map();const val=decodeBackupValue(rec.value,refs);const key=decodeBackupValue(rec.key,refs);
+                if(store.keyPath===null||store.keyPath===undefined)store.put(val,key);else store.put(val);
+              }
+              await idbTxDone(tx);
+            }
+            db.close();resolve();
+          }catch(err){try{db.close();}catch(e){}reject(err);}
+        };
+      });
+      result.restored++;
+      result.databases++;
+    }catch(e){result.errors.push(`${spec.name}: ${e.message}`);}
   }
   try{await initIndexedDB();await loadScoresFromIndexedDB();}catch(e){}
+  return result;
+}
+function snapshotFormState(){
+  const out=[];
+  document.querySelectorAll('input,select,textarea,[contenteditable="true"]').forEach((el,index)=>{
+    const id=el.id||el.name; if(!id)return;
+    const item={id,type:el.tagName.toLowerCase(),name:el.name||'',index};
+    if(el.tagName==='INPUT'){item.inputType=el.type;item.value=el.value;item.checked=!!el.checked;item.files=[];}
+    else if(el.tagName==='SELECT'){item.value=el.value;item.selected=Array.from(el.options).map(o=>!!o.selected);}
+    else if(el.tagName==='TEXTAREA'){item.value=el.value;}
+    else item.textContent=el.innerHTML;
+    out.push(item);
+  });
+  return out;
+}
+function restoreFormState(list){
+  if(!Array.isArray(list))return;
+  for(const item of list){
+    try{const el=document.getElementById(item.id)||document.querySelector(`[name="${CSS.escape(item.name||'')}"]`);if(!el)continue;
+      if(el.tagName==='INPUT'){if(el.type!=='file')el.value=item.value??'';if('checked'in item)el.checked=!!item.checked;}
+      else if(el.tagName==='SELECT'){el.value=item.value??'';}
+      else if(el.tagName==='TEXTAREA')el.value=item.value??'';
+      else if(el.isContentEditable)el.innerHTML=item.textContent||'';
+    }catch(e){}
+  }
 }
 async function buildCompleteBackupPayload(){
-  const fullBackupData = {
-    activeTab: currentActiveTab,
-    selectedGame: currentGame,
-    scores: memoryStore.scores,
-    coins: memoryStore.coins,
-    coinBankBalance: memoryStore.coinBankBalance,
-    creditCardBalance: memoryStore.creditCardBalance,
-    coinHistory: memoryStore.coinHistory,
-    customSiteTitle: memoryStore.customSiteTitle,
-    myProfile: memoryStore.myProfile,
-    shortcuts: shortcutData,
-    customQuestions: customQuestions,
-    language: currentLang,
-    pinnedHistoryIds: KOUSHIN_DATA.filter(k => k.pinned).map(k => k.id),
-    config: {
-      gameEnabled: document.getElementById('cfgGameEnabled').checked, saveScore: document.getElementById('cfgSaveScore').checked, useIndexedDB: document.getElementById('cfgUseIndexedDB').checked,
-      mouseStalkerType: document.getElementById('cfgMouseStalkerType').value, stalkerCustomText: document.getElementById('cfgStalkerCustomText').value, stalkerImageData: localStorage.getItem('airplane_game_stalker_img') || '',
-      gcSimulation: document.getElementById('cfgGcSimulation').checked, bgColor: document.getElementById('cfgBgColor').value, bgColorText: document.getElementById('cfgBgColorText').value, textColor: document.getElementById('cfgTextColor').value, textColorText: document.getElementById('cfgTextColorText').value,
-      fontFamily: document.getElementById('cfgFontFamily').value, fontSizeNum: document.getElementById('cfgFontSizeNum').value, fontSizeUnit: document.getElementById('cfgFontSizeUnit').value, showSearchGame: document.getElementById('cfgShowSearchGame').checked, showSearchOther: document.getElementById('cfgShowSearchOther').checked, showHeader: document.getElementById('cfgShowHeader').checked, colorTheme: document.getElementById('cfgColorTheme').value,
-      stickMaxHeight: document.getElementById('stickMaxHeight').value, stickMaxPillars: document.getElementById('stickMaxPillars').value, nightFlight: document.getElementById('cfgNightFlight').checked, reducedMotion: document.getElementById('cfgReducedMotion').checked, batterySaver: document.getElementById('cfgBatterySaver').checked, masterVolume: document.getElementById('cfgMasterVolume').value, muteAudio: document.getElementById('cfgMuteAudio').checked,
-      dpadPosition: document.getElementById('cfgDpadPosition').value, dpadSize: document.getElementById('cfgDpadSize').value, dpadOpacity: document.getElementById('cfgDpadOpacity').value, vibrate: document.getElementById('cfgVibrate').checked, gameSpeed: document.getElementById('cfgGameSpeed').value, invincible: document.getElementById('cfgInvincible').checked, konjacMaterial: document.getElementById('cfgKonjacMaterial').value, konjacKnife: document.getElementById('cfgKonjacKnife').value, flagRegion: document.getElementById('cfgFlagRegion').value, flightHours: document.getElementById('cfgFlightHours').value, flightMinutes: document.getElementById('cfgFlightMinutes').value, timezoneDiff: document.getElementById('cfgTimezoneDiff').value
-    },
-    // 個別キーを追加しておくことで、将来新しい設定が増えても .itsme に自動収録される。
-    storage: { localStorage: storageSnapshot(localStorage), sessionStorage: storageSnapshot(sessionStorage) },
-    indexedDB: await snapshotIndexedDB()
+  const storageLocal=storageSnapshot(localStorage);
+  const storageSession=storageSnapshot(sessionStorage);
+  const fullBackupData={
+    activeTab:currentActiveTab,selectedGame:currentGame,
+    scores:memoryStore.scores,coins:memoryStore.coins,coinBankBalance:memoryStore.coinBankBalance,creditCardBalance:memoryStore.creditCardBalance,coinHistory:memoryStore.coinHistory,customSiteTitle:memoryStore.customSiteTitle,myProfile:memoryStore.myProfile,shortcuts:shortcutData,customQuestions:customQuestions,language:currentLang,
+    config:{gameEnabled:document.getElementById('cfgGameEnabled')?.checked,saveScore:document.getElementById('cfgSaveScore')?.checked,useIndexedDB:document.getElementById('cfgUseIndexedDB')?.checked,mouseStalkerType:document.getElementById('cfgMouseStalkerType')?.value,stalkerCustomText:document.getElementById('cfgStalkerCustomText')?.value,stalkerImageData:localStorage.getItem('airplane_game_stalker_img')||'',gcSimulation:document.getElementById('cfgGcSimulation')?.checked,bgColor:document.getElementById('cfgBgColor')?.value,bgColorText:document.getElementById('cfgBgColorText')?.value,textColor:document.getElementById('cfgTextColor')?.value,textColorText:document.getElementById('cfgTextColorText')?.value,fontFamily:document.getElementById('cfgFontFamily')?.value,fontSizeNum:document.getElementById('cfgFontSizeNum')?.value,fontSizeUnit:document.getElementById('cfgFontSizeUnit')?.value,showSearchGame:document.getElementById('cfgShowSearchGame')?.checked,showSearchOther:document.getElementById('cfgShowSearchOther')?.checked,showHeader:document.getElementById('cfgShowHeader')?.checked,colorTheme:document.getElementById('cfgColorTheme')?.value,stickMaxHeight:document.getElementById('stickMaxHeight')?.value,stickMaxPillars:document.getElementById('stickMaxPillars')?.value,nightFlight:document.getElementById('cfgNightFlight')?.checked,reducedMotion:document.getElementById('cfgReducedMotion')?.checked,batterySaver:document.getElementById('cfgBatterySaver')?.checked,masterVolume:document.getElementById('cfgMasterVolume')?.value,muteAudio:document.getElementById('cfgMuteAudio')?.checked,dpadPosition:document.getElementById('cfgDpadPosition')?.value,dpadSize:document.getElementById('cfgDpadSize')?.value,dpadOpacity:document.getElementById('cfgDpadOpacity')?.value,vibrate:document.getElementById('cfgVibrate')?.checked,gameSpeed:document.getElementById('cfgGameSpeed')?.value,invincible:document.getElementById('cfgInvincible')?.checked,konjacMaterial:document.getElementById('cfgKonjacMaterial')?.value,konjacKnife:document.getElementById('cfgKonjacKnife')?.value,flagRegion:document.getElementById('cfgFlagRegion')?.value,flightHours:document.getElementById('cfgFlightHours')?.value,flightMinutes:document.getElementById('cfgFlightMinutes')?.value,timezoneDiff:document.getElementById('cfgTimezoneDiff')?.value},
+    storage:{localStorage:storageLocal,sessionStorage:storageSession},
+    formState:snapshotFormState(),
+    uiState:{scrollX:window.scrollX,scrollY:window.scrollY},
+    indexedDB:await snapshotIndexedDB(),
+    updateHistory:KOUSHIN_DATA.map(k=>({id:k.id,date:k.date,desc:k.desc,pinned:!!k.pinned}))
   };
-  return {app:'AirplaneGames',version:CURRENT_DATA_VERSION,timestamp:new Date().toISOString(),data:fullBackupData};
+  // 更新履歴もバックアップ対象に含める。
+  return {app:'AirplaneGames',backupSchema:ITSMe_BACKUP_SCHEMA,version:CURRENT_DATA_VERSION,timestamp:new Date().toISOString(),data:fullBackupData};
 }
-async function exportDataFile(type) {
+async function exportDataFile(type){
   const payload=await buildCompleteBackupPayload();
   const jsonStr=JSON.stringify(payload,null,2);
-  if(type==='itsme') downloadBlob(new Blob([jsonStr],{type:'application/json'}),'backup.itsme');
-  else if(type==='indexeddb') downloadBlob(new Blob([JSON.stringify({app:'AirplaneGames',store:'indexeddb',version:CURRENT_DATA_VERSION,indexedDB:payload.data.indexedDB},null,2)],{type:'application/json'}),'backup.indexeddb');
-  else if(type==='zip') downloadBlob(createSimpleZip([{name:'backup.itsme',content:jsonStr},{name:'backup.indexeddb',content:JSON.stringify({app:'AirplaneGames',version:CURRENT_DATA_VERSION,indexedDB:payload.data.indexedDB},null,2)}]),'backup.zip');
+  if(type==='itsme')downloadBlob(new Blob([jsonStr],{type:'application/json'}),'backup.itsme');
+  else if(type==='indexeddb')downloadBlob(new Blob([JSON.stringify({app:'AirplaneGames',store:'indexeddb',version:CURRENT_DATA_VERSION,indexedDB:payload.data.indexedDB},null,2)],{type:'application/json'}),'backup.indexeddb');
+  else if(type==='zip')downloadBlob(createSimpleZip([{name:'backup.itsme',content:jsonStr},{name:'backup.indexeddb',content:JSON.stringify({app:'AirplaneGames',version:CURRENT_DATA_VERSION,indexedDB:payload.data.indexedDB},null,2)}]),'backup.zip');
 }
-
-function handleRestoreFile(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = async (ev) => {
-    try {
-      let rawJson = '';
-      if (file.name.endsWith('.zip')) {
-        rawJson = extractJsonFromZip(ev.target.result);
-      } else {
-        rawJson = ev.target.result;
+function validateBackupPayload(parsed){
+  if(!parsed||parsed.app!=='AirplaneGames')throw new Error('不審なファイル形式または互換性のないデータです。');
+  if(parsed.version&&parsed.version>CURRENT_DATA_VERSION)throw new Error(`バージョン(v${parsed.version})はまだリリースされていない番号です。`);
+  const data=parsed.data||parsed;
+  if(typeof data!=='object')throw new Error('バックアップのデータ本体がありません。');
+  if(data.storage&&typeof data.storage!=='object')throw new Error('Storageデータが壊れています。');
+  if(data.indexedDB&&!Array.isArray(data.indexedDB))throw new Error('IndexedDBデータが壊れています。');
+  return data;
+}
+async function handleRestoreFile(e){
+  const file=e.target.files[0];if(!file)return;
+  // 復元中に呼ばれる自動保存(changeLanguage/switchTab/updateMyProfileLive等)を止め、
+  // 復元したStorageを古いDOM状態で上書きしない。
+  window.__itsmeRestoreInProgress = true;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    try{
+      const rawJson=file.name.endsWith('.zip')?extractJsonFromZip(ev.target.result):ev.target.result;
+      const parsed=JSON.parse(rawJson);
+      const restored=validateBackupPayload(parsed);
+      const report={storage:0,session:0,indexedDB:0,errors:[]};
+      // まずファイル全体の構造を検証してから、復元処理を開始する。
+      if(restored.storage){
+        const r1=storageRestore(localStorage,restored.storage.localStorage);report.storage=r1.restored;report.errors.push(...r1.errors);
+        const r2=storageRestore(sessionStorage,restored.storage.sessionStorage);report.session=r2.restored;report.errors.push(...r2.errors);
       }
+      if(Array.isArray(restored.indexedDB)){const r=await restoreIndexedDB(restored.indexedDB);report.indexedDB=r.databases;report.errors.push(...r.errors);}
 
-      const parsed = JSON.parse(rawJson);
-
-      if (!parsed || parsed.app !== "AirplaneGames") {
-        throw new Error('不審なファイル形式または互換性のないデータです。');
+      if(Array.isArray(restored.updateHistory)){
+        try{
+          const byId=new Map(restored.updateHistory.filter(x=>x&&x.id!==undefined).map(x=>[x.id,x]));
+          const byDate=new Map(restored.updateHistory.filter(x=>x&&x.date!==undefined).map(x=>[String(x.date),x]));
+          KOUSHIN_DATA.forEach((k,i)=>{
+            const src=byId.get(k.id)||byDate.get(String(k.date))||restored.updateHistory[i];
+            if(!src)return;
+            if(src.id!==undefined)k.id=src.id;
+            if(src.date!==undefined)k.date=src.date;
+            if(src.desc&&typeof src.desc==='object')k.desc=src.desc;
+            k.pinned=!!src.pinned;
+          });
+          try{localStorage.setItem('airplane_game_pinned_ids',JSON.stringify(KOUSHIN_DATA.filter(k=>k.pinned).map(k=>k.id)));}catch(e){report.errors.push('更新履歴ピン保存: '+e.message);}
+          renderHistoryTable();
+        }catch(e){report.errors.push('更新履歴: '+e.message);}
       }
-      if (parsed.version && parsed.version > CURRENT_DATA_VERSION) {
-        throw new Error(`バージョン(v${parsed.version})はまだリリースされていない番号です。`);
+      if(Array.isArray(restored.scores)){
+        memoryStore.scores=restored.scores;
+        // IndexedDBを使わない設定でも、.itsmeに含まれるスコアを再読み込み後に失わないための一時復元領域。
+        try{sessionStorage.setItem('airplane_game_itsme_pending_scores',JSON.stringify(restored.scores));}catch(e){report.errors.push('スコア一時復元: '+e.message);}
       }
-
-      const restored = parsed.data || parsed;
-      // .itsme の動的バックアップを先に復元。既存の個別復元処理は互換性のため後続で実行する。
-      if (restored.storage) { storageRestore(localStorage, restored.storage.localStorage); storageRestore(sessionStorage, restored.storage.sessionStorage); }
-      if (Array.isArray(restored.indexedDB)) { await restoreIndexedDB(restored.indexedDB); }
-      if (!restored.scores) restored.scores = [];
-      if (!restored.myProfile) restored.myProfile = memoryStore.myProfile;
-      if (restored.coins !== undefined) memoryStore.coins = Number(restored.coins) || 0;
-      if (restored.coinBankBalance !== undefined) memoryStore.coinBankBalance = Number(restored.coinBankBalance) || 0;
-      if (restored.creditCardBalance !== undefined) memoryStore.creditCardBalance = Number(restored.creditCardBalance) || 0;
-      if (Array.isArray(restored.coinHistory)) memoryStore.coinHistory = restored.coinHistory;
-      if (typeof restored.customSiteTitle === 'string') memoryStore.customSiteTitle = restored.customSiteTitle;
-      if (Array.isArray(restored.customQuestions) && restored.customQuestions.length === 100) { customQuestions = restored.customQuestions; saveCustomQuestions(); }
-      if (!restored.shortcuts) restored.shortcuts = [
-        { key: 'Space', action: 'jump' },
-        { key: 'KeyP', action: 'pause' }
-      ];
-
-      memoryStore.scores = restored.scores;
-      if (dbInstance && document.getElementById('cfgUseIndexedDB').checked) {
-        try {
-          const tx = dbInstance.transaction('scores', 'readwrite');
-          const store = tx.objectStore('scores');
-          store.clear();
-          restored.scores.forEach(s => store.add(s));
-        } catch (err) {}
+      if(restored.coins!==undefined)memoryStore.coins=Number(restored.coins)||0;
+      if(restored.coinBankBalance!==undefined)memoryStore.coinBankBalance=Number(restored.coinBankBalance)||0;
+      if(restored.creditCardBalance!==undefined)memoryStore.creditCardBalance=Number(restored.creditCardBalance)||0;
+      if(Array.isArray(restored.coinHistory))memoryStore.coinHistory=restored.coinHistory;
+      if(typeof restored.customSiteTitle==='string')memoryStore.customSiteTitle=restored.customSiteTitle;
+      if(Array.isArray(restored.customQuestions)&&restored.customQuestions.length===100){customQuestions=restored.customQuestions;try{localStorage.setItem('airplane_game_100_questions_v5',JSON.stringify(customQuestions));const restoredCleared=restored.storage?.localStorage?.airplane_game_100_questions_cleared;customQuestionsExplicitlyCleared=restoredCleared==='1';localStorage.setItem('airplane_game_100_questions_cleared',customQuestionsExplicitlyCleared?'1':'0');}catch(e){report.errors.push('100問自作版: '+e.message);}}
+      if(Array.isArray(restored.shortcuts)){shortcutData=restored.shortcuts;renderShortcuts();}
+      if(restored.myProfile){memoryStore.myProfile=restored.myProfile;const mp=restored.myProfile;[['myProfName','name'],['myProfBirth','birth'],['myProfGender','gender'],['myProfLocation','location'],['myProfHobby','hobby'],['myProfQuote','quote'],['myProfMessage','message']].forEach(([id,k])=>{const el=document.getElementById(id);if(el)el.value=mp[k]||'';});}
+      if(restored.config){const c=restored.config;const set=(id,v,prop='value')=>{const el=document.getElementById(id);if(el&&v!==undefined)el[prop]=v;};
+        set('cfgGameEnabled',c.gameEnabled,'checked');set('cfgSaveScore',c.saveScore,'checked');set('cfgUseIndexedDB',c.useIndexedDB,'checked');set('cfgMouseStalkerType',c.mouseStalkerType);set('cfgStalkerCustomText',c.stalkerCustomText);set('cfgGcSimulation',c.gcSimulation,'checked');set('cfgBgColor',c.bgColor);set('cfgBgColorText',c.bgColorText);set('cfgTextColor',c.textColor);set('cfgTextColorText',c.textColorText);set('cfgFontFamily',c.fontFamily);set('cfgFontSizeNum',c.fontSizeNum);set('cfgFontSizeUnit',c.fontSizeUnit);set('cfgShowSearchGame',c.showSearchGame,'checked');set('cfgShowSearchOther',c.showSearchOther,'checked');set('cfgShowHeader',c.showHeader,'checked');set('cfgColorTheme',c.colorTheme);set('stickMaxHeight',c.stickMaxHeight);set('stickMaxPillars',c.stickMaxPillars);set('cfgNightFlight',c.nightFlight,'checked');set('cfgReducedMotion',c.reducedMotion,'checked');set('cfgBatterySaver',c.batterySaver,'checked');set('cfgMasterVolume',c.masterVolume);set('cfgMuteAudio',c.muteAudio,'checked');set('cfgDpadPosition',c.dpadPosition);set('cfgDpadSize',c.dpadSize);set('cfgDpadOpacity',c.dpadOpacity);set('cfgVibrate',c.vibrate,'checked');set('cfgGameSpeed',c.gameSpeed);set('cfgInvincible',c.invincible,'checked');set('cfgKonjacMaterial',c.konjacMaterial);set('cfgKonjacKnife',c.konjacKnife);set('cfgFlagRegion',c.flagRegion);set('cfgFlightHours',c.flightHours);set('cfgFlightMinutes',c.flightMinutes);set('cfgTimezoneDiff',c.timezoneDiff);
+        if(c.stalkerImageData)localStorage.setItem('airplane_game_stalker_img',c.stalkerImageData);
       }
-
-      memoryStore.myProfile = restored.myProfile;
-      document.getElementById('myProfName').value = restored.myProfile.name || '';
-      document.getElementById('myProfBirth').value = restored.myProfile.birth || '';
-      document.getElementById('myProfGender').value = restored.myProfile.gender || '';
-      document.getElementById('myProfLocation').value = restored.myProfile.location || '';
-      document.getElementById('myProfHobby').value = restored.myProfile.hobby || '';
-      document.getElementById('myProfQuote').value = restored.myProfile.quote || '';
-      document.getElementById('myProfMessage').value = restored.myProfile.message || '';
-
-      shortcutData = restored.shortcuts;
-      renderShortcuts();
-
-      if (restored.config) {
-        const c = restored.config;
-        if (c.gameEnabled !== undefined) document.getElementById('cfgGameEnabled').checked = c.gameEnabled;
-        if (c.saveScore !== undefined) document.getElementById('cfgSaveScore').checked = c.saveScore;
-        if (c.useIndexedDB !== undefined) document.getElementById('cfgUseIndexedDB').checked = c.useIndexedDB;
-        if (c.mouseStalkerType) document.getElementById('cfgMouseStalkerType').value = c.mouseStalkerType;
-        if (c.stalkerCustomText !== undefined) document.getElementById('cfgStalkerCustomText').value = c.stalkerCustomText;
-        if (c.gcSimulation !== undefined) document.getElementById('cfgGcSimulation').checked = c.gcSimulation;
-        if (c.bgColor) {
-          document.getElementById('cfgBgColor').value = c.bgColor;
-          document.getElementById('cfgBgColorText').value = c.bgColorText || c.bgColor;
-        }
-        if (c.textColor) {
-          document.getElementById('cfgTextColor').value = c.textColor;
-          document.getElementById('cfgTextColorText').value = c.textColorText || c.textColor;
-        }
-        if (c.fontFamily) document.getElementById('cfgFontFamily').value = c.fontFamily;
-        if (c.fontSizeNum) document.getElementById('cfgFontSizeNum').value = c.fontSizeNum;
-        if (c.fontSizeUnit) document.getElementById('cfgFontSizeUnit').value = c.fontSizeUnit;
-        if (c.showSearchGame !== undefined) document.getElementById('cfgShowSearchGame').checked = c.showSearchGame;
-        if (c.showSearchOther !== undefined) document.getElementById('cfgShowSearchOther').checked = c.showSearchOther;
-        if (c.showHeader !== undefined) document.getElementById('cfgShowHeader').checked = c.showHeader;
-        if (c.colorTheme) document.getElementById('cfgColorTheme').value = c.colorTheme;
-        if (c.stickMaxHeight) document.getElementById('stickMaxHeight').value = c.stickMaxHeight;
-        if (c.stickMaxPillars) document.getElementById('stickMaxPillars').value = c.stickMaxPillars;
-        if (c.jumpForce !== undefined) document.getElementById('cfgJumpForce').value = Math.min(98, Math.max(1, Number(c.jumpForce) || 12));
-
-        if (c.nightFlight !== undefined) document.getElementById('cfgNightFlight').checked = c.nightFlight;
-        if (c.reducedMotion !== undefined) document.getElementById('cfgReducedMotion').checked = c.reducedMotion;
-        if (c.batterySaver !== undefined) document.getElementById('cfgBatterySaver').checked = c.batterySaver;
-        if (c.masterVolume !== undefined) document.getElementById('cfgMasterVolume').value = c.masterVolume;
-        if (c.muteAudio !== undefined) document.getElementById('cfgMuteAudio').checked = c.muteAudio;
-        if (c.dpadPosition) document.getElementById('cfgDpadPosition').value = c.dpadPosition;
-        if (c.dpadSize) document.getElementById('cfgDpadSize').value = c.dpadSize;
-        if (c.dpadOpacity !== undefined) document.getElementById('cfgDpadOpacity').value = c.dpadOpacity;
-        if (c.vibrate !== undefined) document.getElementById('cfgVibrate').checked = c.vibrate;
-        if (c.gameSpeed) document.getElementById('cfgGameSpeed').value = c.gameSpeed;
-        if (c.invincible !== undefined) document.getElementById('cfgInvincible').checked = c.invincible;
-        if (c.konjacMaterial) document.getElementById('cfgKonjacMaterial').value = c.konjacMaterial;
-        if (c.konjacKnife) document.getElementById('cfgKonjacKnife').value = c.konjacKnife;
-        if (c.flagRegion) document.getElementById('cfgFlagRegion').value = c.flagRegion;
-        if (c.flightHours) document.getElementById('cfgFlightHours').value = c.flightHours;
-        if (c.flightMinutes) document.getElementById('cfgFlightMinutes').value = c.flightMinutes;
-        if (c.timezoneDiff) document.getElementById('cfgTimezoneDiff').value = c.timezoneDiff;
-
-        if (c.stalkerImageData) {
-          localStorage.setItem('airplane_game_stalker_img', c.stalkerImageData);
-          if (c.mouseStalkerType === 'image') {
-            mouseStalker.innerHTML = `<img src="${c.stalkerImageData}" style="width:24px; height:24px; object-fit:contain;">`;
-          }
-        }
+      restoreFormState(restored.formState);
+      if(restored.language)changeLanguage(restored.language);
+      toggleGameFeatureSetting();relocateGameSettings();applyColors();applyFontSettings();applyColorTheme(document.getElementById('cfgColorTheme')?.value);applyNightFlightMode();applyReducedMotion();updateMasterVolume();applyDpadSettings();initFlightTimer();updateWorldClock();toggleSearchBarVisibility();toggleHeader(document.getElementById('cfgShowHeader')?.checked);updateMouseStalker();updateMyProfileLive();
+      if(restored.selectedGame){const btn=document.querySelector(`.game-select-btn[data-game="${CSS.escape(restored.selectedGame)}"]`);selectGame(restored.selectedGame,btn);}
+      if(restored.activeTab)switchTab(restored.activeTab);
+      if(restored.uiState&&Number.isFinite(restored.uiState.scrollX)&&Number.isFinite(restored.uiState.scrollY))window.scrollTo(restored.uiState.scrollX,restored.uiState.scrollY);
+      renderScoreTable();renderHistoryTable();updateCoinDisplays();renderCoinHistoryTable();if(memoryStore.customSiteTitle)document.title=memoryStore.customSiteTitle;
+      const partial=report.errors.length>0;
+      // Storage / IndexedDB を実際の起動処理にも反映させるため、復元成功後はページを再読み込みする。
+      // 再読み込み前に現在のアプリ側状態を保存してしまうとバックアップ内容を上書きするため、saveAllConfig() は呼ばない。
+      window.__itsmeRestoreInProgress = false;
+      if(!partial){
+        window.__itsmeRestoreReloadPending = true;
+        showModal(t('data_title'),`バックアップを復元しました。<br><br>Storage ${report.storage}件、sessionStorage ${report.session}件、IndexedDB ${report.indexedDB}DBを復元しました。<br><br>復元した保存状態を確実に読み込むため、このページを再読み込みします。<br><br>※更新履歴もバックアップに含まれています。`,`<button class="btn" onclick="closeModal();location.reload();">復元した状態を反映する</button>`);
+      }else{
+        window.__itsmeRestoreReloadPending = true;
+        showModal(t('data_title'),`復元は部分成功しました。Storage ${report.storage}件、sessionStorage ${report.session}件、IndexedDB ${report.indexedDB}DBを復元しました。<br><br>復元できなかった項目:<br>${report.errors.slice(0,20).join('<br>')}<br><br>復元できた保存状態を読み込むため、再読み込みできます。`,`<button class="btn" onclick="closeModal();location.reload();">復元した状態を反映する</button>`);
       }
-
-      if (restored.pinnedHistoryIds) {
-        KOUSHIN_DATA.forEach(k => {
-          k.pinned = restored.pinnedHistoryIds.includes(k.id);
-        });
-      }
-
-      if (restored.language) {
-        changeLanguage(restored.language);
-      }
-
-      toggleGameFeatureSetting();
-
-      if (restored.selectedGame) {
-        const targetGameBtn = document.querySelector(`.game-select-btn[data-game="${restored.selectedGame}"]`);
-        selectGame(restored.selectedGame, targetGameBtn);
-      }
-      if (restored.activeTab) {
-        switchTab(restored.activeTab);
-      }
-
-      relocateGameSettings();
-      applyColors();
-      applyFontSettings();
-      applyColorTheme(document.getElementById('cfgColorTheme').value);
-      applyNightFlightMode();
-      applyReducedMotion();
-      updateMasterVolume();
-      applyDpadSettings();
-      initFlightTimer();
-      updateWorldClock();
-      toggleSearchBarVisibility();
-      toggleHeader(document.getElementById('cfgShowHeader').checked);
-      updateMouseStalker();
-      updateMyProfileLive();
-      saveAllConfig();
-
-      renderScoreTable();
-      renderHistoryTable();
-      updateCoinDisplays();
-      renderCoinHistoryTable();
-      if (memoryStore.customSiteTitle) document.title = memoryStore.customSiteTitle;
-
-      showModal(t('data_title'), 'すべてのデータ（設定・ショートカット・プロフィール・スコア・開いていたタブ）が完全に復元されました！');
-    } catch (err) {
-      showModal(
-        '不審なファイル',
-        `${err.message}<br><br>壊れているか形式が不正です。修復用として現在の最新データから使える形式の新しい .itsme ファイルをダウンロードしますか？`,
-        `<button class="btn" onclick="exportDataFile('itsme'); closeModal();">使える形式で新規ダウンロード</button>`
-      );
+      try{e.target.value='';}catch(_){}
+    }catch(err){
+      window.__itsmeRestoreInProgress = false;
+      showModal('不審なファイル',`${err.message}<br><br>壊れているか形式が不正です。修復用として現在の最新データから新しい .itsme ファイルをダウンロードしますか？`,`<button class="btn" onclick="exportDataFile('itsme'); closeModal();">使える形式で新規ダウンロード</button>`);
     }
   };
-
-  if (file.name.endsWith('.zip')) {
-    reader.readAsArrayBuffer(file);
-  } else {
-    reader.readAsText(file);
-  }
+  if(file.name.endsWith('.zip'))reader.readAsArrayBuffer(file);else reader.readAsText(file);
 }
 
 function extractJsonFromZip(buffer) {
@@ -4829,7 +4813,12 @@ function downloadBlob(blob, filename) {
 /* ==========================================================================
    リロード直前セーフティネット
    ========================================================================== */
+window.__itsmeRestoreReloadPending = false;
+window.__itsmeRestoreInProgress = false;
 window.addEventListener('beforeunload', () => {
+  // .itsme復元直後のlocation.reload()では、復元したStorageを
+  // リロード前の古いDOM状態で上書きしない。
+  if (window.__itsmeRestoreReloadPending) return;
   if (typeof updateMyProfileLive === 'function') updateMyProfileLive();
   if (typeof saveAllConfig === 'function') saveAllConfig();
 });
@@ -4902,6 +4891,26 @@ window.addEventListener('load', async () => {
 
   await initIndexedDB();
   await loadScoresFromIndexedDB();
+  // .itsme復元直後だけ、バックアップに含まれていたメモリ上のスコアを最終値として採用する。
+  // IndexedDB無効時にもスコアが消えず、IndexedDB復元が部分失敗した場合もUI側を救済できる。
+  try{
+    const pendingScoresRaw=sessionStorage.getItem('airplane_game_itsme_pending_scores');
+    if(pendingScoresRaw){
+      const pendingScores=JSON.parse(pendingScoresRaw);
+      if(Array.isArray(pendingScores)){
+        memoryStore.scores=pendingScores;
+        if(dbInstance && document.getElementById('cfgUseIndexedDB').checked){
+          try{
+            const tx=dbInstance.transaction('scores','readwrite');
+            const store=tx.objectStore('scores');
+            store.clear();
+            pendingScores.forEach(record=>{try{store.add(record);}catch(e){}});
+          }catch(e){}
+        }
+      }
+      sessionStorage.removeItem('airplane_game_itsme_pending_scores');
+    }
+  }catch(e){}
 
   const savedCoinState = localStorage.getItem('airplane_game_coins');
   if (savedCoinState) {
