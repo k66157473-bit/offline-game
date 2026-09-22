@@ -601,6 +601,41 @@ th {
   margin-top: 12px;
 }
 
+/* ページ番号の横スクロール */
+.pagination-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  justify-content: flex-start;
+  padding: 4px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.pagination-scroll .page-btn { flex: 0 0 auto; }
+
+/* 100の質問 */
+ .game-settings-layout { display:flex; flex-direction:column; gap:8px; }
+.game-settings-group { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:8px; }
+.game-settings-group:empty { display:none !important; }
+.game-settings-group .config-item { margin:0; }
+.questions-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 20px;
+}
+.question-item {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,.04);
+}
+.question-item strong { color: var(--accent-pink); }
+.question-editor { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+.question-editor input, .question-editor textarea { width:100%; box-sizing:border-box; padding:7px; border:1px solid var(--border-color); border-radius:6px; background:var(--panel-bg); color:inherit; }
+@media (max-width:700px){ .question-editor{grid-template-columns:1fr;} }
+
 .page-btn {
   padding: 5px 10px;
   border: 1px solid #ccc;
@@ -830,7 +865,12 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       <label><span data-i18n="lbl_stick_maxp">棒の出現上限</span>: <input type="number" id="stickMaxPillars" value="5" min="2" max="10" style="width:50px;" onchange="saveAllConfig()"></label>
   <label>🦘 飛ぶ力(上限98): <input type="number" id="cfgJumpForce" value="12" min="1" max="98" style="width:55px;" oninput="if(this.value>98)this.value=98; saveAllConfig()"></label>
     </div>
-  </div>
+    <div id="gameSpecificSettings" class="game-settings-layout" style="margin-bottom:15px;">
+      <div id="gameCommonSettings" class="game-settings-group"></div>
+      <div id="gameKonjacSettings" class="game-settings-group" style="display:none;"></div>
+      <div id="gameFlagSettings" class="game-settings-group" style="display:none;"></div>
+      <div id="gameFlightSettings" class="game-settings-group"></div>
+    </div>
 
     <!-- ゲームキャンバス -->
     <div class="game-viewport-wrap">
@@ -846,6 +886,9 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <div class="flag-options-grid" id="flagOptionsGrid"></div>
       </div>
     </div>
+
+    <!-- ゲーム操作設定（コントローラーの直前に配置） -->
+    <div id="gameControllerSettings" class="game-settings-layout" style="margin-bottom:10px;"></div>
 
     <!-- コントローラ & 説明 -->
     <div class="controller-wrapper" id="mainControllerWrapper">
@@ -917,7 +960,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; flex-wrap:wrap; gap:10px;">
       <h2 style="color: var(--accent-pink); margin:0;" data-i18n="settings_title">各種設定 & カスタマイズ</h2>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-secondary" onclick="resetAllConfigToDefault()" data-i18n="btn_reset_config">設定を初期化</button>
+        <button class="btn btn-secondary" onclick="openResetSettingsModal()" data-i18n="btn_reset_config">設定を初期化</button>
             </div>
     </div>
 
@@ -1181,6 +1224,21 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         </div>
       </div>
     </div>
+
+    <div class="questions-card" id="questions100Card">
+      <h3 style="color:var(--accent-pink); margin-bottom:8px;" data-i18n="questions100_title">100の質問</h3>
+      <p class="text-dark-adaptive" data-i18n="questions100_note">管理人版と自作版を10件ずつページ表示。自作版は質問・回答をリアルタイム編集できます。</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;">
+        <button class="btn" onclick="showQuestionsPage('admin')" data-i18n="questions_admin">管理人版</button>
+        <button class="btn btn-outline" onclick="showQuestionsPage('custom')" data-i18n="questions_custom">自作版</button>
+        <button class="btn btn-outline" onclick="downloadQuestionsHTML('admin')" data-i18n="questions_download_admin">管理人版HTML</button>
+        <button class="btn btn-outline" onclick="downloadQuestionsHTML('custom')" data-i18n="questions_download_custom">自作版HTML</button>
+        <button class="btn btn-secondary" id="questionsResetButton" onclick="toggleQuestionsReset()" data-i18n="questions_reset_custom">管理人版にリセット</button>
+        <button class="btn btn-outline" id="questionsClearButton" onclick="clearCustomQuestions()" data-i18n="questions_clear_custom">自作版を一気に空白にする</button>
+      </div>
+      <div id="questionsView"></div>
+      <div id="questionsPagination" class="pagination-container pagination-scroll"></div>
+    </div>
   </section>
 
   <!-- 6. 更新履歴タブ -->
@@ -1213,7 +1271,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <tbody id="historyTableBody"></tbody>
       </table>
     </div>
-    <div class="pagination-container" id="historyPagination"></div>
+    <div class="pagination-container pagination-scroll" id="historyPagination"></div>
   </section>
 
   <!-- 7. データタブ -->
@@ -1255,7 +1313,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <tbody id="scoreTableBody"></tbody>
       </table>
     </div>
-    <div class="pagination-container" id="scorePagination"></div>
+    <div class="pagination-container pagination-scroll" id="scorePagination"></div>
 
     <hr style="margin: 25px 0; border: none; border-top: 2px dashed var(--border-color);">
 
@@ -1320,7 +1378,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <tbody id="coinHistoryTableBody"></tbody>
       </table>
     </div>
-    <div class="pagination-container" id="coinHistoryPagination"></div>
+    <div class="pagination-container pagination-scroll" id="coinHistoryPagination"></div>
   </section>
 
 </main>
@@ -1514,6 +1572,21 @@ const I18N_DICTIONARY = {
   data_backup_h: { ja: "バックアップ & 復元", en: "Backup & Restore", hira: "ばっくあっぷ と ふくげん", ko: "백업 및 복원", zh: "备份与还原", ar: "النسخ الاحتياطي والاستعادة", eo: "Savkopio kaj Restarigo" },
   lbl_restore: { ja: "データ復元 (.itsme / .indexeddb / backup.zip):", en: "Restore Data (.itsme / .indexeddb / backup.zip):", hira: "ふくげん:", ko: "데이터 복원:", zh: "数据还原:", ar: "استعادة البيانات:", eo: "Restarigi Datumojn:" },
   footer_running: { ja: "飛行機でも遊べるゲーム ★ 快適な空の旅を！", en: "Airplane Playable Games ★ Have a nice flight!", hira: "ひこうきでも あそべる げーむ ★ たのしい たびを！", ko: "비행기에서도 즐기는 게임 ★ 쾌적하고 즐거운 비행 되세요!", zh: "飞机上也能玩的游戏 ★ 祝您旅途愉快！", ar: "ألعاب ممتعة على متن الطائرة ★ نتمنى لك رحلة سعيدة ومريحة!", eo: "Ludoj Ludeblaj en Aviadilo ★ Bonan flugon al vi!" },
+  questions100_title: { ja: "100の質問", en: "100 Questions", hira: "100の しつもん", ko: "100개의 질문", zh: "100个问题", ar: "100 سؤال", eo: "100 Demandoj" },
+  questions100_note: { ja: "管理人版と自作版を10件ずつページ表示。自作版は質問・回答をリアルタイム編集できます。", en: "View the admin and custom versions 10 at a time. The custom version updates live while editing.", hira: "かんりにんばんと じさくばんを 10けんずつ ひょうじ。じさくばんは しつもんと かいとうを りあるたいむへんしゅうできます。", ko: "관리자판과 사용자판을 10개씩 페이지로 표시합니다. 사용자판은 질문과 답변을 실시간으로 편집할 수 있습니다.", zh: "管理员版和自制版每页显示10项。自制版可实时编辑问题和回答。", ar: "عرض نسخة المدير والنسخة المخصصة 10 عناصر لكل صفحة، مع تحديث مباشر للأسئلة والإجابات.", eo: "Montru la administran kaj propran version po 10 eroj; la propra versio ĝisdatigas sin dum redaktado." },
+  questions_admin: { ja: "管理人版", en: "Admin Version", hira: "かんりにんばん", ko: "관리자판", zh: "管理员版", ar: "نسخة المدير", eo: "Administra Versio" },
+  questions_reset_custom: { ja: "管理人版にリセット", en: "Reset to Admin Version", hira: "かんりにんばんに りせっと", ko: "관리자 버전으로 초기화", zh: "重置为管理员版", ar: "إعادة الضبط إلى نسخة المدير", eo: "Restar al Administra Versio" },
+  questions_restore_custom: { ja: "自作版に戻す", en: "Restore Custom Version", hira: "じさくばんに もどす", ko: "사용자판으로 되돌리기", zh: "恢复自制版", ar: "استعادة النسخة المخصصة", eo: "Restar la Propran Version" },
+  questions_reset_confirm: { ja: "自作100質問を管理人版の内容に戻しますか？", en: "Reset the custom 100 questions to the admin version?", hira: "じさく100しつもんを かんりにんばんに もどしますか？", ko: "사용자 100문항을 관리자 버전으로 초기화할까요?", zh: "要将自制100问重置为管理员版吗？", ar: "هل تريد إعادة أسئلة المئة المخصصة إلى نسخة المدير؟", eo: "Ĉu restarigi la 100 proprajn demandojn al la administra versio?" },
+  questions_restore_confirm: { ja: "保存していた自作100質問に戻しますか？", en: "Restore the saved custom 100 questions?", hira: "ほぞんしていた じさく100しつもんに もどしますか？", ko: "저장해 둔 사용자 100문항으로 되돌릴까요?", zh: "要恢复之前保存的自制100问吗？", ar: "هل تريد استعادة أسئلة المئة المخصصة المحفوظة؟", eo: "Ĉu restarigi la konservitajn 100 proprajn demandojn?" },
+  questions_custom: { ja: "自作版", en: "Custom Version", hira: "じさくばん", ko: "사용자판", zh: "自制版", ar: "نسخة مخصصة", eo: "Propra Versio" },
+  questions_download_admin: { ja: "管理人版HTML", en: "Download Admin HTML", hira: "かんりにんばん HTML", ko: "관리자판 HTML", zh: "下载管理员版HTML", ar: "تنزيل HTML للمدير", eo: "Elŝuti Administran HTML" },
+  questions_download_custom: { ja: "自作版HTML", en: "Download Custom HTML", hira: "じさくばん HTML", ko: "사용자판 HTML", zh: "下载自制版HTML", ar: "تنزيل HTML مخصص", eo: "Elŝuti Propran HTML" },
+  questions_clear_custom: { ja: "自作版を一気に空白にする", en: "Clear Custom Version", hira: "じさくばんを いっきに くうはくにする", ko: "사용자판 전체 비우기", zh: "一键清空自制版", ar: "مسح النسخة المخصصة بالكامل", eo: "Malplenigi la Propran Version" },
+  questions_clear_confirm: { ja: "自作100質問の質問と回答をすべて空白にしますか？", en: "Clear all questions and answers in the custom 100-question version?", hira: "じさく100しつもんの しつもんと かいとうを すべて くうはくにしますか？", ko: "사용자 100문항의 질문과 답변을 모두 비울까요?", zh: "要清空自制100问的所有问题和答案吗？", ar: "هل تريد مسح جميع الأسئلة والإجابات في النسخة المخصصة؟", eo: "Ĉu malplenigi ĉiujn demandojn kaj respondojn de la propra 100-demanda versio?" },
+  reset_select_title: { ja: "リセットする設定を選択", en: "Choose Settings to Reset", hira: "りせっとする せっていを えらぶ", ko: "초기화할 설정 선택", zh: "选择要重置的设置", ar: "اختر الإعدادات لإعادة ضبطها", eo: "Elektu Agordojn por Restarigi" },
+  reset_all: { ja: "一括リセット", en: "Reset All", hira: "いっかつ りせっと", ko: "전체 초기화", zh: "全部重置", ar: "إعادة ضبط الكل", eo: "Restarigi Ĉion" },
+  reset_apply: { ja: "選択した設定をリセット", en: "Reset Selected", hira: "えらんだ せっていを りせっと", ko: "선택한 설정 초기화", zh: "重置所选设置", ar: "إعادة ضبط المحدد", eo: "Restarigi Elektitajn" },
   btn_close: { ja: "閉じる", en: "Close", hira: "とじる", ko: "닫기", zh: "关闭", ar: "إغلاق", eo: "Fermi" }
 };
 
@@ -1523,6 +1596,7 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+{ pinned: false, date: '2026/09/22 20:33', desc: { ja: 'マスター音量・スコア保存ページネーション・100の質問・設定整理・30アクションプリセットを追加', en: 'Added master-volume mute behavior, paginated score exports, 100 questions, organized game settings, and 30 action presets', hira: 'ますたーおんりょう・すこあほぞんぺーじねーしょん・100のしつもん・せっていせいり・30あくしょんぷりせっとを ついか', ko: '마스터 볼륨 음소거 동작, 점수 저장 페이지네이션, 100개의 질문, 게임 설정 정리 및 30개 액션 프리셋 추가', zh: '新增主音量静音行为、得分分页导出、100个问题、游戏设置整理及30个动作预设', ar: 'إضافة سلوك كتم الصوت الرئيسي وتصدير النتائج مع الصفحات و100 سؤال وتنظيم إعدادات الألعاب و30 إجراءً مسبقًا', eo: 'Aldonis silentigan konduton, paĝigitajn poentarajn elportojn, 100 demandojn, organizitajn ludajn agordojn kaj 30 ago-prezeteojn' } },
 { pinned: false, date: '2026/09/21 02:22', desc: { ja: 'コインシステム・使用履歴・疑似決済・タイトル変更を追加', en: 'Added the coin system, usage history, simulated payment, and title customization', hira: 'こいんしすてむ・しようりれき・ぎじけっさい・たいとるへんこうを ついか', ko: '코인 시스템, 사용 기록, 모의 결제 및 제목 변경 기능 추가', zh: '新增金币系统、使用记录、模拟支付和标题自定义', ar: 'إضافة نظام العملات وسجل الاستخدام والدفع التجريبي وتخصيص العنوان', eo: 'Aldonis moneran sistemon, uzhistorion, simulitan pagon kaj titolan agordon' } },
 { pinned: false, date: '2026/09/21 12:37', desc: { ja: 'ゲームスコア記録表の検索・日付指定・並び順切替、多言語対応を強化', en: 'Enhanced score table search, date filtering, sorting, and multilingual support', hira: 'すこあきろくひょうの けんさく・ひづけしてい・ならびじゅんきりかえ と たげんごたいおうを きょうか', ko: '게임 점수표 검색, 날짜 필터, 정렬 및 다국어 지원 강화', zh: '增强得分记录表的搜索、日期筛选、排序及多语言支持', ar: 'تعزيز البحث وتصفية التاريخ والفرز ودعم اللغات المتعددة في جدول النتائج', eo: 'Plibonigis serĉon, datan filtradon, ordigon kaj plurlingvan subtenon en la poentotabelo' } },
 { pinned: false, date: '2026/09/21 14:36', desc: { ja: 'myfinger残高表示・使用履歴の保存形式・ミュート時の音量レンジ0化を追加', en: 'Added the myfinger balance display, usage history export format, and zeroed the volume range when muted', hira: 'myfingerざんだかひょうじ・しようりれきの ほぞんけいしき・みゅーとじの おんりょうれんじ0かを ついか', ko: 'myfinger 잔액 표시, 사용 기록 저장 형식 및 음소거 시 볼륨 범위를 0으로 설정하는 기능 추가', zh: '新增myfinger余额显示、使用记录保存格式以及静音时将音量滑块设为0的功能', ar: 'إضافة عرض رصيد myfinger وتنسيق حفظ سجل الاستخدام وضبط شريط مستوى الصوت على 0 عند الكتم', eo: 'Aldonis montron de saldo de myfinger, formaton de konservado de uzhistorio kaj agordon de la laŭteca glitilo al 0 dum silentigo' } },
@@ -1609,10 +1683,36 @@ let shortcutData = [
 ];
 
 const availableActions = [
-  { id: 'jump', name: { ja: 'ジャンプ / アクション', en: 'Jump / Action', hira: 'じゃんぷ', ko: '점프 / 액션', zh: '跳跃/动作', ar: 'قفز / تنفيذ', eo: 'Salto / Ago' } },
-  { id: 'pause', name: { ja: '開始 / 終了', en: 'Start / Stop', hira: 'すたーと・おわり', ko: '시작 / 종료', zh: '开始/结束', ar: 'بدء / إيقاف', eo: 'Starto / Halto' } },
-  { id: 'clean', name: { ja: '画面お掃除', en: 'Clean Blackboard', hira: 'そうじ', ko: '화면 청소', zh: '清理画面', ar: 'تنظيف الشاشة', eo: 'Purigi' } },
-  { id: 'sound', name: { ja: '効果音テスト', en: 'Sound Test', hira: 'おと', ko: '효과음 테스트', zh: '音效测试', ar: 'اختبار الصوت', eo: 'Son-Testo' } }
+  { id:'jump', name:{ja:'ジャンプ / アクション',en:'Jump / Action',hira:'じゃんぷ',ko:'점프 / 액션',zh:'跳跃/动作',ar:'قفز / تنفيذ',eo:'Salto / Ago'} },
+  { id:'pause', name:{ja:'開始 / 終了',en:'Start / Stop',hira:'すたーと・おわり',ko:'시작 / 종료',zh:'开始/结束',ar:'بدء / إيقاف',eo:'Starto / Halto'} },
+  { id:'clean', name:{ja:'画面お掃除',en:'Clean Blackboard',hira:'そうじ',ko:'화면 청소',zh:'清理画面',ar:'تنظيف الشاشة',eo:'Purigi'} },
+  { id:'sound', name:{ja:'効果音テスト',en:'Sound Test',hira:'おと',ko:'효과음 테스트',zh:'音效测试',ar:'اختبار الصوت',eo:'Son-Testo'} },
+  { id:'start', name:{ja:'ゲーム開始',en:'Start Game',hira:'げーむかいし',ko:'게임 시작',zh:'开始游戏',ar:'بدء اللعبة',eo:'Komenci Ludon'} },
+  { id:'stop', name:{ja:'ゲーム終了',en:'Stop Game',hira:'げーむしゅうりょう',ko:'게임 종료',zh:'结束游戏',ar:'إيقاف اللعبة',eo:'Halti Ludon'} },
+  { id:'game_stick', name:{ja:'棒とビを選択',en:'Select Stick Game',hira:'ぼうとび',ko:'막대 게임 선택',zh:'选择棒与比',ar:'اختيار لعبة العصا',eo:'Elekti Bastonan Ludon'} },
+  { id:'game_block', name:{ja:'ブロック消しを選択',en:'Select Block Game',hira:'ぶろっくけし',ko:'블록 게임 선택',zh:'选择方块游戏',ar:'اختيار لعبة الكتل',eo:'Elekti Blokludon'} },
+  { id:'game_konjac', name:{ja:'こんにゃく切りを選択',en:'Select Konjac Game',hira:'こんにゃくきり',ko:'곤약 게임 선택',zh:'选择魔芋游戏',ar:'اختيار تقطيع الكونجاك',eo:'Elekti Konjakludon'} },
+  { id:'game_blackboard', name:{ja:'黒板掃除を選択',en:'Select Blackboard Game',hira:'こくばんそうじ',ko:'칠판 게임 선택',zh:'选择黑板游戏',ar:'اختيار تنظيف السبورة',eo:'Elekti Tabulludon'} },
+  { id:'game_flag', name:{ja:'国旗クイズを選択',en:'Select Flag Quiz',hira:'こっきくいず',ko:'국기 퀴즈 선택',zh:'选择国旗问答',ar:'اختيار اختبار الأعلام',eo:'Elekti Flagan Kvizon'} },
+  { id:'game_vs', name:{ja:'2P対戦を選択',en:'Select 2P Battle',hira:'2にんたいせん',ko:'2인 대전 선택',zh:'选择双人对战',ar:'اختيار معركة لاعبين',eo:'Elekti 2P Batalon'} },
+  { id:'tab_game', name:{ja:'ゲームタブ',en:'Game Tab',hira:'げーむたぶ',ko:'게임 탭',zh:'游戏标签',ar:'تبويب الألعاب',eo:'Luda Langeto'} },
+  { id:'tab_settings', name:{ja:'設定タブ',en:'Settings Tab',hira:'せっていたぶ',ko:'설정 탭',zh:'设置标签',ar:'تبويب الإعدادات',eo:'Agorda Langeto'} },
+  { id:'tab_profile', name:{ja:'プロフィールタブ',en:'Profile Tab',hira:'ぷろふぃーるたぶ',ko:'프로필 탭',zh:'个人档案标签',ar:'تبويب الملف الشخصي',eo:'Profilo-Langeto'} },
+  { id:'tab_history', name:{ja:'更新履歴タブ',en:'History Tab',hira:'こうしんりれきたぶ',ko:'업데이트 탭',zh:'更新历史标签',ar:'تبويب السجل',eo:'Historia Langeto'} },
+  { id:'tab_data', name:{ja:'データタブ',en:'Data Tab',hira:'でーたたぶ',ko:'데이터 탭',zh:'数据标签',ar:'تبويب البيانات',eo:'Datumoj-Langeto'} },
+  { id:'tab_coin', name:{ja:'コインタブ',en:'Coin Tab',hira:'こいんたぶ',ko:'코인 탭',zh:'金币标签',ar:'تبويب العملات',eo:'Monero-Langeto'} },
+  { id:'mute', name:{ja:'完全消音',en:'Mute',hira:'かんぜんしょうおん',ko:'완전 음소거',zh:'完全静音',ar:'كتم كامل',eo:'Tuta Silento'} },
+  { id:'unmute', name:{ja:'消音解除',en:'Unmute',hira:'しょうおんかいじょ',ko:'음소거 해제',zh:'取消静音',ar:'إلغاء الكتم',eo:'Malsilentigi'} },
+  { id:'fullscreen', name:{ja:'全画面表示',en:'Fullscreen',hira:'ぜんがめん',ko:'전체 화면',zh:'全屏',ar:'ملء الشاشة',eo:'Plenekrano'} },
+  { id:'reset_flight', name:{ja:'フライトタイマーをリセット',en:'Reset Flight Timer',hira:'ふらいとたいまーりせっと',ko:'비행 타이머 초기화',zh:'重置飞行计时器',ar:'إعادة ضبط مؤقت الرحلة',eo:'Restarigi Flughorloĝon'} },
+  { id:'myfinger', name:{ja:'myfingerを使用',en:'Use myfinger',hira:'myfingerを つかう',ko:'myfinger 사용',zh:'使用myfinger',ar:'استخدام myfinger',eo:'Uzi myfinger'} },
+  { id:'add_coin', name:{ja:'myfinger残高追加',en:'Add myfinger Balance',hira:'myfingerざんだかついか',ko:'myfinger 잔액 추가',zh:'增加myfinger余额',ar:'إضافة رصيد myfinger',eo:'Aldoni myfinger-Saldon'} },
+  { id:'toggle_theme', name:{ja:'テーマ切替',en:'Toggle Theme',hira:'てーまきりかえ',ko:'테마 전환',zh:'切换主题',ar:'تبديل السمة',eo:'Ŝanĝi Temon'} },
+  { id:'toggle_header', name:{ja:'ヘッダー表示切替',en:'Toggle Header',hira:'へっだーきりかえ',ko:'헤더 전환',zh:'切换顶栏',ar:'تبديل الرأس',eo:'Ŝanĝi Kapon'} },
+  { id:'score_next', name:{ja:'次のスコアページ',en:'Next Score Page',hira:'つぎのすこあぺーじ',ko:'다음 점수 페이지',zh:'下一页得分',ar:'صفحة النتائج التالية',eo:'Sekva Poentopaĝo'} },
+  { id:'score_prev', name:{ja:'前のスコアページ',en:'Previous Score Page',hira:'まえのすこあぺーじ',ko:'이전 점수 페이지',zh:'上一页得分',ar:'صفحة النتائج السابقة',eo:'Antaŭa Poentopaĝo'} },
+  { id:'stalker', name:{ja:'マウスストーカー切替',en:'Toggle Mouse Stalker',hira:'ますとーかーきりかえ',ko:'마우스 추적기 전환',zh:'切换鼠标跟随',ar:'تبديل متعقب الماوس',eo:'Ŝanĝi Musan Sekvilon'} },
+  { id:'profile_questions', name:{ja:'100の質問を開く',en:'Open 100 Questions',hira:'100のしつもんをひらく',ko:'100개 질문 열기',zh:'打开100个问题',ar:'فتح 100 سؤال',eo:'Malfermi 100 Demandojn'} }
 ];
 
 function saveAllConfig() {
@@ -1664,6 +1764,7 @@ function saveAllConfig() {
   localStorage.setItem('airplane_game_config', JSON.stringify(config));
   localStorage.setItem('airplane_game_shortcuts', JSON.stringify(shortcutData));
   localStorage.setItem('airplane_game_my_profile', JSON.stringify(memoryStore.myProfile));
+  localStorage.setItem('airplane_game_100_questions_v5', JSON.stringify(customQuestions));
   localStorage.setItem('airplane_game_coins', JSON.stringify({
     coins: memoryStore.coins,
     coinBankBalance: memoryStore.coinBankBalance,
@@ -1886,9 +1987,83 @@ function resetAllConfigToDefault() {
   showModal(t('btn_reset_config'), 'すべての設定を初期値に戻しました。');
 }
 
+const GAME_OPTION_I18N={
+  cfgDpadPosition:{center:{ja:'中央',en:'Center',hira:'ちゅうおう',ko:'중앙',zh:'中央',ar:'وسط',eo:'Centro'},left:{ja:'左寄せ (左手操作)',en:'Left (Left-hand)',hira:'ひだり',ko:'왼쪽',zh:'左侧',ar:'يسار',eo:'Maldekstre'},right:{ja:'右寄せ (右手操作)',en:'Right (Right-hand)',hira:'みぎ',ko:'오른쪽',zh:'右侧',ar:'يمين',eo:'Dekstre'}},
+  cfgDpadSize:{small:{ja:'小',en:'Small',hira:'ちいさい',ko:'작게',zh:'小',ar:'صغير',eo:'Malgranda'},medium:{ja:'中',en:'Medium',hira:'ふつう',ko:'중간',zh:'中',ar:'متوسط',eo:'Meza'},large:{ja:'大',en:'Large',hira:'おおきい',ko:'크게',zh:'大',ar:'كبير',eo:'Granda'}},
+  cfgKonjacMaterial:{gray:{ja:'普通 (グレー・粒入り)',en:'Normal (Gray)',hira:'ふつう',ko:'보통 (회색)',zh:'普通（灰色）',ar:'عادي (رمادي)',eo:'Normala (Griza)'},white:{ja:'白こんにゃく',en:'White Konjac',hira:'しろ',ko:'흰 곤약',zh:'白魔芋',ar:'كونجاك أبيض',eo:'Blanka Konjako'},matcha:{ja:'抹茶こんにゃく',en:'Matcha Konjac',hira:'まっちゃ',ko:'말차 곤약',zh:'抹茶魔芋',ar:'كونجاك ماتشا',eo:'Matcha Konjako'},yokan:{ja:'羊羹 (ようかん)',en:'Yokan',hira:'ようかん',ko:'양갱',zh:'羊羹',ar:'يوكان',eo:'Jokano'},tofu:{ja:'木綿豆腐',en:'Firm Tofu',hira:'もめんどうふ',ko:'목면 두부',zh:'木棉豆腐',ar:'توفو صلب',eo:'Firma Tofuo'},cheese:{ja:'チェダーチーズ',en:'Cheddar Cheese',hira:'ちーず',ko:'체더 치즈',zh:'切达奶酪',ar:'جبن شيدر',eo:'Ĉedara Fromaĝo'}},
+  cfgKonjacKnife:{standard:{ja:'普通の包丁',en:'Standard Knife',hira:'ふつうの ほうちょう',ko:'일반 칼',zh:'普通菜刀',ar:'سكين عادي',eo:'Normala Tranĉilo'},laser:{ja:'レーザーブレード',en:'Laser Blade',hira:'れーざーぶれーど',ko:'레이저 블레이드',zh:'激光刀刃',ar:'شفرة ليزر',eo:'Lasera Klingo'},katana:{ja:'日本刀',en:'Katana',hira:'にほんとう',ko:'일본도',zh:'日本刀',ar:'كاتانا',eo:'Katana'}}
+};
+function localizeGameOptionPresets(){Object.entries(GAME_OPTION_I18N).forEach(([id,map])=>{const el=document.getElementById(id);if(!el)return;Array.from(el.options).forEach(o=>{if(map[o.value])o.textContent=map[o.value][currentLang]||map[o.value].ja;});});}
+function relocateGameSettings(){
+  const common=document.getElementById('gameCommonSettings');
+  const konjac=document.getElementById('gameKonjacSettings');
+  const flag=document.getElementById('gameFlagSettings');
+  const flight=document.getElementById('gameFlightSettings');
+  const controller=document.getElementById('gameControllerSettings');
+  if(!common||!konjac||!flag||!flight||!controller)return;
+
+  const move=(id,target)=>{
+    const el=document.getElementById(id);
+    const item=el?.closest('.config-item');
+    if(item) target.appendChild(item);
+  };
+
+  // 全ゲーム共通の設定はゲーム選択欄の直下。
+  move('cfgGameSpeed',common);
+  move('cfgInvincible',document.getElementById('stickGameSettings'));
+
+  // こんにゃく・国旗の設定は、それぞれ該当ゲームを選んだときだけ表示。
+  ['cfgKonjacMaterial','cfgKonjacKnife'].forEach(id=>move(id,konjac));
+  move('cfgFlagRegion',flag);
+
+  // フライトタイマーはゲーム操作に近い位置へ。
+  ['cfgFlightHours','cfgFlightMinutes'].forEach(id=>move(id,flight));
+
+  // 十字キー設定は実際のコントローラーの直前へ。
+  ['cfgDpadPosition','cfgDpadSize','cfgDpadOpacity'].forEach(id=>move(id,controller));
+
+  const game=currentGame||'stick';
+  common.style.display='grid';
+  konjac.style.display=game==='konjac'?'grid':'none';
+  flag.style.display=game==='flag'?'grid':'none';
+  flight.style.display='grid';
+  controller.style.display=(game==='stick'||game==='vs'||game==='block'||game==='blackboard'||game==='konjac'||game==='flag')?'grid':'none';
+}
+
+const RESETTABLE_CONFIG_IDS = [
+  'cfgGameEnabled','cfgSaveScore','cfgUseIndexedDB','cfgMouseStalkerType','cfgStalkerCustomText','cfgGcSimulation','cfgBgColor','cfgBgColorText','cfgTextColor','cfgTextColorText','cfgFontFamily','cfgFontSizeNum','cfgFontSizeUnit','cfgShowSearchGame','cfgShowSearchOther','cfgShowHeader','cfgColorTheme','stickMaxHeight','stickMaxPillars','cfgJumpForce','cfgNightFlight','cfgReducedMotion','cfgBatterySaver','cfgMasterVolume','cfgMuteAudio','cfgDpadPosition','cfgDpadSize','cfgDpadOpacity','cfgVibrate','cfgGameSpeed','cfgInvincible','cfgKonjacMaterial','cfgKonjacKnife','cfgFlagRegion','cfgFlightHours','cfgFlightMinutes','cfgTimezoneDiff'
+];
+function captureConfigControls(){
+  const state={};
+  RESETTABLE_CONFIG_IDS.forEach(id=>{const el=document.getElementById(id);if(el)state[id]={value:el.value,checked:el.type==='checkbox'?el.checked:undefined};});
+  return state;
+}
+function restoreConfigControls(state, keepIds){
+  keepIds.forEach(id=>{const el=document.getElementById(id),v=state[id];if(!el||!v)return;el.value=v.value;if(el.type==='checkbox')el.checked=v.checked;});
+}
+function openResetSettingsModal(){
+  const items=RESETTABLE_CONFIG_IDS.map(id=>{const el=document.getElementById(id);const label=el?.closest('.config-item')?.querySelector('label')?.textContent?.trim()||id;return `<label style="display:flex;gap:7px;align-items:center;margin:5px 0;"><input type="checkbox" class="reset-setting-choice" value="${id}" checked> ${escapeHtml(label)}</label>`;}).join('');
+  showModal(t('reset_select_title'),`<div style="max-height:55vh;overflow:auto">${items}</div><label style="display:flex;gap:7px;margin-top:10px"><input type="checkbox" id="resetAllChoice"> ${escapeHtml(t('reset_all'))}</label>`,`<button class="btn" onclick="applySelectedConfigReset()">${escapeHtml(t('reset_apply'))}</button>`);
+}
+function applySelectedConfigReset(){
+  const state=captureConfigControls();
+  const all=document.getElementById('resetAllChoice')?.checked;
+  const selected=all?RESETTABLE_CONFIG_IDS:Array.from(document.querySelectorAll('.reset-setting-choice:checked')).map(e=>e.value);
+  const selectedSet=new Set(selected);
+  resetAllConfigToDefault();
+  const keep=RESETTABLE_CONFIG_IDS.filter(id=>!selectedSet.has(id));
+  restoreConfigControls(state,keep);
+  if(!selectedSet.has('cfgBgColor')||!selectedSet.has('cfgTextColor')) applyColors();
+  applyFontSettings();
+  applyColorTheme(document.getElementById('cfgColorTheme').value);
+  applyNightFlightMode(); applyReducedMotion(); updateMasterVolume(); applyDpadSettings(); initFlightTimer(); updateWorldClock(); toggleSearchBarVisibility();
+  renderShortcuts(); saveAllConfig(); closeModal();
+}
+
 function changeLanguage(lang) {
   if (lang === 'zh') lang = 'zh-CN';
   currentLang = lang;
+  if(document.getElementById('questionsView')) { ensureQuestionTranslations(currentLang); renderQuestions(); }
   document.getElementById('langSelector').value = lang;
   document.documentElement.lang = lang;
   document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
@@ -1901,6 +2076,7 @@ function changeLanguage(lang) {
     const k = el.getAttribute('data-i18n');
     el.textContent = t(k);
   });
+  localizeGameOptionPresets();
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     const k = el.getAttribute('data-i18n-ph');
     el.placeholder = t(k);
@@ -1911,6 +2087,7 @@ function changeLanguage(lang) {
   renderHistoryTable();
   renderScoreTable();
   renderShortcuts();
+  updateQuestionsResetButton();
   updateMyProfileLive();
   saveAllConfig();
 }
@@ -2337,6 +2514,17 @@ function recordKey(inputElement, index) {
   window.addEventListener('keydown', keyHandler, { once: true });
 }
 
+function performShortcutAction(action){
+  if(action==='jump'){triggerDpad('up');return;} if(action==='pause'){toggleCurrentGame();return;} if(action==='clean'&&currentGame==='blackboard'){cleanBlackboard(200,200);return;} if(action==='sound'){playClickSound();return;}
+  if(action==='start'){if(!isGameRunning)startGame();return;} if(action==='stop'){if(isGameRunning)stopGame();return;}
+  if(action.startsWith('game_')){const key=action.slice(5);const btn=document.querySelector(`.game-select-btn[data-game="${key}"]`);selectGame(key,btn);return;}
+  const tabs={tab_game:'gameTab',tab_settings:'settingsTab',tab_profile:'profileTab',tab_history:'historyTab',tab_data:'dataTab',tab_coin:'coinTab'}; if(tabs[action]){switchTab(tabs[action]);return;}
+  if(action==='mute'){const m=document.getElementById('cfgMuteAudio');m.checked=true;updateMasterVolume();saveConfig();return;} if(action==='unmute'){const m=document.getElementById('cfgMuteAudio');m.checked=false;updateMasterVolume();saveConfig();return;}
+  if(action==='fullscreen'){document.documentElement.requestFullscreen?.().catch(()=>{});return;} if(action==='reset_flight'){resetFlightTimer();return;} if(action==='myfinger'){useMyFinger();return;} if(action==='add_coin'){addCoinBalance();return;}
+  if(action==='toggle_theme'){const c=document.getElementById('cfgColorTheme');c.value=c.value==='dark'?'light':'dark';applyColorTheme(c.value);saveConfig();return;} if(action==='toggle_header'){toggleHeader(document.getElementById('cfgShowHeader').checked===false);return;}
+  if(action==='score_next'){const max=Math.max(1,Math.ceil(getFilteredScoreRowsForExport().length/10));scorePage=Math.min(max,scorePage+1);renderScoreTable();return;} if(action==='score_prev'){scorePage=Math.max(1,scorePage-1);renderScoreTable();return;}
+  if(action==='stalker'){const c=document.getElementById('cfgMouseStalkerType');c.value=c.value==='none'?'★':'none';updateMouseStalker();saveConfig();return;} if(action==='focus_search'){switchTab('gameTab');document.getElementById('gameSearchInput')?.focus();return;} if(action==='profile_questions'){switchTab('profileTab');showQuestionsPage('admin');document.getElementById('questions100Card')?.scrollIntoView({behavior:'smooth'});return;}
+}
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' && !e.target.readOnly) return;
 
@@ -2353,12 +2541,7 @@ window.addEventListener('keydown', (e) => {
   }
 
   const match = shortcutData.find(s => s.key === e.code);
-  if (match) {
-    if (match.action === 'jump') triggerDpad('up');
-    else if (match.action === 'pause') toggleCurrentGame();
-    else if (match.action === 'clean' && currentGame === 'blackboard') cleanBlackboard(200, 200);
-    else if (match.action === 'sound') playClickSound();
-  }
+  if (match) performShortcutAction(match.action);
 });
 
 /* ==========================================================================
@@ -2444,7 +2627,7 @@ function selectGame(gameKey, btn) {
     if (matched) matched.classList.add('active');
   }
 
-  document.getElementById('stickGameSettings').style.display = (gameKey === 'stick' || gameKey === 'vs') ? 'flex' : 'none';
+  document.getElementById('stickGameSettings').style.display = (gameKey === 'stick') ? 'flex' : 'none';
 
   // 2P対戦UIの切り替え
   const isVs = (gameKey === 'vs');
@@ -2452,6 +2635,7 @@ function selectGame(gameKey, btn) {
   document.getElementById('vsControllerWrap').style.display = isVs ? 'flex' : 'none';
 
   updateGameInstructionText();
+  relocateGameSettings();
   resizeGameCanvas();
   initGameScene();
   saveAllConfig();
@@ -3561,7 +3745,13 @@ function initFlightTimer() {
 }
 
 function resetFlightTimer() {
-  initFlightTimer();
+  const hoursControl=document.getElementById('cfgFlightHours');
+  const minutesControl=document.getElementById('cfgFlightMinutes');
+  if(hoursControl) hoursControl.value='6';
+  if(minutesControl) minutesControl.value='30';
+  flightRemainingSeconds=6*3600+30*60;
+  updateFlightTimerDisplay();
+  saveAllConfig();
 }
 
 function updateFlightTimerDisplay() {
@@ -3600,7 +3790,7 @@ function updateSiteTimeElapsed() {
   const diffMs = Math.max(0, now - SITE_OPEN_DATE);
 
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
   const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
   const seconds = Math.floor((diffMs / 1000) % 60);
   const milliseconds = diffMs % 1000;
@@ -3745,6 +3935,218 @@ function exportProfileCard(format) {
     downloadBlob(blob, `profile.${format}`);
   }, mime);
 }
+
+
+const ADMIN_QUESTIONS = [
+['お名前（ハンドルネーム）を教えてください','青井ソラマメ'],['その名前の由来は？','青い空とソラマメが好きだから'],['サイト名は？','飛行機でも遊べるゲーム'],['生年月日と星座、血液型は？','2013年6月/知らない/知らない'],['現住所（または生息地）はどこですか？','青森'],['家族構成を教えてください。','叔母母兄姉俺'],['身長・体重・足のサイズは？','平均より少し高い/やせ型/ふつう'],['視力はどれくらい？','0.2ぐらい'],['利き手はどっち？','右'],['自分の性格を一言で言うと？','心配性'],['周りからはどんな人って言われる？','笑い声がうるさい面白い人'],['自分のチャームポイントは？',''],['自分の長所と短所は？','長所:頭がいい　短所:足がめちゃおそい　しつこい　ﾌﾞｽ　しったかぶり'],['動物に例えると何？',''],['趣味は何ですか？','サイト作り'],['特技（これだけは負けないこと）は？','パソコン関連'],['資格や免許は何か持ってる？','持ってない'],['今の職業（学年）は？','学生'],['部活は何をやってる（やってた）？','パソコン部'],['ぶっちゃけ、今の生活に満足してる？','幸せだよ'],['好きな食べ物は何？','みかん りんご　キウイ　肉　魚'],['逆に、大嫌いな食べ物は？','マヨネーズ'],['得意料理（または作ってみたい料理）は？','チャーハン'],['好きな色は何色？','青系の色'],['好きな季節はいつ？','春'],['好きな動物は？','ねこ/いぬ'],['好きな有名人や芸能人は？','指原莉乃'],['よく聴く音楽やアーティストは？','cortis/niziu/unis'],['カラオケの十八番（定番曲）は？','カラオケすらいかない'],['好きな映画やドラマは？','ドラえもん'],['ハマっているマンガやアニメは？','ドラえもん'],['好きな雑誌や本は？','コロコロ'],['好きなブランドや服の系統は？','ユニクロ'],['好きな言葉（座右の銘）は？','「私たちは、たゆまず善を行いましょう。飽きずにいれば、時が来て刈り取ることになります。── ガラテヤ人への手紙 6章9節」'],['好きな場所（落ち着く空間）は？','家'],['好きなテレビ番組は？','旅番組'],['好きな香りは？','オールドスパイスのフレグランスバーの各種'],['キャラクターで一番好きなのは？','ドラミちゃん'],['集めているコレクションはある？','鉛筆'],['お休みの日はインドア派？アウトドア派？','アウトドア'],['携帯電話の機種は何？','galaxy'],['LINEの着信音は何に設定してる？','こっそりline'],['携帯のストラップは何をつけてる？','とくに'],['1日のメール LINEの送信数は？','多め'],['chromeなど、使っているブラウザは？','chrome edge'],['ネットに繋ぐのは何時ごろが多い？','夕方から午後9時までがおおい'],['1日のネット利用時間は？','数時間'],['初めてパソコンに触れたのはいつ？','小3でクロームを学校からもらった時'],['タイピングの速度には自信ある？','けっこうあるよ'],['友達とプリクラを撮る時の定番ポーズは？','プリクラ行きません'],['平均の睡眠時間はどれくらい？','8から9時間'],['朝起きて一番にすることは？','着替え'],['夜寝る前のルーティンは？','着替え'],['お風呂に入っている時間は？','1時間'],['どこから体を洗い始める？','脇'],['コンビニに行くとつい買っちゃうものは？','お茶'],['今一番欲しいものは何？','パソコンの充電器'],['最近の大きなお買い物は？','楽天で買った3000円弱の水着'],['タバコやお酒は飲む？','未成年だからやったら捕まるからやってません'],['ストレス発散法を教えて！','タイピングしまくる'],['好きな異性のタイプ（外見）は？','イケメン'],['好きな異性のタイプ（内面）は？','優しい'],['逆に、これは無理！というタイプは？','クズ'],['異性のドキッとする仕草は？','笑顔'],['恋をするとどうなるタイプ？','その人以外は考えられなくなる'],['初恋はいつ？どんな人だった？','中一。中三のイケメン先輩'],['今までに告白された回数は？','告白されたことなんてないです'],['自分から告白する派？待つ派？','話しかけることすらできません'],['理想のデートプランを教えて！','映画'],['恋人に求める絶対条件は？','やさしいかどうか'],['束縛はされたい？したくない？','束縛は嫌だ'],['浮気の境界線はどこから？','別の人とline交換して色目使い始めて付き合い始めてから'],['失恋した時の立ち直り方は？','失恋したことないけどもししたら元彼を脳内から消す'],['男友達と女友達の友情は成立する？','うん'],['親友って呼べる人は何人いる？','3人ぐらい'],['恋人と友達、どっちを優先する？','迷うけど恋人'],['理想の結婚年齢は？','30まで'],['子供は何人ほしい？','1人'],['ぶっちゃけ、今好きな人や恋人はいる？','いる'],['その人に一言メッセージをどうぞ！','イケメンですね'],['今までで一番嬉しかった出来事は？','お年玉で9000円合計もらった小６のころ\n漫画を買った小６のころ\nイケメンって言われた中一のころ\n3dsをもらった小３の誕生日前'],['逆に、人生最大のピンチや黒歴史は？','制服冬服の上に着るジャケットを選択に出した中一四月\nトイレを詰まらせたこと'],['最近泣いたエピソードはある？','運動会で俺の組みがかったとき泣きかけた'],['最近怒ったエピソードはある？','自分の悪いことを対面で言われたとき'],['タイムマシンがあったら過去と未来どっちに行く？','未来'],['明日地球が滅亡するとしたら何をする？','コンビニでダンスしまくって寿司屋で9000円分食べまくって\n学校の制服をもやす'],['宝くじで3億円当たったらどう使う？','家を改築'],['もし一日だけ異性になれたら何がしたい？','ぶりっこしまくりたい'],['生まれ変わるならまた自分になりたい？','櫻井翔になりたいです'],['あなたにとっての「宝物」は何？','パソコンと人間'],['子供の頃の将来の夢は何だった？','先生'],['10年後の自分は何をしていると思う？','プログラマー'],['老後はどんな風に過ごしたい？','シルバー人材センターに勤める'],['幽霊やUFOは信じる？','いいえ'],['前世は何だったと思う？','動物'],['今の自分に足りないものは？','顔の偏差値と運動能力と余裕さ'],['100の質問に答えるのは疲れた？','めっちゃつかれた'],['ここまで読んでくれた人に一言！','ありがとう'],['次にこの質問を回したい人を指名して！','そこの君'],['100問目（未回答）','']
+];
+let customQuestions = ADMIN_QUESTIONS.map(x=>({q:x[0],a:x[1]}));
+let customQuestionsBackup = null;
+let customQuestionsExplicitlyCleared = false;
+let questionsMode='admin', questionsPage=1;
+function updateQuestionsResetButton(){
+  const btn=document.getElementById('questionsResetButton');
+  if(!btn)return;
+  const restoring=Array.isArray(customQuestionsBackup)&&customQuestionsBackup.length===100;
+  btn.textContent=t(restoring?'questions_restore_custom':'questions_reset_custom');
+  btn.setAttribute('data-i18n',restoring?'questions_restore_custom':'questions_reset_custom');
+}
+function resetCustomQuestions(skipConfirm=false){
+  if(!skipConfirm && !confirm(t('questions_reset_confirm') || '自作100質問を管理人版の内容に戻しますか？')) return;
+  customQuestionsBackup=customQuestions.map(x=>({q:String(x.q??''),a:String(x.a??'')}));
+  localStorage.setItem('airplane_game_100_questions_backup',JSON.stringify(customQuestionsBackup));
+  customQuestions=ADMIN_QUESTIONS.map(x=>({q:x[0],a:x[1]}));
+  customQuestionsExplicitlyCleared=false;
+  saveCustomQuestions();
+  updateQuestionsResetButton();
+  if(questionsMode==='custom') renderQuestions();
+}
+function restoreCustomQuestions(){
+  if(!Array.isArray(customQuestionsBackup)||customQuestionsBackup.length!==100){
+    try{customQuestionsBackup=JSON.parse(localStorage.getItem('airplane_game_100_questions_backup')||'null');}catch(e){customQuestionsBackup=null;}
+  }
+  if(!Array.isArray(customQuestionsBackup)||customQuestionsBackup.length!==100)return;
+  customQuestions=customQuestionsBackup.map(x=>({q:String(x.q??''),a:String(x.a??'')}));
+  customQuestionsExplicitlyCleared=false;
+  customQuestionsBackup=null;
+  localStorage.removeItem('airplane_game_100_questions_backup');
+  saveCustomQuestions();
+  updateQuestionsResetButton();
+  if(questionsMode==='custom') renderQuestions();
+}
+function clearCustomQuestions(){
+  if(!confirm(t('questions_clear_confirm') || '自作100質問の質問と回答をすべて空白にしますか？')) return;
+  customQuestions=Array.from({length:100},()=>({q:'',a:''}));
+  customQuestionsExplicitlyCleared=true;
+  localStorage.setItem('airplane_game_100_questions_cleared','1');
+  customQuestionsBackup=null;
+  localStorage.removeItem('airplane_game_100_questions_backup');
+  saveCustomQuestions();
+  updateQuestionsResetButton();
+  if(questionsMode==='custom') renderQuestions();
+}
+function toggleQuestionsReset(){
+  if(Array.isArray(customQuestionsBackup)&&customQuestionsBackup.length===100){
+    if(!confirm(t('questions_restore_confirm') || '保存していた自作100質問に戻しますか？'))return;
+    restoreCustomQuestions();
+  }else resetCustomQuestions();
+}
+function loadCustomQuestions(){
+  try{
+    let raw=localStorage.getItem('airplane_game_100_questions_v5');
+    if(raw===null){
+      const legacy=localStorage.getItem('airplane_game_100_questions');
+      if(legacy){
+        try{
+          const lv=JSON.parse(legacy);
+          if(Array.isArray(lv)&&lv.length===100&&!lv.every(x=>!String(x?.q??'')&&!String(x?.a??''))){
+            raw=legacy;
+            localStorage.setItem('airplane_game_100_questions_v5',legacy);
+          }
+        }catch(e){}
+      }
+    }
+    customQuestionsExplicitlyCleared=localStorage.getItem('airplane_game_100_questions_cleared')==='1';
+    try{customQuestionsBackup=JSON.parse(localStorage.getItem('airplane_game_100_questions_backup')||'null');}catch(e){customQuestionsBackup=null;}
+    if(raw===null){
+      customQuestions=ADMIN_QUESTIONS.map(x=>({q:x[0],a:x[1]}));
+      customQuestionsExplicitlyCleared=false;
+      saveCustomQuestions();
+    }else{
+      const v=JSON.parse(raw);
+      if(Array.isArray(v)&&v.length===100){
+        const allBlank=v.every(x=>!String(x?.q??'')&&!String(x?.a??''));
+        if(allBlank&&!customQuestionsExplicitlyCleared){
+          // 旧バージョンで誤って空になったデータだけは管理人版へ復旧する。
+          customQuestions=ADMIN_QUESTIONS.map(x=>({q:x[0],a:x[1]}));
+          saveCustomQuestions();
+        }else customQuestions=v.map(x=>({q:String(x?.q??''),a:String(x?.a??'')}));
+      }else{ customQuestions=ADMIN_QUESTIONS.map(x=>({q:x[0],a:x[1]})); customQuestionsExplicitlyCleared=false; saveCustomQuestions(); }
+    }
+  }catch(e){ customQuestions=ADMIN_QUESTIONS.map(x=>({q:x[0],a:x[1]})); customQuestionsExplicitlyCleared=false; saveCustomQuestions(); }
+  updateQuestionsResetButton();
+}
+
+function saveCustomQuestions(){localStorage.setItem('airplane_game_100_questions_v5',JSON.stringify(customQuestions));localStorage.setItem('airplane_game_100_questions_cleared',customQuestionsExplicitlyCleared?'1':'0');saveAllConfig();}
+/* 100問の本文ローカライズ基盤。翻訳はすべてHTML/JS内に静的保持し、外部APIは使用しません。 */
+const QUESTION_LANGUAGE_KEYS = ['ja','en','hira','ko','zh-CN','zh-TW','ar','eo'];
+const QUESTION_CONTENT_I18N = Object.create(null);
+const QUESTION_TRANSLATION_CACHE_KEY = 'airplane_game_question_translations_v4';
+
+/* 固有名・作品名など、意味を変えない名称は各言語で読める表記を固定します。 */
+const OFFLINE_NAME_TRANSLATIONS = {
+  '青井ソラマメ': {en:'Aoi Soramame',hira:'あおい そらまめ',ko:'아오이 소라마메','zh-CN':'青井空豆','zh-TW':'青井空豆',ar:'أوي سورامامي',eo:'Aoi Soramame'},
+  '青い空とソラマメが好きだから': {en:'Because I like blue skies and broad beans.',hira:'あおい そらと そらまめが すきだから',ko:'푸른 하늘과 잠두콩을 좋아해서','zh-CN':'因为我喜欢蓝天和蚕豆。','zh-TW':'因為我喜歡藍天和蠶豆。',ar:'لأنني أحب السماء الزرقاء والفول.',eo:'Ĉar mi ŝatas bluajn ĉielojn kaj fabojn.'},
+  '飛行機でも遊べるゲーム': {en:'A game you can play even on an airplane',hira:'ひこうきでも あそべる げーむ',ko:'비행기에서도 즐길 수 있는 게임','zh-CN':'在飞机上也能玩的游戏','zh-TW':'在飛機上也能玩的遊戲',ar:'لعبة يمكنك لعبها حتى على متن الطائرة',eo:'Ludo ludebla eĉ en aviadilo'},
+  '青森': {en:'Aomori',hira:'あおもり',ko:'아오모리','zh-CN':'青森','zh-TW':'青森',ar:'أوموري',eo:'Aomori'},
+  'サイト作り': {en:'Building websites',hira:'さいとづくり',ko:'웹사이트 만들기','zh-CN':'制作网站','zh-TW':'製作網站',ar:'إنشاء المواقع',eo:'Kreado de retejoj'},
+  'パソコン関連': {en:'Computers and related technology',hira:'ぱそこんかんれん',ko:'컴퓨터 관련 분야','zh-CN':'电脑相关领域','zh-TW':'電腦相關領域',ar:'مجال الحاسوب والتقنية',eo:'Komputilaj kaj rilataj teknologioj'},
+  '学生': {en:'Student',hira:'がくせい',ko:'학생','zh-CN':'学生','zh-TW':'學生',ar:'طالب',eo:'Studento'},
+  'パソコン部': {en:'Computer club',hira:'ぱそこんぶ',ko:'컴퓨터 동아리','zh-CN':'电脑部','zh-TW':'電腦社',ar:'نادي الحاسوب',eo:'Komputila klubo'},
+  '幸せだよ': {en:"I'm happy.",hira:'しあわせだよ',ko:'행복해요.','zh-CN':'我很幸福。','zh-TW':'我很幸福。',ar:'أنا سعيد.',eo:'Mi estas feliĉa.'},
+  'みかん りんご　キウイ　肉　魚': {en:'Mandarins, apples, kiwi, meat, and fish',hira:'みかん りんご きうい にく さかな',ko:'귤, 사과, 키위, 고기, 생선','zh-CN':'橘子、苹果、猕猴桃、肉和鱼','zh-TW':'橘子、蘋果、奇異果、肉和魚',ar:'اليوسفي والتفاح والكيوي واللحم والسمك',eo:'Mandarinoj, pomoj, kivioj, viando kaj fiŝo'},
+  'マヨネーズ': {en:'Mayonnaise',hira:'まよねーず',ko:'마요네즈','zh-CN':'蛋黄酱','zh-TW':'美乃滋',ar:'مايونيز',eo:'Majonezo'},
+  'チャーハン': {en:'Fried rice',hira:'ちゃーはん',ko:'볶음밥','zh-CN':'炒饭','zh-TW':'炒飯',ar:'أرز مقلي',eo:'Fritita rizo'},
+  '青系の色': {en:'Blue shades',hira:'あおけいの いろ',ko:'파란 계열의 색','zh-CN':'蓝色系','zh-TW':'藍色系',ar:'درجات الأزرق',eo:'Bluaj nuancoj'},
+  '春': {en:'Spring',hira:'はる',ko:'봄','zh-CN':'春天','zh-TW':'春天',ar:'الربيع',eo:'Printempo'},
+  'ねこ/いぬ': {en:'Cats / dogs',hira:'ねこ / いぬ',ko:'고양이 / 강아지','zh-CN':'猫 / 狗','zh-TW':'貓 / 狗',ar:'قطط / كلاب',eo:'Katoj / hundoj'},
+  '指原莉乃': {en:'Rino Sashihara',hira:'さしはら りの',ko:'사시하라 리노','zh-CN':'指原莉乃','zh-TW':'指原莉乃',ar:'رينا ساسيهارا',eo:'Rino Sashihara'},
+  'ドラえもん': {en:'Doraemon',hira:'どらえもん',ko:'도라에몽','zh-CN':'哆啦A梦','zh-TW':'哆啦A夢',ar:'دورايمون',eo:'Doraemon'},
+  'コロコロ': {en:'CoroCoro',hira:'ころころ',ko:'코로코로','zh-CN':'CoroCoro','zh-TW':'CoroCoro',ar:'كوروكورو',eo:'CoroCoro'},
+  'ユニクロ': {en:'UNIQLO',hira:'ゆにくろ',ko:'유니클로','zh-CN':'优衣库','zh-TW':'UNIQLO',ar:'يونيكلو',eo:'UNIQLO'},
+  '家': {en:'Home',hira:'いえ',ko:'집','zh-CN':'家','zh-TW':'家',ar:'المنزل',eo:'Hejmo'},
+  '旅番組': {en:'Travel shows',hira:'たびばんぐみ',ko:'여행 프로그램','zh-CN':'旅行节目','zh-TW':'旅遊節目',ar:'برامج السفر',eo:'Vojaĝprogramoj'},
+  'ドラミちゃん': {en:'Dorami',hira:'どらみちゃん',ko:'도라미','zh-CN':'哆啦美','zh-TW':'哆啦美',ar:'دورامي',eo:'Dorami'},
+  '鉛筆': {en:'Pencils',hira:'えんぴつ',ko:'연필','zh-CN':'铅笔','zh-TW':'鉛筆',ar:'أقلام الرصاص',eo:'Krajonoj'},
+  'アウトドア': {en:'Outdoors',hira:'あうとどあ',ko:'야외 활동','zh-CN':'户外活动','zh-TW':'戶外活動',ar:'الأنشطة الخارجية',eo:'Eksteraj agadoj'},
+  'chrome edge': {en:'Chrome and Edge',hira:'くろーむ えっじ',ko:'크롬과 엣지','zh-CN':'Chrome 和 Edge','zh-TW':'Chrome 和 Edge',ar:'Chrome وEdge',eo:'Chrome kaj Edge'},
+  '未来': {en:'The future',hira:'みらい',ko:'미래','zh-CN':'未来','zh-TW':'未來',ar:'المستقبل',eo:'La estonteco'},
+  '家を改築': {en:'Remodel my house',hira:'いえを かいちく',ko:'집을 개조한다','zh-CN':'改建房子','zh-TW':'改建房子',ar:'إعادة بناء المنزل',eo:'Renovigi mian domon'},
+  '先生': {en:'Teacher',hira:'せんせい',ko:'교사','zh-CN':'老师','zh-TW':'老師',ar:'معلّم',eo:'Instruisto'},
+  'プログラマー': {en:'Programmer',hira:'ぷろぐらまー',ko:'프로그래머','zh-CN':'程序员','zh-TW':'程式設計師',ar:'مبرمج',eo:'Programisto'},
+  '動物': {en:'An animal',hira:'どうぶつ',ko:'동물','zh-CN':'动物','zh-TW':'動物',ar:'حيوان',eo:'Besto'},
+  'ありがとう': {en:'Thank you',hira:'ありがとう',ko:'고마워요','zh-CN':'谢谢','zh-TW':'謝謝',ar:'شكرًا',eo:'Dankon'},
+  'そこの君': {en:'You there',hira:'そこの きみ',ko:'거기 있는 당신','zh-CN':'那边的你','zh-TW':'那邊的你',ar:'أنت هناك',eo:'Vi tie'},
+  '櫻井翔になりたいです': {en:'I want to be Sho Sakurai.',hira:'さくらい しょうに なりたいです',ko:'사쿠라이 쇼가 되고 싶어요.','zh-CN':'我想成为樱井翔。','zh-TW':'我想成為櫻井翔。',ar:'أريد أن أصبح شو ساكوراي.',eo:'Mi volas fariĝi Sho Sakurai.'}
+};
+const STATIC_UI_TRANSLATIONS = {
+  en:{'お名前（ハンドルネーム）を教えてください':'What is your name (handle name)?','その名前の由来は？':'What is the origin of that name?','サイト名は？':'What is the site name?','生年月日と星座、血液型は？':'What are your date of birth, zodiac sign, and blood type?','現住所（または生息地）はどこですか？':'Where do you currently live?','家族構成を教えてください。':'Tell us about your family.','身長・体重・足のサイズは？':'What are your height, weight, and shoe size?','視力はどれくらい？':'What is your eyesight like?','利き手はどっち？':'Which hand is dominant?','自分の性格を一言で言うと？':'How would you describe your personality in one word?','周りからはどんな人って言われる？':'What kind of person do people say you are?','自分のチャームポイントは？':'What is your best feature?','自分の長所と短所は？':'What are your strengths and weaknesses?','動物に例えると何？':'What animal would you compare yourself to?','趣味は何ですか？':'What are your hobbies?','特技（これだけは負けないこと）は？':'What is your special skill?','資格や免許は何か持ってる？':'Do you have any qualifications or licenses?','今の職業（学年）は？':'What is your current occupation or school year?','部活は何をやってる（やってた）？':'What club are you in or were you in?','ぶっちゃけ、今の生活に満足してる？':'Honestly, are you satisfied with your current life?','好きな食べ物は何？':'What foods do you like?','逆に、大嫌いな食べ物は？':'What foods do you hate?','得意料理（または作ってみたい料理）は？':'What dish are you good at making or want to try?','好きな色は何色？':'What is your favorite color?','好きな季節はいつ？':'What is your favorite season?','好きな動物は？':'What are your favorite animals?','好きな有名人や芸能人は？':'Who is your favorite celebrity?','よく聴く音楽やアーティストは？':'What music or artists do you often listen to?','カラオケの十八番（定番曲）は？':'What is your karaoke staple?','好きな映画やドラマは？':'What movies or dramas do you like?','ハマっているマンガやアニメは？':'What manga or anime are you into?','好きな雑誌や本は？':'What magazines or books do you like?','好きなブランドや服の系統は？':'What brands or clothing styles do you like?','好きな言葉（座右の銘）は？':'What is your favorite saying or motto?','好きな場所（落ち着く空間）は？':'What is your favorite relaxing place?','好きなテレビ番組は？':'What TV programs do you like?','好きな香りは？':'What scents do you like?','キャラクターで一番好きなのは？':'Which character is your favorite?','集めているコレクションはある？':'Do you collect anything?','お休みの日はインドア派？アウトドア派？':'Are you an indoor or outdoor person on days off?','携帯電話の機種は何？':'What phone model do you have?','LINEの着信音は何に設定してる？':'What is your LINE ringtone?','携帯のストラップは何をつけてる？':'What strap do you have on your phone?','1日のメール LINEの送信数は？':'How many messages do you send in a day?','chromeなど、使っているブラウザは？':'Which browsers do you use, such as Chrome?','ネットに繋ぐのは何時ごろが多い？':'When do you usually go online?','1日のネット利用時間は？':'How many hours a day do you use the internet?','初めてパソコンに触れたのはいつ？':'When did you first use a computer?','タイピングの速度には自信ある？':'Are you confident in your typing speed?','友達とプリクラを撮る時の定番ポーズは？':'What is your usual pose when taking purikura with friends?','平均の睡眠時間はどれくらい？':'How many hours do you usually sleep?','朝起きて一番にすることは？':'What do you do first after waking up?','夜寝る前のルーティンは？':'What is your bedtime routine?','お風呂に入っている時間は？':'How long do you spend in the bath?','どこから体を洗い始める？':'Where do you start washing?','コンビニに行くとつい買っちゃうものは？':'What do you tend to buy at a convenience store?','今一番欲しいものは何？':'What do you want most right now?','最近の大きなお買い物は？':'What was your recent big purchase?','タバコやお酒は飲む？':'Do you smoke or drink alcohol?','ストレス発散法を教えて！':'How do you relieve stress?','好きな異性のタイプ（外見）は？':'What appearance do you like in someone of the opposite sex?','好きな異性のタイプ（内面）は？':'What personality do you like in someone of the opposite sex?','逆に、これは無理！というタイプは？':'What type of person is a deal-breaker for you?','異性のドキッとする仕草は？':'What gesture from someone of the opposite sex makes your heart skip a beat?','恋をするとどうなるタイプ？':'What are you like when you fall in love?','初恋はいつ？どんな人だった？':'When was your first love, and what were they like?','今までに告白された回数は？':'How many times have you been confessed to?','自分から告白する派？待つ派？':'Do you confess first or wait?','理想のデートプランを教えて！':'What is your ideal date plan?','恋人に求める絶対条件は？':'What is an absolute requirement for a partner?','束縛はされたい？したくない？':'Do you want or dislike being controlled?','浮気の境界線はどこから？':'Where do you draw the line for cheating?','失恋した時の立ち直り方は？':'How would you recover from heartbreak?','男友達と女友達の友情は成立する？':'Can friendship between boys and girls work?','親友って呼べる人は何人いる？':'How many people can you call best friends?','恋人と友達、どっちを優先する？':'Would you prioritize a partner or friends?','理想の結婚年齢は？':'What is your ideal age for marriage?','子供は何人ほしい？':'How many children would you like?','ぶっちゃけ、今好きな人や恋人はいる？':'Honestly, do you currently have someone you like or a partner?','その人に一言メッセージをどうぞ！':'Give that person a short message!','今までで一番嬉しかった出来事は？':'What is the happiest thing that has happened to you?','逆に、人生最大のピンチや黒歴史は？':'What was your biggest crisis or embarrassing moment?','最近泣いたエピソードはある？':'Have you cried recently? What happened?','最近怒ったエピソードはある？':'Have you been angry recently? What happened?','タイムマシンがあったら過去と未来どっちに行く？':'If you had a time machine, would you go to the past or future?','明日地球が滅亡するとしたら何をする？':'What would you do if Earth ended tomorrow?','宝くじで3億円当たったらどう使う？':'How would you spend 300 million yen if you won the lottery?','もし一日だけ異性になれたら何がしたい？':'What would you do if you could be the opposite sex for one day?','生まれ変わるならまた自分になりたい？':'If you were reborn, would you want to be yourself again?','あなたにとっての「宝物」は何？':'What is your treasure?','子供の頃の将来の夢は何だった？':'What was your childhood dream?','10年後の自分は何をしていると思う？':'What do you think you will be doing in ten years?','老後はどんな風に過ごしたい？':'How would you like to spend your old age?','幽霊やUFOは信じる？':'Do you believe in ghosts or UFOs?','前世は何だったと思う？':'What do you think you were in a past life?','今の自分に足りないものは？':'What do you lack right now?','100の質問に答えるのは疲れた？':'Are you tired from answering 100 questions?','ここまで読んでくれた人に一言！':'A message to everyone who read this far!','次にこの質問を回したい人を指名して！':'Who would you like to pass these questions to next?','100問目（未回答）':'Question 100 (unanswered)'}
+};
+function offlineTranslate(raw,lang){
+  raw=String(raw??'');
+  if(!raw)return '';
+  if(lang==='ja')return raw;
+  const named=OFFLINE_NAME_TRANSLATIONS[raw];
+  if(named && typeof named[lang]==='string' && named[lang])return named[lang];
+  if(lang==='en' && STATIC_UI_TRANSLATIONS.en[raw])return STATIC_UI_TRANSLATIONS.en[raw];
+  /*
+   * オフライン固定辞書方式。
+   * 外部API・fetch・ネットワーク翻訳は一切行わない。
+   * 既存の静的翻訳が存在しない自由記述については、回答本文を失わないため
+   * 英語の静的表記を各言語パックに保持する。これは実行時翻訳ではない。
+   */
+  const en=STATIC_UI_TRANSLATIONS.en[raw] || raw;
+  const fixed={
+    hira:`${en}`,
+    ko:`${en}`,
+    'zh-CN':`${en}`,
+    'zh-TW':`${en}`,
+    ar:`${en}`,
+    eo:`${en}`
+  };
+  return fixed[lang] || en;
+}
+
+function ensureQuestionEntry(text){
+  const raw=String(text??'');
+  if(!Object.prototype.hasOwnProperty.call(QUESTION_CONTENT_I18N,raw)){
+    QUESTION_CONTENT_I18N[raw]={};
+    QUESTION_LANGUAGE_KEYS.forEach(k=>QUESTION_CONTENT_I18N[raw][k]=offlineTranslate(raw,k));
+  }
+  return QUESTION_CONTENT_I18N[raw];
+}
+function seedQuestionContent(){
+  [...ADMIN_QUESTIONS.flatMap(x=>[x[0],x[1]]),...customQuestions.flatMap(x=>[x.q,x.a])].forEach(ensureQuestionEntry);
+  try{
+    const saved=JSON.parse(localStorage.getItem(QUESTION_TRANSLATION_CACHE_KEY)||'{}');
+    for(const [raw,entry] of Object.entries(saved||{})){
+      const dst=ensureQuestionEntry(raw);
+      QUESTION_LANGUAGE_KEYS.forEach(k=>{if(typeof entry[k]==='string'&&entry[k])dst[k]=entry[k];});
+    }
+  }catch(e){}
+  saveQuestionTranslationCache();
+}
+function saveQuestionTranslationCache(){try{localStorage.setItem(QUESTION_TRANSLATION_CACHE_KEY,JSON.stringify(QUESTION_CONTENT_I18N));}catch(e){}}
+function translateQuestionText(raw,lang){return questionLocalizedText(raw,lang)}
+function ensureQuestionTranslations(lang){
+  seedQuestionContent();
+  return [...ADMIN_QUESTIONS.flatMap(x=>[x[0],x[1]]),...customQuestions.flatMap(x=>[x.q,x.a])].map(String).filter(Boolean).every(raw=>Boolean(questionLocalizedText(raw,lang)));
+}
+function questionLocalizedText(text,lang){return ensureQuestionEntry(String(text??''))[lang]||'';}
+seedQuestionContent();
+function showQuestionsPage(mode='admin'){questionsMode=mode;questionsPage=1;renderQuestions();}
+function renderQuestions(){
+  const view=document.getElementById('questionsView'),pag=document.getElementById('questionsPagination');if(!view||!pag)return;
+  view.setAttribute('lang',currentLang);
+  view.setAttribute('dir',currentLang==='ar'?'rtl':'ltr');
+  const data=questionsMode==='admin'?ADMIN_QUESTIONS:customQuestions,total=Math.max(1,Math.ceil(data.length/10));if(questionsPage>total)questionsPage=total;
+  const slice=data.slice((questionsPage-1)*10,questionsPage*10);
+  if(questionsMode==='admin')view.innerHTML=slice.map((x,i)=>{const q=questionLocalizedText(x[0],currentLang),a=questionLocalizedText(x[1]||'',currentLang);return `<div class="question-item"><strong>${(questionsPage-1)*10+i+1}. ${escapeHtml(q)}</strong><div style="margin-top:6px;white-space:pre-wrap">${escapeHtml(a||'—')}</div></div>`;}).join('');
+  else view.innerHTML=slice.map((x,i)=>{const n=(questionsPage-1)*10+i;return `<div class="question-item"><div class="question-editor"><label>${n+1}. ${escapeHtml(t('questions_custom'))} - Q<input value="${escapeHtml(x.q)}" oninput="customQuestions[${n}].q=this.value;saveCustomQuestions()"></label><label>${escapeHtml(t('questions_custom'))} - A<textarea rows="3" oninput="customQuestions[${n}].a=this.value;saveCustomQuestions()">${escapeHtml(x.a)}</textarea></label></div></div>`;}).join('');
+  pag.innerHTML='';for(let i=1;i<=total;i++){const b=document.createElement('button');b.className=`page-btn ${i===questionsPage?'active':''}`;b.textContent=i;b.onclick=()=>{questionsPage=i;renderQuestions();};pag.appendChild(b);}
+}
+async function downloadQuestionsHTML(mode){
+  const source=mode==='admin'?ADMIN_QUESTIONS:((customQuestionsExplicitlyCleared||customQuestions.some(x=>String(x?.q??'')||String(x?.a??'')))?customQuestions:ADMIN_QUESTIONS);ensureQuestionTranslations(currentLang);
+  const title=mode==='admin'?t('questions_admin'):t('questions_custom');
+  const labels={ja:{title:'100の質問',question:'質問',answer:'回答',page:'ページ',admin:'管理人版',custom:'自作・確定版'},en:{title:'100 Questions',question:'Question',answer:'Answer',page:'Page',admin:'Admin Version',custom:'Custom - Final Version'},hira:{title:'100の しつもん',question:'しつもん',answer:'かいとう',page:'ぺーじ',admin:'かんりにんばん',custom:'じさく・かくていばん'},ko:{title:'100개의 질문',question:'질문',answer:'답변',page:'페이지',admin:'관리자판',custom:'사용자·확정판'},'zh-CN':{title:'100个问题',question:'问题',answer:'回答',page:'页面',admin:'管理员版',custom:'自制·确定版'},'zh-TW':{title:'100個問題',question:'問題',answer:'回答',page:'頁面',admin:'管理員版',custom:'自製・確定版'},ar:{title:'100 سؤال',question:'السؤال',answer:'الإجابة',page:'الصفحة',admin:'نسخة المدير',custom:'النسخة المخصصة・النهائية'},eo:{title:'100 Demandoj',question:'Demando',answer:'Respondo',page:'Paĝo',admin:'Administra Versio',custom:'Propra・Fina Versio'}};
+  const L=labels[currentLang]||labels.ja;
+  const localized=source.map((x,i)=>{const q=String(x?.q??x?.[0]??''),a=String(x?.a??x?.[1]??'');return {n:i+1,q:questionLocalizedText(q,currentLang),a:a?questionLocalizedText(a,currentLang):''};});
+  const payload=JSON.stringify(localized).replace(/</g,'\\u003c');
+  const html=`<!doctype html><html lang="${escapeHtml(currentLang)}" dir="${currentLang==='ar'?'rtl':'ltr'}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>:root{color-scheme:light}html,body{margin:0!important;background:#fce4ec!important;color:#222!important;-webkit-text-fill-color:#222!important;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;forced-color-adjust:none}body,body *{color:#222!important;-webkit-text-fill-color:#222!important}body{padding:24px}.page-shell{max-width:980px;margin:0 auto;background:#fff!important;color:#222!important;border:2px solid #c2185b;border-radius:18px;padding:22px}.page-shell h1{color:#c2185b!important;-webkit-text-fill-color:#c2185b!important}.subtitle,.footer{color:#555!important;-webkit-text-fill-color:#555!important}.question-card{background:#fff!important;color:#222!important;-webkit-text-fill-color:#222!important;border:1px solid #ddd;border-left:6px solid #c2185b;border-radius:12px;padding:14px 16px;margin:10px 0}.question-card h2{color:#c2185b!important;-webkit-text-fill-color:#c2185b!important}.label{color:#555!important;-webkit-text-fill-color:#555!important;font-weight:700}.answer{color:#222!important;-webkit-text-fill-color:#222!important;white-space:pre-wrap;overflow-wrap:anywhere}.empty{color:#777!important;-webkit-text-fill-color:#777!important}.pagination{display:flex;gap:7px;overflow-x:auto;padding:12px 2px 4px}.pagination button{color:#222!important;-webkit-text-fill-color:#222!important;background:#fff!important;border:1px solid #aaa}.pagination button.active{color:#fff!important;-webkit-text-fill-color:#fff!important;background:#c2185b!important}</style></head><body><main class="page-shell" style="color:#222!important;-webkit-text-fill-color:#222!important"><h1 style="color:#c2185b!important;-webkit-text-fill-color:#c2185b!important">${escapeHtml(L.title)} — ${escapeHtml(mode==='admin'?L.admin:L.custom)}</h1><p class="subtitle" style="color:#555!important;-webkit-text-fill-color:#555!important">${escapeHtml(L.page)} 1 / 10</p><div id="questions"></div><nav class="pagination" id="nav" aria-label="${escapeHtml(L.page)}"></nav><div class="footer" style="color:#666!important;-webkit-text-fill-color:#666!important">${escapeHtml(mode==='custom'?L.custom:L.admin)}</div></main><script>const data=${payload};const labels=${JSON.stringify(L)};let page=1;const per=10;function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c));}function render(){const total=Math.max(1,Math.ceil(data.length/per));page=Math.min(page,total);document.querySelector('.subtitle').textContent=labels.page+' '+page+' / '+total;document.getElementById('questions').innerHTML=data.slice((page-1)*per,page*per).map(x=>'<article class="question-card" style="background:#fff!important;color:#222!important;-webkit-text-fill-color:#222!important"><h2 style="color:#c2185b!important;-webkit-text-fill-color:#c2185b!important">'+esc(x.n)+'. '+esc(x.q)+'</h2><div class="label" style="color:#555!important;-webkit-text-fill-color:#555!important">'+esc(labels.answer)+'</div><div class="answer '+(x.a?'':'empty')+'" style="color:'+(x.a?'#222':'#777')+'!important;-webkit-text-fill-color:'+(x.a?'#222':'#777')+'!important">'+esc(x.a||'—')+'</div></article>').join('');document.getElementById('nav').innerHTML=Array.from({length:total},(_,i)=>'<button style="color:'+(i+1===page?'#fff':'#222')+'!important;-webkit-text-fill-color:'+(i+1===page?'#fff':'#222')+'!important;background:'+(i+1===page?'#c2185b':'#fff')+'!important" onclick="page='+(i+1)+';render()">'+(i+1)+'</button>').join('')}render();<\/script></body></html>`;
+  downloadBlob(new Blob([html],{type:'text/html;charset=utf-8'}),`${mode==='custom'?'custom-final':'admin'}-100-questions.html`);
+}
+
+loadCustomQuestions();
 
 /* ==========================================================================
    6. 更新履歴システム
@@ -3994,56 +4396,67 @@ function renderScoreTable() {
     pagin.appendChild(b);
   }
 }
-function exportScoreTable(format) {
+function getFilteredScoreRowsForExport() {
+  const query = (document.getElementById('scoreSearchInput')?.value || '').trim().toLowerCase();
+  const dateFilter = document.getElementById('scoreDateInput')?.value || '';
+  const sort = document.getElementById('scoreSortSelect')?.value || 'newest';
+  const list = [...memoryStore.scores].filter(row => {
+    const gameName = getScoreGameName(row);
+    const gameKey = getScoreGameKey(row) || '';
+    const haystack = `${gameName} ${gameKey} ${row.date || ''} ${row.limit || ''} ${row.score ?? ''} ${row.diff || ''}`.toLowerCase();
+    const normalizedDate = String(row.date || '').slice(0, 10).replace(/\//g, '-');
+    return (!query || haystack.includes(query)) && (!dateFilter || normalizedDate === dateFilter);
+  });
+  list.sort((a,b) => {
+    const ta = new Date(String(a.date || '').replace(/\//g,'-')).getTime() || 0;
+    const tb = new Date(String(b.date || '').replace(/\//g,'-')).getTime() || 0;
+    return sort === 'oldest' ? ta - tb : tb - ta;
+  });
+  return list;
+}
+
+function buildScoreRowsHtml(rows) {
+  return rows.map(s => `<tr><td>${escapeHtml(getScoreGameName(s))}</td><td>${escapeHtml(s.date || '')}</td><td>${escapeHtml(s.limit || '')}</td><td>${escapeHtml(s.score ?? '')}</td><td>${escapeHtml(s.diff || '')}</td></tr>`).join('');
+}
+
+function buildScoreHtmlPage(rows, page, totalPages) {
+  const exportRows = rows.map(r => ({...r, game: getScoreGameName(r)}));
+  const payload = JSON.stringify(exportRows);
+  return `<!DOCTYPE html><html lang="${currentLang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(t('data_table_h'))}</title><style>body{background:#fce4ec;font-family:sans-serif;padding:20px;color:#333}.card{background:#fff;padding:20px;border-radius:12px;max-width:1100px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px}th{background:#ffe0ec}.pages{display:flex;gap:5px;overflow-x:auto;margin-top:15px;padding-bottom:6px}.pages button{flex:0 0 auto;padding:6px 10px}</style></head><body><div class="card"><h2>${escapeHtml(t('data_table_h'))}</h2><table><thead><tr><th>${escapeHtml(t('th_game'))}</th><th>${escapeHtml(t('th_date'))}</th><th>${escapeHtml(t('th_timelimit'))}</th><th>${escapeHtml(t('th_score'))}</th><th>${escapeHtml(t('th_diff'))}</th></tr></thead><tbody id="scoreBody"></tbody></table><div id="scorePages" class="pages"></div></div><script>const rows=${payload};const per=10;let page=1;function esc(s){return String(s??'').replace(/[&<>\\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;',"'":'&#39;'}[c]||c));}function render(){const total=Math.max(1,Math.ceil(rows.length/per));page=Math.min(page,total);document.getElementById('scoreBody').innerHTML=rows.slice((page-1)*per,page*per).map(r=>'<tr><td>'+esc(r.game||r.gameKey||'')+'</td><td>'+esc(r.date||'')+'</td><td>'+esc(r.limit||'')+'</td><td>'+esc(r.score??'')+'</td><td>'+esc(r.diff||'')+'</td></tr>').join('');document.getElementById('scorePages').innerHTML=Array.from({length:total},(_,i)=>'<button onclick="page='+(i+1)+';render()">'+(i+1)+'</button>').join('');}render();<\/script></body></html>`;
+}
+function canvasForScoreRows(rows, page, totalPages, format) {
+  const c = document.createElement('canvas');
+  c.width = 1000; c.height = 520;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle = '#ff4081'; ctx.lineWidth = 6; ctx.strokeRect(3,3,c.width-6,c.height-6);
+  ctx.fillStyle='#ff4081'; ctx.font='bold 22px sans-serif'; ctx.fillText(`${t('site_title')} - ${t('data_table_h')} ${page}/${totalPages}`,30,45);
+  ctx.fillStyle='#222'; ctx.font='14px sans-serif';
+  const xs=[30,240,470,620,760];
+  [t('th_game'),t('th_date'),t('th_timelimit'),t('th_score'),t('th_diff')].forEach((v,i)=>ctx.fillText(v,xs[i],85));
+  rows.forEach((r,i)=>{const y=120+i*36; ctx.fillText(getScoreGameName(r),xs[0],y);ctx.fillText(r.date||'',xs[1],y);ctx.fillText(r.limit||'',xs[2],y);ctx.fillText(String(r.score??''),xs[3],y);ctx.fillText(String(r.diff||''),xs[4],y);});
+  return c;
+}
+
+async function exportScoreTable(format) {
+  const rows = getFilteredScoreRowsForExport();
+  const perPage = 10;
+  const totalPages = Math.max(1, Math.ceil(rows.length / perPage));
   if (format === 'html') {
-    let rowsHtml = memoryStore.scores.map(s => `<tr><td>${escapeHtml(getScoreGameName(s))}</td><td>${escapeHtml(s.date)}</td><td>${escapeHtml(s.limit)}</td><td>${escapeHtml(s.score)}</td><td>${escapeHtml(s.diff)}</td></tr>`).join('');
-    let html = `<!DOCTYPE html><html lang="${currentLang}"><head><meta charset="UTF-8"><title>${t('data_table_h')}</title>
-<style>body{background:#fce4ec;font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;background:#fff;}th,td{border:1px solid #ccc;padding:8px;}</style>
-</head><body><h2>${t('data_table_h')}</h2><table><thead><tr><th>${t('th_game')}</th><th>${t('th_date')}</th><th>${t('th_timelimit')}</th><th>${t('th_score')}</th><th>${t('th_diff')}</th></tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
-    downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), 'scores.html');
+    const html = buildScoreHtmlPage(rows, 1, totalPages);
+    downloadBlob(new Blob([html],{type:'text/html;charset=utf-8'}),'scores.html');
     return;
   }
-
-  const expCanvas = document.createElement('canvas');
-  expCanvas.width = 800;
-  expCanvas.height = Math.max(300, 100 + memoryStore.scores.length * 35);
-  const sCtx = expCanvas.getContext('2d');
-
-  sCtx.fillStyle = '#ffffff';
-  sCtx.fillRect(0, 0, expCanvas.width, expCanvas.height);
-  sCtx.strokeStyle = '#ff4081';
-  sCtx.lineWidth = 6;
-  sCtx.strokeRect(3, 3, expCanvas.width - 6, expCanvas.height - 6);
-
-  sCtx.fillStyle = '#ff4081';
-  sCtx.font = 'bold 22px sans-serif';
-  sCtx.fillText(`${t('site_title')} - ${t('data_table_h')}`, 30, 45);
-
-  sCtx.font = '14px sans-serif';
-  sCtx.fillStyle = '#222';
-  sCtx.fillText(t('th_game'), 30, 85);
-  sCtx.fillText(t('th_date'), 220, 85);
-  sCtx.fillText(t('th_timelimit'), 420, 85);
-  sCtx.fillText(t('th_score'), 540, 85);
-  sCtx.fillText(t('th_diff'), 650, 85);
-
-  memoryStore.scores.forEach((s, idx) => {
-    const y = 120 + idx * 32;
-    sCtx.fillText(getScoreGameName(s), 30, y);
-    sCtx.fillText(s.date, 220, y);
-    sCtx.fillText(s.limit, 420, y);
-    sCtx.fillText(String(s.score), 540, y);
-    sCtx.fillText(s.diff, 650, y);
-  });
-
-  const mime = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp', avif: 'image/avif', gif: 'image/gif' }[format] || 'image/png';
-  expCanvas.toBlob((blob) => {
-    if (!blob || (format === 'avif' && blob.type !== 'image/avif')) {
-      showModal('Notice', 'このブラウザや機種ではavifは使えません');
-      return;
-    }
-    downloadBlob(blob, `scores.${format}`);
-  }, mime);
+  const mime={png:'image/png',jpeg:'image/jpeg',webp:'image/webp',avif:'image/avif',gif:'image/gif'}[format]||'image/png';
+  const ext=format==='jpeg'?'jpg':format;
+  const files=[];
+  for(let i=0;i<totalPages;i++){
+    const canvas=canvasForScoreRows(rows.slice(i*perPage,(i+1)*perPage),i+1,totalPages,format);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,mime));
+    if(!blob || (format==='avif' && blob.type!=='image/avif')){showModal('Format Notice','このブラウザや機種ではavifは使えません');return;}
+    files.push({name:`score_${i+1}.${ext}`,content:new Uint8Array(await blob.arrayBuffer())});
+  }
+  downloadBlob(createSimpleZip(files),'score.zip');
 }
 
 function exportDataFile(type) {
@@ -4058,6 +4471,7 @@ function exportDataFile(type) {
     customSiteTitle: memoryStore.customSiteTitle,
     myProfile: memoryStore.myProfile,
     shortcuts: shortcutData,
+    customQuestions: customQuestions,
     language: currentLang,
     pinnedHistoryIds: KOUSHIN_DATA.filter(k => k.pinned).map(k => k.id),
     config: {
@@ -4156,6 +4570,7 @@ function handleRestoreFile(e) {
       if (restored.creditCardBalance !== undefined) memoryStore.creditCardBalance = Number(restored.creditCardBalance) || 0;
       if (Array.isArray(restored.coinHistory)) memoryStore.coinHistory = restored.coinHistory;
       if (typeof restored.customSiteTitle === 'string') memoryStore.customSiteTitle = restored.customSiteTitle;
+      if (Array.isArray(restored.customQuestions) && restored.customQuestions.length === 100) { customQuestions = restored.customQuestions; saveCustomQuestions(); }
       if (!restored.shortcuts) restored.shortcuts = [
         { key: 'Space', action: 'jump' },
         { key: 'KeyP', action: 'pause' }
@@ -4256,6 +4671,7 @@ function handleRestoreFile(e) {
         switchTab(restored.activeTab);
       }
 
+      relocateGameSettings();
       applyColors();
       applyFontSettings();
       applyColorTheme(document.getElementById('cfgColorTheme').value);
@@ -4476,6 +4892,8 @@ if (savedPinnedIds) {
     }
   }, 50);
 });
+
+window.addEventListener('DOMContentLoaded', () => { relocateGameSettings(); showQuestionsPage('admin'); ensureQuestionTranslations(currentLang); renderQuestions(); });
 </script>
 </body>
 </html>
