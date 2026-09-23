@@ -1315,6 +1315,10 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 
     <div id="coinUsageGraphPanel" style="margin-bottom:25px;">
       <h3 style="font-size:16px; margin-bottom:10px;">🪙 myfinger消費量リアルタイムグラフ</h3>
+      <div id="coinUsageGraphMeta" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px; font-size:12px; line-height:1.5;">
+        <div id="coinUsageGraphCurrentMeta"></div>
+        <div id="coinUsageGraphSessionList"></div>
+      </div>
       <canvas id="coinUsageGraphCanvas" width="900" height="320" style="width:100%; max-width:100%; border:1px solid var(--border-color); border-radius:10px; background:rgba(255,255,255,0.65);"></canvas>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px;">
         <button class="btn" onclick="playCoinUsageGraph()">▶ 再生</button>
@@ -1613,6 +1617,7 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+{ pinned: false, date: '2026/09/24 06:02', desc: { ja: 'myfinger消費量リアルタイムグラフをゲーム別の色線で表示し、遊んだ日時とモードをグラフ枠外に表示するようにしました。リアルタイム描画、再生・一時停止・再開・シーク、MP4録画保存にも対応しました', en: 'Updated the real-time myfinger consumption graph with separate colored lines for each game and displayed the played date/time and mode outside the graph frame. Real-time drawing, playback, pause, resume, seeking, and MP4 recording are supported', hira: 'myfingerしょうひりょう りあるたいむぐらふを げーむべつの いろせんで ひょうじし、あそんだ にちじと もーどを ぐらふわくがいに ひょうじするようにしました。りあるたいむびょうが、さいせい・いちじていし・さいかい・しーく、MP4ろくがほぞんにも たいおうしました', ko: 'myfinger 실시간 소비 그래프를 게임별 색상 선으로 표시하고 플레이한 날짜/시간과 모드를 그래프 바깥에 표시하도록 업데이트했습니다. 실시간 그리기, 재생, 일시정지, 재개, 탐색 및 MP4 녹화를 지원합니다', zh: '更新myfinger实时消费图表：按游戏使用不同颜色的线，并在图表框外显示游玩日期时间和模式。支持实时绘制、播放、暂停、继续、搜索和MP4录制保存', ar: 'تم تحديث مخطط استهلاك myfinger اللحظي لعرض خط بلون مختلف لكل لعبة وإظهار تاريخ ووقت اللعب والوضع خارج إطار المخطط. كما يدعم الرسم اللحظي والتشغيل والإيقاف والاستئناف والبحث وتسجيل MP4', eo: 'Ĝisdatigis la realtempan grafikon de myfinger-konsumo per apartkoloraj linioj por ĉiu ludo kaj montris la luddaton, horon kaj reĝimon ekster la grafika kadro. Subtenataj estas realtempa desegnado, ludado, paŭzo, rekomenco, serĉado kaj MP4-registrado' } },
 { pinned: false, date: '2026/09/23 18:06', desc: { ja: 'ゲーム速度の自由入力、コイン残高5回確認リセット、ブロック消しの😂特殊ブロック、ゲーム内myfinger消費量リアルタイム表示、データタブのmyfinger消費量リアルタイム折れ線グラフと再生・一時停止・再開・シーク・MP4録画を追加', en: 'Added free game-speed input, a five-step myfinger balance reset, the 😂 special block, real-time in-game myfinger cost display, and a real-time data-tab line graph with playback, pause, resume, seeking, and MP4 recording', hira: 'げーむすぴーどの じゆうにゅうりょく、こいんざんだか ごかいかくにん りせっと、ぶろっくけしの 😂 とくしゅぶろっく、げーむない myfingerしょうひりょう りあるたいむひょうじ、でーたたぶの りあるたいむ おれせんぐらふと さいせい・いちじていし・さいかい・しーく・MP4ろくがを ついか', ko: '게임 속도 자유 입력, 5단계 myfinger 잔액 초기화, 😂 특수 블록, 게임 내 myfinger 실시간 소비량 표시, 데이터 탭 실시간 선 그래프 재생·일시정지·재개·탐색·MP4 녹화를 추가했습니다', zh: '新增游戏速度自由输入、五次确认的myfinger余额重置、😂特殊方块、游戏内myfinger实时消费显示，以及数据标签页实时折线图的播放、暂停、继续、搜索和MP4录制', ar: 'تمت إضافة إدخال سرعة اللعبة بحرية، وإعادة ضبط رصيد myfinger بعد خمس تأكيدات، وكتلة 😂 الخاصة، وعرض استهلاك myfinger في اللعبة لحظيًا، ومخطط خطي لحظي في تبويب البيانات مع التشغيل والإيقاف والاستئناف والبحث وتسجيل MP4', eo: 'Aldonis liberan ludrapidan enigon, kvinpaŝan konfirmitan restarigon de myfinger-saldo, la specialan 😂 blokon, realtempan myfinger-konsumon en la ludo, kaj realtempan linian grafikon en Datumoj kun ludado, paŭzo, rekomenco, serĉo kaj MP4-registrado' } },
 { pinned: false, date: '2026/09/23 16:40', desc: { ja: 'コイン機能を修正：クレカ残高から追加するコイン残高の追加金額を設定可能にし、通常値を800,000コインにしました。また、ゲームをプレイした時間に応じて1分ごとに2,000コイン、1分未満の残り時間は1秒あたり0.6コインで計算し、小数点以下を切り捨てて自動消費するようにしました', en: 'Updated the coin system: the amount added from the credit-card balance is now configurable, with a default of 800,000 coins. Game play now automatically consumes 2,000 coins per minute, with under-one-minute time charged at 0.6 coins per second and fractional coins truncated', hira: 'こいんきのうを しゅうせい：くれか ざんだから ついかする こいんざんだかの ついかきんがくを せってい かのうにし、つうじょうちを 800,000こいんにしました。また、げーむを ぷれいした じかんに おうじて 1ぷんごとに 2,000こいん、1ぷんみまんの のこりじかんは 1びょうあたり 0.6こいんで けいさんし、しょうすうてんいかを きりすてて じどうしょうひするようにしました', ko: '코인 기능 수정: 신용카드 잔액에서 추가되는 코인 금액을 설정할 수 있게 하고 기본값을 800,000코인으로 변경했습니다. 또한 게임 플레이 시간에 따라 1분마다 2,000코인을 자동 소비하고, 1분 미만의 남은 시간은 초당 0.6코인으로 계산한 뒤 소수점 이하를 버리도록 했습니다', zh: '更新金币功能：现在可以设置从信用卡余额追加的金币数量，默认值为800,000金币。游戏游玩时间每1分钟自动消耗2,000金币，不满1分钟的剩余时间按每秒0.6金币计算，并舍去小数部分', ar: 'تم تحديث نظام العملات: أصبح من الممكن ضبط مقدار العملات المضافة من رصيد البطاقة، والقيمة الافتراضية 800000 عملة. كما يتم استهلاك 2000 عملة لكل دقيقة لعب، ويُحسب الوقت المتبقي الأقل من دقيقة بمقدار 0.6 عملة لكل ثانية مع حذف الجزء العشري', eo: 'Ĝisdatigis la monersistemon: la kvanto aldonata el la kartsaldo estas agordebla, kun defaŭlto de 800 000 moneroj. Dum ludado 2 000 moneroj estas aŭtomate konsumataj por ĉiu minuto, kaj la resto sub unu minuto estas kalkulata je 0,6 monero por sekundo kun forigo de la frakcia parto' } },
 { pinned: false, date: '2026/09/23 10:48', desc: { ja: '今回の8件の不具合を修正：設定保存時にゲーム内データを意図せず変更する問題、更新履歴のピン留め情報の保存・復元不一致、同じバックアップファイルを再選択できない問題、IndexedDBを復元時に消去・破損させる問題、IndexedDB復元の完了を待たない問題、.itsmeバックアップの保存データ不足、ファイル読み込み・復元エラー処理不足、プロフィール等の二重保存による不整合を修正しました', en: 'Fixed 8 bugs: unintended game-data changes during settings save, update-history pin save/restore mismatch, inability to reselect the same backup file, IndexedDB clearing or corruption during restore, restore transactions not being awaited, incomplete .itsme backup data, insufficient file/restore error handling, and inconsistencies caused by duplicate profile/config saves', hira: 'こんかいの8けんの ふぐあいを しゅうせい：せっていほぞんじに げーむないでーたを いとせず へんこうするもんだい、こうしんりれきの ぴんどめじょうほうの ほぞん・ふくげんふいっち、おなじ ばっくあっぷふぁいるを さいせんたくできないもんだい、IndexedDBを ふくげんじに しょうきょ・はそんさせるもんだい、IndexedDBふくげんの かんりょうを またないもんだい、.itsmeばっくあっぷの ほぞんでーたぶそく、ふぁいるよみこみ・ふくげんえらーしょりぶそく、ぷろふぃーるなどの にじゅうほぞんによる ふせいごうを しゅうせいしました', ko: '이번 8건의 버그 수정: 설정 저장 중 게임 데이터가 의도하지 않게 변경되는 문제, 업데이트 기록의 고정 정보 저장·복원 불일치, 같은 백업 파일을 다시 선택할 수 없는 문제, 복원 중 IndexedDB가 삭제되거나 손상되는 문제, IndexedDB 복원이 완료되기 전에 다음 처리가 진행되는 문제, .itsme 백업 데이터 부족, 파일 읽기·복원 오류 처리 부족, 프로필 등의 중복 저장으로 인한 불일치를 수정했습니다', zh: '修复本次8项问题：设置保存时意外修改游戏数据、更新记录置顶信息保存与恢复不一致、无法重新选择相同备份文件、恢复时清空或损坏IndexedDB、未等待IndexedDB恢复事务完成、.itsme备份数据不足、文件读取与恢复错误处理不足，以及个人资料等重复保存导致的数据不一致', ar: 'تم إصلاح 8 مشكلات: تغيير بيانات اللعبة دون قصد عند حفظ الإعدادات، وعدم تطابق حفظ واستعادة تثبيت سجل التحديثات، وعدم إمكانية اختيار ملف النسخ الاحتياطي نفسه مرة أخرى، ومسح أو إتلاف IndexedDB أثناء الاستعادة، وعدم انتظار اكتمال معاملة IndexedDB، ونقص بيانات النسخ الاحتياطي .itsme، وضعف معالجة أخطاء قراءة واستعادة الملفات، وعدم الاتساق الناتج عن الحفظ المكرر للملف الشخصي والإعدادات', eo: 'Korektis 8 problemojn: neintencan ŝanĝon de luddatumoj dum konservado de agordoj, malkongruon de konservado kaj restaŭrado de fiksitaj ĝisdatigaj registroj, neeblon reelekti la saman sekurkopian dosieron, forigon aŭ damaĝon de IndexedDB dum restaŭrado, neatendon de la kompletigo de IndexedDB-transakcioj, mankantajn datumojn en .itsme-sekurkopioj, nesufiĉan erartraktadon por dosierlegado kaj restaŭrado, kaj malkongruojn pro duobla konservado de profilo kaj agordoj' } },
@@ -1843,23 +1848,56 @@ function updateGameCostDisplay() {
   if (hud) hud.textContent = `💸 今回の消費: ${formatCoinAmount(cost)} myfinger`;
   if (isGameRunning) updateCoinUsageGraphLive(cost);
 }
+function getCoinUsageGameLabel(gameKey) {
+  const key = gameKey || '';
+  return t(`game_${key}`) || key || '---';
+}
+function formatCoinUsageDate(timestamp) {
+  const d = new Date(Number(timestamp));
+  if (!Number.isFinite(d.getTime())) return '---';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+}
+function getCoinUsageGameColor(gameKey) {
+  return ({stick:'#2196f3',block:'#ff9800',konjac:'#4caf50',blackboard:'#9c27b0',flag:'#f44336',vs:'#00acc1'})[gameKey] || '#607d8b';
+}
 function updateCoinUsageGraphLive(cost) {
   const now = Date.now();
   const last = coinUsageGraphData[coinUsageGraphData.length - 1];
-  if (!last || now - last.time >= 250 || cost !== last.cost) {
-    coinUsageGraphData.push({ time: now, cost });
+  if (!last || now - last.time >= 250 || cost !== last.cost || last.sessionId !== gameSessionId) {
+    coinUsageGraphData.push({ time: now, cost, gameKey: gameSessionGame || currentGame, sessionId: gameSessionId || `legacy-${now}`, sessionDate: gameSessionDate || formatCoinUsageDate(now) });
     if (coinUsageGraphData.length > 3600) coinUsageGraphData.shift();
     if (coinUsageGraphPlaying) coinUsageGraphPlaybackIndex = Math.max(0, coinUsageGraphData.length - 1);
     localStorage.setItem('airplane_game_coin_usage_graph', JSON.stringify(coinUsageGraphData));
     updateCoinUsageGraphControls();
+    updateCoinUsageGraphMeta();
   }
 }
 function loadCoinUsageGraph() {
   try {
     const raw = JSON.parse(localStorage.getItem('airplane_game_coin_usage_graph') || '[]');
-    coinUsageGraphData = Array.isArray(raw) ? raw.filter(p => p && Number.isFinite(Number(p.time)) && Number.isFinite(Number(p.cost))).map(p => ({time:Number(p.time),cost:Number(p.cost)})).slice(-3600) : [];
+    coinUsageGraphData = Array.isArray(raw) ? raw.filter(p => p && Number.isFinite(Number(p.time)) && Number.isFinite(Number(p.cost))).map(p => ({
+      time:Number(p.time), cost:Number(p.cost), gameKey:p.gameKey || '', sessionId:p.sessionId || `legacy-${p.time}`, sessionDate:p.sessionDate || formatCoinUsageDate(p.time)
+    })).slice(-3600) : [];
   } catch(e) { coinUsageGraphData = []; }
   coinUsageGraphPlaybackIndex = Math.max(0, coinUsageGraphData.length - 1);
+  updateCoinUsageGraphMeta();
+}
+function updateCoinUsageGraphMeta() {
+  const current = document.getElementById('coinUsageGraphCurrentMeta');
+  const list = document.getElementById('coinUsageGraphSessionList');
+  const sessions = [];
+  const seen = new Set();
+  coinUsageGraphData.forEach(p => {
+    const id = p.sessionId || `legacy-${p.time}`;
+    if (!seen.has(id)) { seen.add(id); sessions.push({ id, date: p.sessionDate || formatCoinUsageDate(p.time), gameKey: p.gameKey || '' }); }
+  });
+  if (current) {
+    const p = coinUsageGraphData[Math.min(Math.max(0, coinUsageGraphPlaybackIndex), Math.max(0, coinUsageGraphData.length - 1))];
+    current.innerHTML = p ? `<strong>遊んだ日時:</strong> ${escapeHtml(p.sessionDate || formatCoinUsageDate(p.time))}　<strong>モード:</strong> ${escapeHtml(getCoinUsageGameLabel(p.gameKey))}` : '<strong>遊んだ日時:</strong> ---　<strong>モード:</strong> ---';
+  }
+  if (list) {
+    list.innerHTML = sessions.length ? '<strong>遊んだ履歴:</strong> ' + sessions.slice(-30).reverse().map(x => `<span style="display:inline-block; margin:2px 8px 2px 0;"><span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:${getCoinUsageGameColor(x.gameKey)}; margin-right:4px;"></span>${escapeHtml(x.date)} / ${escapeHtml(getCoinUsageGameLabel(x.gameKey))}</span>`).join('') : '';
+  }
 }
 function updateCoinUsageGraphControls() {
   const seek=document.getElementById('coinUsageGraphSeek');
@@ -1867,27 +1905,20 @@ function updateCoinUsageGraphControls() {
   const max=Math.max(0,coinUsageGraphData.length-1);
   if(seek){seek.max=String(max);if(coinUsageGraphPlaying)seek.value=String(max);}
   if(status)status.textContent=`${Math.min(coinUsageGraphPlaybackIndex+1,coinUsageGraphData.length)} / ${coinUsageGraphData.length}`;
+  updateCoinUsageGraphMeta();
 }
 function seekCoinUsageGraph(value){
   coinUsageGraphPlaybackIndex=Math.max(0,Math.min(Number(value)||0,coinUsageGraphData.length-1));
-  coinUsageGraphPlaying=false;
-  updateCoinUsageGraphControls();
-  drawCoinUsageGraph();
+  coinUsageGraphPlaying=false; updateCoinUsageGraphControls(); drawCoinUsageGraph();
 }
 function playCoinUsageGraph(){
-  coinUsageGraphPlaying=true;
-  if(coinUsageGraphPlaybackIndex>=coinUsageGraphData.length-1) coinUsageGraphPlaybackIndex=0;
-  animateCoinUsageGraph();
+  coinUsageGraphPlaying=true; if(coinUsageGraphPlaybackIndex>=coinUsageGraphData.length-1) coinUsageGraphPlaybackIndex=0; animateCoinUsageGraph();
 }
 function pauseCoinUsageGraph(){ coinUsageGraphPlaying=false; if(coinUsageGraphAnimationId)cancelAnimationFrame(coinUsageGraphAnimationId); coinUsageGraphAnimationId=null; drawCoinUsageGraph(); }
 function resumeCoinUsageGraph(){ coinUsageGraphPlaying=true; animateCoinUsageGraph(); }
 function animateCoinUsageGraph(){
-  if(!coinUsageGraphPlaying){drawCoinUsageGraph();return;}
-  drawCoinUsageGraph();
-  if(coinUsageGraphPlaybackIndex < coinUsageGraphData.length-1){
-    coinUsageGraphPlaybackIndex++;
-    coinUsageGraphAnimationId=requestAnimationFrame(()=>setTimeout(animateCoinUsageGraph,30));
-  } else coinUsageGraphAnimationId=null;
+  if(!coinUsageGraphPlaying){drawCoinUsageGraph();return;} drawCoinUsageGraph();
+  if(coinUsageGraphPlaybackIndex < coinUsageGraphData.length-1){ coinUsageGraphPlaybackIndex++; coinUsageGraphAnimationId=requestAnimationFrame(()=>setTimeout(animateCoinUsageGraph,30)); } else coinUsageGraphAnimationId=null;
 }
 function drawCoinUsageGraph(){
   const c=document.getElementById('coinUsageGraphCanvas'); if(!c)return;
@@ -1897,17 +1928,19 @@ function drawCoinUsageGraph(){
   const textColor=getComputedStyle(document.body).getPropertyValue('--text-color')||'#333';
   g.fillStyle=textColor; g.font='bold 14px sans-serif'; g.fillText('myfinger消費量',16,22);
   const left=48,top=36,right=16,bottom=34,w=Math.max(10,cssW-left-right),h=Math.max(10,cssH-top-bottom);
-  g.strokeStyle='rgba(120,120,120,.35)';g.lineWidth=1;
-  for(let i=0;i<5;i++){const y=top+h*i/4;g.beginPath();g.moveTo(left,y);g.lineTo(left+w,y);g.stroke();}
+  g.strokeStyle='rgba(120,120,120,.35)';g.lineWidth=1; for(let i=0;i<5;i++){const y=top+h*i/4;g.beginPath();g.moveTo(left,y);g.lineTo(left+w,y);g.stroke();}
   if(!coinUsageGraphData.length){g.fillStyle=textColor;g.fillText('ゲームを開始するとリアルタイムで線が描かれます',left+10,top+h/2);updateCoinUsageGraphControls();return;}
   const end=Math.min(coinUsageGraphPlaybackIndex,coinUsageGraphData.length-1), start=Math.max(0,end-599), pts=coinUsageGraphData.slice(start,end+1);
   const maxCost=Math.max(1,...pts.map(p=>p.cost));
   g.fillStyle=textColor;g.font='12px sans-serif';g.fillText(String(Math.round(maxCost)),4,top+4);g.fillText('0',20,top+h);
   if(pts.length<2){g.fillText(formatCoinAmount(pts[0].cost)+' myfinger',left,top+h/2);updateCoinUsageGraphControls();return;}
-  g.strokeStyle='#ff4081';g.lineWidth=2;g.beginPath();
-  pts.forEach((p,i)=>{const x=left+(i/(pts.length-1))*w,y=top+h-(p.cost/maxCost)*h;i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();
-  g.fillStyle=textColor;g.fillText(`現在: ${formatCoinAmount(pts[pts.length-1].cost)} myfinger`,left,cssH-10);
-  updateCoinUsageGraphControls();
+  const groups = new Map();
+  pts.forEach((p,i)=>{const key=p.sessionId || p.gameKey || 'legacy';if(!groups.has(key))groups.set(key,[]);groups.get(key).push({p,i});});
+  groups.forEach(items=>{
+    const key=items[0].p.gameKey || ''; g.strokeStyle=getCoinUsageGameColor(key); g.lineWidth=2; g.beginPath();
+    items.forEach((item,j)=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-(item.p.cost/maxCost)*h;j?g.lineTo(x,y):g.moveTo(x,y);}); g.stroke();
+  });
+  g.fillStyle=textColor;g.fillText(`現在: ${formatCoinAmount(pts[pts.length-1].cost)} myfinger`,left,cssH-10); updateCoinUsageGraphControls();
 }
 function startCoinUsageGraphLoop(){
   if(coinUsageGraphSampleTimer)clearInterval(coinUsageGraphSampleTimer);
@@ -2684,6 +2717,9 @@ const ctx = canvas.getContext('2d');
 let isGameRunning = false;
 let gameTimer = null;
 let gameSessionStartedAt = 0;
+let gameSessionId = '';
+let gameSessionDate = '';
+let gameSessionGame = '';
 let timeLeft = 60;
 let coinUsageGraphData = [];
 let coinUsageGraphPlaying = true;
@@ -3505,6 +3541,10 @@ function toggleCurrentGame() {
 function startGame() {
   isGameRunning = true;
   gameSessionStartedAt = Date.now();
+  gameSessionId = `${gameSessionStartedAt}-${Math.random().toString(36).slice(2)}`;
+  gameSessionDate = formatCoinUsageDate(gameSessionStartedAt);
+  gameSessionGame = currentGame;
+  updateCoinUsageGraphLive(0);
   document.getElementById('gameActionBtn').textContent = t('btn_stop');
   document.getElementById('gameActionBtn').classList.add('btn-secondary');
 
@@ -3550,6 +3590,9 @@ function stopGame() {
       renderCoinHistoryTable();
     }
     gameSessionStartedAt = 0;
+    gameSessionId = '';
+    gameSessionDate = '';
+    gameSessionGame = '';
   }
   document.getElementById('gameActionBtn').textContent = t('btn_start');
   document.getElementById('gameActionBtn').classList.remove('btn-secondary');
