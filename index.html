@@ -732,6 +732,56 @@ body.dark-mode .config-item { background: rgba(255,255,255,0.03); }
 }
 
 .btn:hover { opacity: 0.85; }
+
+/* myfingerグラフのシークバーを常に見える状態にする（既存UI以外は変更しない） */
+#coinUsageGraphSeek {
+  display: block !important;
+  width: min(100%, 420px);
+  height: 24px;
+  min-width: 180px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  accent-color: var(--accent-pink);
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+#coinUsageGraphSeek::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #bdbdbd;
+}
+#coinUsageGraphSeek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--accent-pink);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+}
+#coinUsageGraphSeek::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #bdbdbd;
+}
+#coinUsageGraphSeek::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent-pink);
+}
+#coinUsageGraphSeek::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-pink);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+}
+body.dark-mode #coinUsageGraphSeek::-webkit-slider-runnable-track { background: #666; }
+body.dark-mode #coinUsageGraphSeek::-moz-range-track { background: #666; }
 .btn-secondary { background: #607d8b; }
 .btn-outline { background: transparent; border: 1px solid var(--accent-pink); color: var(--accent-pink); }
 .btn-danger { background: #d32f2f; color: white; }
@@ -1324,7 +1374,8 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <button class="btn" onclick="playCoinUsageGraph()">▶ 再生</button>
         <button class="btn btn-secondary" onclick="pauseCoinUsageGraph()">⏸ 一時停止</button>
         <button class="btn btn-outline" onclick="resumeCoinUsageGraph()">⏯ 再開</button>
-        <input type="range" id="coinUsageGraphSeek" min="0" max="0" value="0" step="1" style="flex:1; min-width:180px;" oninput="seekCoinUsageGraph(this.value)">
+        <label for="coinUsageGraphSeek" style="font-size:12px; font-weight:bold; white-space:nowrap;">シーク</label>
+        <input type="range" id="coinUsageGraphSeek" min="0" max="0" value="0" step="1" aria-label="myfingerグラフのシークバー" oninput="seekCoinUsageGraph(this.value)">
         <span id="coinUsageGraphStatus" style="font-size:12px;">0 / 0</span>
         <button class="btn btn-outline" onclick="recordCoinUsageGraphVideo()">🎥 .mp4で録画</button>
       </div>
@@ -1931,14 +1982,22 @@ function drawCoinUsageGraph(){
   g.strokeStyle='rgba(120,120,120,.35)';g.lineWidth=1; for(let i=0;i<5;i++){const y=top+h*i/4;g.beginPath();g.moveTo(left,y);g.lineTo(left+w,y);g.stroke();}
   if(!coinUsageGraphData.length){g.fillStyle=textColor;g.fillText('ゲームを開始するとリアルタイムで線が描かれます',left+10,top+h/2);updateCoinUsageGraphControls();return;}
   const end=Math.min(coinUsageGraphPlaybackIndex,coinUsageGraphData.length-1), start=Math.max(0,end-599), pts=coinUsageGraphData.slice(start,end+1);
-  const maxCost=Math.max(1,...pts.map(p=>p.cost));
-  g.fillStyle=textColor;g.font='12px sans-serif';g.fillText(String(Math.round(maxCost)),4,top+4);g.fillText('0',20,top+h);
-  if(pts.length<2){g.fillText(formatCoinAmount(pts[0].cost)+' myfinger',left,top+h/2);updateCoinUsageGraphControls();return;}
+  const maxObserved=Math.max(0,...pts.map(p=>Number(p.cost)||0));
+  const maxCost=Math.max(10,Math.ceil(maxObserved/10)*10);
+  g.fillStyle=textColor;g.font='12px sans-serif';g.fillText(formatCoinAmount(maxCost),2,top+4);g.fillText('0',20,top+h);
+  if(pts.length<2){
+    const p=pts[0];
+    const x=left+w/2, y=top+h-((Number(p.cost)||0)/maxCost)*h;
+    g.fillStyle=getCoinUsageGameColor(p.gameKey||''); g.beginPath(); g.arc(x,y,5,0,Math.PI*2); g.fill();
+    g.fillStyle=textColor;g.fillText(formatCoinAmount(p.cost)+' myfinger',left,top+h/2);updateCoinUsageGraphControls();return;
+  }
   const groups = new Map();
   pts.forEach((p,i)=>{const key=p.sessionId || p.gameKey || 'legacy';if(!groups.has(key))groups.set(key,[]);groups.get(key).push({p,i});});
   groups.forEach(items=>{
-    const key=items[0].p.gameKey || ''; g.strokeStyle=getCoinUsageGameColor(key); g.lineWidth=2; g.beginPath();
-    items.forEach((item,j)=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-(item.p.cost/maxCost)*h;j?g.lineTo(x,y):g.moveTo(x,y);}); g.stroke();
+    const key=items[0].p.gameKey || '';
+    g.strokeStyle=getCoinUsageGameColor(key); g.lineWidth=4; g.lineJoin='round'; g.lineCap='round'; g.beginPath();
+    items.forEach((item,j)=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-((Number(item.p.cost)||0)/maxCost)*h;j?g.lineTo(x,y):g.moveTo(x,y);}); g.stroke();
+    items.forEach(item=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-((Number(item.p.cost)||0)/maxCost)*h;g.fillStyle=getCoinUsageGameColor(key);g.beginPath();g.arc(x,y,2.5,0,Math.PI*2);g.fill();});
   });
   g.fillStyle=textColor;g.fillText(`現在: ${formatCoinAmount(pts[pts.length-1].cost)} myfinger`,left,cssH-10); updateCoinUsageGraphControls();
 }
