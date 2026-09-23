@@ -878,6 +878,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       <div class="game-hud-timer" id="gameHudTimer">TIME: --</div>
       <div class="game-hud-score" id="gameHudScore">SCORE: 0</div>
       <div class="coin-balance-hud" id="gameCoinHud">🪙 myfinger: 10,000</div>
+      <div class="coin-balance-hud" id="gameCoinCostHud">💸 今回の消費: 0 myfinger</div>
       <button class="btn btn-outline" id="myFingerBtn" onclick="useMyFinger()" data-i18n="item_my_finger">my finger（2,000コイン）</button>
       <div class="flight-hud-clock" id="flightHudClock">FLIGHT: 00:00:00</div>
 
@@ -1092,12 +1093,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       </div>
       <div class="config-item">
         <label data-i18n="cfg_gamespeed">⚡ ゲームスピード倍率</label>
-        <select id="cfgGameSpeed" onchange="saveConfig();">
-          <option value="0.5">0.5倍速 (スロー/練習用)</option>
-          <option value="1.0" selected>1.0倍速 (通常)</option>
-          <option value="1.5">1.5倍速 (高速)</option>
-          <option value="2.0">2.0倍速 (激ムズ・ターボ)</option>
-        </select>
+        <input type="number" id="cfgGameSpeed" value="1.0" min="0.01" step="any" inputmode="decimal" style="width:110px;" oninput="saveConfig();"> <span style="font-size:12px;">倍速（自由入力）</span>
       </div>
       <div class="config-item">
         <label data-i18n="cfg_invincible">🛡️ 無敵・練習モード (棒とビ)</label>
@@ -1317,6 +1313,19 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 
     <hr style="margin: 25px 0; border: none; border-top: 2px dashed var(--border-color);">
 
+    <div id="coinUsageGraphPanel" style="margin-bottom:25px;">
+      <h3 style="font-size:16px; margin-bottom:10px;">🪙 myfinger消費量リアルタイムグラフ</h3>
+      <canvas id="coinUsageGraphCanvas" width="900" height="320" style="width:100%; max-width:100%; border:1px solid var(--border-color); border-radius:10px; background:rgba(255,255,255,0.65);"></canvas>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+        <button class="btn" onclick="playCoinUsageGraph()">▶ 再生</button>
+        <button class="btn btn-secondary" onclick="pauseCoinUsageGraph()">⏸ 一時停止</button>
+        <button class="btn btn-outline" onclick="resumeCoinUsageGraph()">⏯ 再開</button>
+        <input type="range" id="coinUsageGraphSeek" min="0" max="0" value="0" step="1" style="flex:1; min-width:180px;" oninput="seekCoinUsageGraph(this.value)">
+        <span id="coinUsageGraphStatus" style="font-size:12px;">0 / 0</span>
+        <button class="btn btn-outline" onclick="recordCoinUsageGraphVideo()">🎥 .mp4で録画</button>
+      </div>
+    </div>
+
     <h3 style="font-size: 16px; margin-bottom: 12px;" data-i18n="data_backup_h">バックアップ & 復元</h3>
     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
       <button class="btn" onclick="exportDataFile('itsme')">.itsme 保存</button>
@@ -1352,6 +1361,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       </label>
       <button class="btn" onclick="addCoinBalance()" data-i18n="coin_add_balance">残高追加</button>
       <button class="btn btn-secondary" onclick="addCreditCardBalance()" data-i18n="coin_add_card">クレカ残高を増やす</button>
+      <button class="btn btn-danger" onclick="startCoinBalanceResetProcess()" data-i18n="coin_reset_balance">残高をリセット</button>
     </div>
 
     <h3 style="font-size:16px; margin-bottom:10px;" data-i18n="coin_item_title">アイテム購入</h3>
@@ -1422,6 +1432,7 @@ const I18N_DICTIONARY = {
   coin_add_balance: { ja: "残高追加", en: "Add Balance", hira: "ざんだか ついか", ko: "잔액 추가", zh: "增加余额", ar: "إضافة الرصيد", eo: "Aldoni Saldo" },
   coin_balance_add_amount: { ja: "クレカ残高の追加金額", en: "Credit-card balance addition amount", hira: "くれか ざんだかの ついか きんがく", ko: "카드 잔액 추가 금액", zh: "信用卡余额增加金额", ar: "مبلغ إضافة رصيد البطاقة", eo: "Kvanto de aldono al kartsaldo" },
   coin_game_time_cost: { ja: "ゲームプレイ料金", en: "Game play cost", hira: "げーむ ぷれい りょうきん", ko: "게임 플레이 요금", zh: "游戏游玩费用", ar: "تكلفة اللعب", eo: "Ludkosto" },
+  coin_reset_balance: { ja: "残高をリセット", en: "Reset balance", hira: "ざんだかを りせっと", ko: "잔액 초기화", zh: "重置余额", ar: "إعادة ضبط الرصيد", eo: "Restarigi saldon" },
   coin_add_card: { ja: "クレカ残高を増やす", en: "Increase Card Balance", hira: "くれか ざんだかを ふやす", ko: "카드 잔액 늘리기", zh: "增加信用卡余额", ar: "زيادة رصيد البطاقة", eo: "Pliigi Kartan Saldon" },
   coin_item_title: { ja: "アイテム購入", en: "Item Purchase", hira: "あいてむ こうにゅう", ko: "아이템 구매", zh: "购买物品", ar: "شراء العناصر", eo: "Aĉeto de Eroj" },
   coin_title_item: { ja: "サイトタイトル変更", en: "Change Site Title", hira: "さいとたいとる へんこう", ko: "사이트 제목 변경", zh: "更改网站标题", ar: "تغيير عنوان الموقع", eo: "Ŝanĝi Titolo de Retejo" },
@@ -1602,7 +1613,8 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
-{ pinned: false, date: '2026/09/23 17:50', desc: { ja: 'コイン機能を修正：クレカ残高から追加するコイン残高の追加金額を設定可能にし、通常値を800,000コインにしました。また、ゲームをプレイした時間に応じて1分ごとに2,000コイン、1分未満の残り時間は1秒あたり0.6コインで計算し、小数点以下を切り捨てて自動消費するようにしました', en: 'Updated the coin system: the amount added from the credit-card balance is now configurable, with a default of 800,000 coins. Game play now automatically consumes 2,000 coins per minute, with under-one-minute time charged at 0.6 coins per second and fractional coins truncated', hira: 'こいんきのうを しゅうせい：くれか ざんだから ついかする こいんざんだかの ついかきんがくを せってい かのうにし、つうじょうちを 800,000こいんにしました。また、げーむを ぷれいした じかんに おうじて 1ぷんごとに 2,000こいん、1ぷんみまんの のこりじかんは 1びょうあたり 0.6こいんで けいさんし、しょうすうてんいかを きりすてて じどうしょうひするようにしました', ko: '코인 기능 수정: 신용카드 잔액에서 추가되는 코인 금액을 설정할 수 있게 하고 기본값을 800,000코인으로 변경했습니다. 또한 게임 플레이 시간에 따라 1분마다 2,000코인을 자동 소비하고, 1분 미만의 남은 시간은 초당 0.6코인으로 계산한 뒤 소수점 이하를 버리도록 했습니다', zh: '更新金币功能：现在可以设置从信用卡余额追加的金币数量，默认值为800,000金币。游戏游玩时间每1分钟自动消耗2,000金币，不满1分钟的剩余时间按每秒0.6金币计算，并舍去小数部分', ar: 'تم تحديث نظام العملات: أصبح من الممكن ضبط مقدار العملات المضافة من رصيد البطاقة، والقيمة الافتراضية 800000 عملة. كما يتم استهلاك 2000 عملة لكل دقيقة لعب، ويُحسب الوقت المتبقي الأقل من دقيقة بمقدار 0.6 عملة لكل ثانية مع حذف الجزء العشري', eo: 'Ĝisdatigis la monersistemon: la kvanto aldonata el la kartsaldo estas agordebla, kun defaŭlto de 800 000 moneroj. Dum ludado 2 000 moneroj estas aŭtomate konsumataj por ĉiu minuto, kaj la resto sub unu minuto estas kalkulata je 0,6 monero por sekundo kun forigo de la frakcia parto' } },
+{ pinned: false, date: '2026/09/23 18:06', desc: { ja: 'ゲーム速度の自由入力、コイン残高5回確認リセット、ブロック消しの😂特殊ブロック、ゲーム内myfinger消費量リアルタイム表示、データタブのmyfinger消費量リアルタイム折れ線グラフと再生・一時停止・再開・シーク・MP4録画を追加', en: 'Added free game-speed input, a five-step myfinger balance reset, the 😂 special block, real-time in-game myfinger cost display, and a real-time data-tab line graph with playback, pause, resume, seeking, and MP4 recording', hira: 'げーむすぴーどの じゆうにゅうりょく、こいんざんだか ごかいかくにん りせっと、ぶろっくけしの 😂 とくしゅぶろっく、げーむない myfingerしょうひりょう りあるたいむひょうじ、でーたたぶの りあるたいむ おれせんぐらふと さいせい・いちじていし・さいかい・しーく・MP4ろくがを ついか', ko: '게임 속도 자유 입력, 5단계 myfinger 잔액 초기화, 😂 특수 블록, 게임 내 myfinger 실시간 소비량 표시, 데이터 탭 실시간 선 그래프 재생·일시정지·재개·탐색·MP4 녹화를 추가했습니다', zh: '新增游戏速度自由输入、五次确认的myfinger余额重置、😂特殊方块、游戏内myfinger实时消费显示，以及数据标签页实时折线图的播放、暂停、继续、搜索和MP4录制', ar: 'تمت إضافة إدخال سرعة اللعبة بحرية، وإعادة ضبط رصيد myfinger بعد خمس تأكيدات، وكتلة 😂 الخاصة، وعرض استهلاك myfinger في اللعبة لحظيًا، ومخطط خطي لحظي في تبويب البيانات مع التشغيل والإيقاف والاستئناف والبحث وتسجيل MP4', eo: 'Aldonis liberan ludrapidan enigon, kvinpaŝan konfirmitan restarigon de myfinger-saldo, la specialan 😂 blokon, realtempan myfinger-konsumon en la ludo, kaj realtempan linian grafikon en Datumoj kun ludado, paŭzo, rekomenco, serĉo kaj MP4-registrado' } },
+{ pinned: false, date: '2026/09/23 16:40', desc: { ja: 'コイン機能を修正：クレカ残高から追加するコイン残高の追加金額を設定可能にし、通常値を800,000コインにしました。また、ゲームをプレイした時間に応じて1分ごとに2,000コイン、1分未満の残り時間は1秒あたり0.6コインで計算し、小数点以下を切り捨てて自動消費するようにしました', en: 'Updated the coin system: the amount added from the credit-card balance is now configurable, with a default of 800,000 coins. Game play now automatically consumes 2,000 coins per minute, with under-one-minute time charged at 0.6 coins per second and fractional coins truncated', hira: 'こいんきのうを しゅうせい：くれか ざんだから ついかする こいんざんだかの ついかきんがくを せってい かのうにし、つうじょうちを 800,000こいんにしました。また、げーむを ぷれいした じかんに おうじて 1ぷんごとに 2,000こいん、1ぷんみまんの のこりじかんは 1びょうあたり 0.6こいんで けいさんし、しょうすうてんいかを きりすてて じどうしょうひするようにしました', ko: '코인 기능 수정: 신용카드 잔액에서 추가되는 코인 금액을 설정할 수 있게 하고 기본값을 800,000코인으로 변경했습니다. 또한 게임 플레이 시간에 따라 1분마다 2,000코인을 자동 소비하고, 1분 미만의 남은 시간은 초당 0.6코인으로 계산한 뒤 소수점 이하를 버리도록 했습니다', zh: '更新金币功能：现在可以设置从信用卡余额追加的金币数量，默认值为800,000金币。游戏游玩时间每1分钟自动消耗2,000金币，不满1分钟的剩余时间按每秒0.6金币计算，并舍去小数部分', ar: 'تم تحديث نظام العملات: أصبح من الممكن ضبط مقدار العملات المضافة من رصيد البطاقة، والقيمة الافتراضية 800000 عملة. كما يتم استهلاك 2000 عملة لكل دقيقة لعب، ويُحسب الوقت المتبقي الأقل من دقيقة بمقدار 0.6 عملة لكل ثانية مع حذف الجزء العشري', eo: 'Ĝisdatigis la monersistemon: la kvanto aldonata el la kartsaldo estas agordebla, kun defaŭlto de 800 000 moneroj. Dum ludado 2 000 moneroj estas aŭtomate konsumataj por ĉiu minuto, kaj la resto sub unu minuto estas kalkulata je 0,6 monero por sekundo kun forigo de la frakcia parto' } },
 { pinned: false, date: '2026/09/23 10:48', desc: { ja: '今回の8件の不具合を修正：設定保存時にゲーム内データを意図せず変更する問題、更新履歴のピン留め情報の保存・復元不一致、同じバックアップファイルを再選択できない問題、IndexedDBを復元時に消去・破損させる問題、IndexedDB復元の完了を待たない問題、.itsmeバックアップの保存データ不足、ファイル読み込み・復元エラー処理不足、プロフィール等の二重保存による不整合を修正しました', en: 'Fixed 8 bugs: unintended game-data changes during settings save, update-history pin save/restore mismatch, inability to reselect the same backup file, IndexedDB clearing or corruption during restore, restore transactions not being awaited, incomplete .itsme backup data, insufficient file/restore error handling, and inconsistencies caused by duplicate profile/config saves', hira: 'こんかいの8けんの ふぐあいを しゅうせい：せっていほぞんじに げーむないでーたを いとせず へんこうするもんだい、こうしんりれきの ぴんどめじょうほうの ほぞん・ふくげんふいっち、おなじ ばっくあっぷふぁいるを さいせんたくできないもんだい、IndexedDBを ふくげんじに しょうきょ・はそんさせるもんだい、IndexedDBふくげんの かんりょうを またないもんだい、.itsmeばっくあっぷの ほぞんでーたぶそく、ふぁいるよみこみ・ふくげんえらーしょりぶそく、ぷろふぃーるなどの にじゅうほぞんによる ふせいごうを しゅうせいしました', ko: '이번 8건의 버그 수정: 설정 저장 중 게임 데이터가 의도하지 않게 변경되는 문제, 업데이트 기록의 고정 정보 저장·복원 불일치, 같은 백업 파일을 다시 선택할 수 없는 문제, 복원 중 IndexedDB가 삭제되거나 손상되는 문제, IndexedDB 복원이 완료되기 전에 다음 처리가 진행되는 문제, .itsme 백업 데이터 부족, 파일 읽기·복원 오류 처리 부족, 프로필 등의 중복 저장으로 인한 불일치를 수정했습니다', zh: '修复本次8项问题：设置保存时意外修改游戏数据、更新记录置顶信息保存与恢复不一致、无法重新选择相同备份文件、恢复时清空或损坏IndexedDB、未等待IndexedDB恢复事务完成、.itsme备份数据不足、文件读取与恢复错误处理不足，以及个人资料等重复保存导致的数据不一致', ar: 'تم إصلاح 8 مشكلات: تغيير بيانات اللعبة دون قصد عند حفظ الإعدادات، وعدم تطابق حفظ واستعادة تثبيت سجل التحديثات، وعدم إمكانية اختيار ملف النسخ الاحتياطي نفسه مرة أخرى، ومسح أو إتلاف IndexedDB أثناء الاستعادة، وعدم انتظار اكتمال معاملة IndexedDB، ونقص بيانات النسخ الاحتياطي .itsme، وضعف معالجة أخطاء قراءة واستعادة الملفات، وعدم الاتساق الناتج عن الحفظ المكرر للملف الشخصي والإعدادات', eo: 'Korektis 8 problemojn: neintencan ŝanĝon de luddatumoj dum konservado de agordoj, malkongruon de konservado kaj restaŭrado de fiksitaj ĝisdatigaj registroj, neeblon reelekti la saman sekurkopian dosieron, forigon aŭ damaĝon de IndexedDB dum restaŭrado, neatendon de la kompletigo de IndexedDB-transakcioj, mankantajn datumojn en .itsme-sekurkopioj, nesufiĉan erartraktadon por dosierlegado kaj restaŭrado, kaj malkongruojn pro duobla konservado de profilo kaj agordoj' } },
 { pinned: false, date: '2026/09/22 20:33', desc: { ja: 'マスター音量・スコア保存ページネーション・100の質問・設定整理・30アクションプリセットを追加', en: 'Added master-volume mute behavior, paginated score exports, 100 questions, organized game settings, and 30 action presets', hira: 'ますたーおんりょう・すこあほぞんぺーじねーしょん・100のしつもん・せっていせいり・30あくしょんぷりせっとを ついか', ko: '마스터 볼륨 음소거 동작, 점수 저장 페이지네이션, 100개의 질문, 게임 설정 정리 및 30개 액션 프리셋 추가', zh: '新增主音量静音行为、得分分页导出、100个问题、游戏设置整理及30个动作预设', ar: 'إضافة سلوك كتم الصوت الرئيسي وتصدير النتائج مع الصفحات و100 سؤال وتنظيم إعدادات الألعاب و30 إجراءً مسبقًا', eo: 'Aldonis silentigan konduton, paĝigitajn poentarajn elportojn, 100 demandojn, organizitajn ludajn agordojn kaj 30 ago-prezeteojn' } },
 { pinned: false, date: '2026/09/21 02:22', desc: { ja: 'コインシステム・使用履歴・疑似決済・タイトル変更を追加', en: 'Added the coin system, usage history, simulated payment, and title customization', hira: 'こいんしすてむ・しようりれき・ぎじけっさい・たいとるへんこうを ついか', ko: '코인 시스템, 사용 기록, 모의 결제 및 제목 변경 기능 추가', zh: '新增金币系统、使用记录、模拟支付和标题自定义', ar: 'إضافة نظام العملات وسجل الاستخدام والدفع التجريبي وتخصيص العنوان', eo: 'Aldonis moneran sistemon, uzhistorion, simulitan pagon kaj titolan agordon' } },
@@ -1816,6 +1828,90 @@ function updateCoinDisplays() {
   if (cardVisual) cardVisual.textContent = card;
   const input = document.getElementById('customSiteTitleInput');
   if (input && document.activeElement !== input) input.value = memoryStore.customSiteTitle || '';
+  updateGameCostDisplay();
+}
+function getCurrentGameCost() {
+  if (!gameSessionStartedAt) return 0;
+  const totalWholeSeconds = Math.floor(Math.max(0, Date.now() - gameSessionStartedAt) / 1000);
+  const fullMinutes = Math.floor(totalWholeSeconds / 60);
+  const remainingSeconds = totalWholeSeconds % 60;
+  return Math.floor(fullMinutes * 2000 + remainingSeconds * 0.6);
+}
+function updateGameCostDisplay() {
+  const cost = getCurrentGameCost();
+  const hud = document.getElementById('gameCoinCostHud');
+  if (hud) hud.textContent = `💸 今回の消費: ${formatCoinAmount(cost)} myfinger`;
+  if (isGameRunning) updateCoinUsageGraphLive(cost);
+}
+function updateCoinUsageGraphLive(cost) {
+  const now = Date.now();
+  const last = coinUsageGraphData[coinUsageGraphData.length - 1];
+  if (!last || now - last.time >= 250 || cost !== last.cost) {
+    coinUsageGraphData.push({ time: now, cost });
+    if (coinUsageGraphData.length > 3600) coinUsageGraphData.shift();
+    if (coinUsageGraphPlaying) coinUsageGraphPlaybackIndex = Math.max(0, coinUsageGraphData.length - 1);
+    localStorage.setItem('airplane_game_coin_usage_graph', JSON.stringify(coinUsageGraphData));
+    updateCoinUsageGraphControls();
+  }
+}
+function loadCoinUsageGraph() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('airplane_game_coin_usage_graph') || '[]');
+    coinUsageGraphData = Array.isArray(raw) ? raw.filter(p => p && Number.isFinite(Number(p.time)) && Number.isFinite(Number(p.cost))).map(p => ({time:Number(p.time),cost:Number(p.cost)})).slice(-3600) : [];
+  } catch(e) { coinUsageGraphData = []; }
+  coinUsageGraphPlaybackIndex = Math.max(0, coinUsageGraphData.length - 1);
+}
+function updateCoinUsageGraphControls() {
+  const seek=document.getElementById('coinUsageGraphSeek');
+  const status=document.getElementById('coinUsageGraphStatus');
+  const max=Math.max(0,coinUsageGraphData.length-1);
+  if(seek){seek.max=String(max);if(coinUsageGraphPlaying)seek.value=String(max);}
+  if(status)status.textContent=`${Math.min(coinUsageGraphPlaybackIndex+1,coinUsageGraphData.length)} / ${coinUsageGraphData.length}`;
+}
+function seekCoinUsageGraph(value){
+  coinUsageGraphPlaybackIndex=Math.max(0,Math.min(Number(value)||0,coinUsageGraphData.length-1));
+  coinUsageGraphPlaying=false;
+  updateCoinUsageGraphControls();
+  drawCoinUsageGraph();
+}
+function playCoinUsageGraph(){
+  coinUsageGraphPlaying=true;
+  if(coinUsageGraphPlaybackIndex>=coinUsageGraphData.length-1) coinUsageGraphPlaybackIndex=0;
+  animateCoinUsageGraph();
+}
+function pauseCoinUsageGraph(){ coinUsageGraphPlaying=false; if(coinUsageGraphAnimationId)cancelAnimationFrame(coinUsageGraphAnimationId); coinUsageGraphAnimationId=null; drawCoinUsageGraph(); }
+function resumeCoinUsageGraph(){ coinUsageGraphPlaying=true; animateCoinUsageGraph(); }
+function animateCoinUsageGraph(){
+  if(!coinUsageGraphPlaying){drawCoinUsageGraph();return;}
+  drawCoinUsageGraph();
+  if(coinUsageGraphPlaybackIndex < coinUsageGraphData.length-1){
+    coinUsageGraphPlaybackIndex++;
+    coinUsageGraphAnimationId=requestAnimationFrame(()=>setTimeout(animateCoinUsageGraph,30));
+  } else coinUsageGraphAnimationId=null;
+}
+function drawCoinUsageGraph(){
+  const c=document.getElementById('coinUsageGraphCanvas'); if(!c)return;
+  const dpr=window.devicePixelRatio||1, cssW=c.clientWidth||900, cssH=320;
+  if(c.width!==Math.floor(cssW*dpr)||c.height!==Math.floor(cssH*dpr)){c.width=Math.floor(cssW*dpr);c.height=Math.floor(cssH*dpr);}
+  const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,cssW,cssH);
+  const textColor=getComputedStyle(document.body).getPropertyValue('--text-color')||'#333';
+  g.fillStyle=textColor; g.font='bold 14px sans-serif'; g.fillText('myfinger消費量',16,22);
+  const left=48,top=36,right=16,bottom=34,w=Math.max(10,cssW-left-right),h=Math.max(10,cssH-top-bottom);
+  g.strokeStyle='rgba(120,120,120,.35)';g.lineWidth=1;
+  for(let i=0;i<5;i++){const y=top+h*i/4;g.beginPath();g.moveTo(left,y);g.lineTo(left+w,y);g.stroke();}
+  if(!coinUsageGraphData.length){g.fillStyle=textColor;g.fillText('ゲームを開始するとリアルタイムで線が描かれます',left+10,top+h/2);updateCoinUsageGraphControls();return;}
+  const end=Math.min(coinUsageGraphPlaybackIndex,coinUsageGraphData.length-1), start=Math.max(0,end-599), pts=coinUsageGraphData.slice(start,end+1);
+  const maxCost=Math.max(1,...pts.map(p=>p.cost));
+  g.fillStyle=textColor;g.font='12px sans-serif';g.fillText(String(Math.round(maxCost)),4,top+4);g.fillText('0',20,top+h);
+  if(pts.length<2){g.fillText(formatCoinAmount(pts[0].cost)+' myfinger',left,top+h/2);updateCoinUsageGraphControls();return;}
+  g.strokeStyle='#ff4081';g.lineWidth=2;g.beginPath();
+  pts.forEach((p,i)=>{const x=left+(i/(pts.length-1))*w,y=top+h-(p.cost/maxCost)*h;i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();
+  g.fillStyle=textColor;g.fillText(`現在: ${formatCoinAmount(pts[pts.length-1].cost)} myfinger`,left,cssH-10);
+  updateCoinUsageGraphControls();
+}
+function startCoinUsageGraphLoop(){
+  if(coinUsageGraphSampleTimer)clearInterval(coinUsageGraphSampleTimer);
+  coinUsageGraphSampleTimer=setInterval(()=>{updateGameCostDisplay();drawCoinUsageGraph();},250);
 }
 function addCoinHistory(action, amount, balance) {
   memoryStore.coinHistory.unshift({ id: Date.now() + Math.random(), date: new Date().toLocaleString('sv-SE').replace('T',' '), action, amount, balance });
@@ -1836,6 +1932,24 @@ function useMyFinger() {
   memoryStore.coins -= cost;
   addCoinHistory(t('item_my_finger'), -cost, memoryStore.coins);
   flyCoinToSky();
+  saveCoinState();
+}
+let coinResetStep = 0;
+function startCoinBalanceResetProcess(){ coinResetStep=1; showCoinBalanceResetModal(); }
+function showCoinBalanceResetModal(){
+  const modal=document.getElementById('genericModal');
+  document.getElementById('modalTitle').textContent=`⚠️ myfinger残高リセットの確認 (${coinResetStep}/5)`;
+  document.getElementById('modalBody').innerHTML='myfingerの残高を初期値10,000に戻しますか？<br>この操作は残高だけをリセットします。<br><strong>YES? or NO</strong>';
+  document.getElementById('modalDefaultCloseBtn').style.display='none';
+  document.getElementById('modalActionArea').innerHTML='<div style="display:flex;justify-content:center;gap:15px;margin-top:15px;"><button class="btn btn-danger" onclick="handleCoinBalanceResetAnswer(true)">YES</button><button class="btn btn-secondary" onclick="handleCoinBalanceResetAnswer(false)">NO</button></div>';
+  modal.style.display='flex';
+}
+function handleCoinBalanceResetAnswer(isYes){
+  if(!isYes){closeModal();document.getElementById('modalDefaultCloseBtn').style.display='inline-block';coinResetStep=0;return;}
+  if(coinResetStep<5){coinResetStep++;showCoinBalanceResetModal();return;}
+  closeModal();document.getElementById('modalDefaultCloseBtn').style.display='inline-block';coinResetStep=0;
+  memoryStore.coins=10000;
+  addCoinHistory(t('coin_reset_balance'),0,memoryStore.coins);
   saveCoinState();
 }
 function addCoinBalance() {
@@ -2571,6 +2685,11 @@ let isGameRunning = false;
 let gameTimer = null;
 let gameSessionStartedAt = 0;
 let timeLeft = 60;
+let coinUsageGraphData = [];
+let coinUsageGraphPlaying = true;
+let coinUsageGraphPlaybackIndex = 0;
+let coinUsageGraphAnimationId = null;
+let coinUsageGraphSampleTimer = null;
 let currentScore = 0;
 let stars = [];
 let lastFrameTime = 0;
@@ -2682,7 +2801,8 @@ function getTimeLimit() {
 }
 
 function getGameSpeed() {
-  return parseFloat(document.getElementById('cfgGameSpeed')?.value || '1.0');
+  const v=parseFloat(document.getElementById('cfgGameSpeed')?.value || '1.0');
+  return Number.isFinite(v) && v > 0 ? v : 1.0;
 }
 
 function getJumpForce() {
@@ -2823,6 +2943,7 @@ let blocks3D = [];
 let blockSlowUntil = 0;       // 🧊 スロー
 let milkDropUntil = 0;        // 🧀 牛乳12秒
 let yumekawaUntil = 0;        // 🦄 ゆめかわ8秒
+let funnyBlockUntil = 0;      // 😂 5秒間全ブロックを😂化
 let milkParticles = [];
 
 function initBlockGame() {
@@ -2863,6 +2984,7 @@ function updateBlockGame() {
     else if (rand < 0.25) { specialType = 'rainbow'; icon = '🌈'; }
     else if (rand < 0.30) { specialType = 'cheese'; icon = '🧀'; }
     else if (rand < 0.35) { specialType = 'unicorn'; icon = '🦄'; }
+    else if (rand < 0.40) { specialType = 'funny'; icon = '😂'; }
 
     blocks3D.push({
       x: Math.random() * (w - 60) + 20,
@@ -2948,12 +3070,13 @@ function renderBlockGame() {
     }
 
     // 特殊ブロックの絵文字アイコン表示
-    if (b.icon) {
+    const displayIcon = now < funnyBlockUntil ? '😂' : b.icon;
+    if (displayIcon) {
       ctx.rotate(-b.rot);
       ctx.font = '22px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(b.icon, 0, 0);
+      ctx.fillText(displayIcon, 0, 0);
     }
     ctx.restore();
   }
@@ -3417,11 +3540,8 @@ function stopGame() {
   isGameRunning = false;
   if (gameTimer) clearInterval(gameTimer);
   if (gameSessionStartedAt > 0) {
-    const elapsedMs = Math.max(0, Date.now() - gameSessionStartedAt);
-    const totalWholeSeconds = Math.floor(elapsedMs / 1000);
-    const fullMinutes = Math.floor(totalWholeSeconds / 60);
-    const remainingSeconds = totalWholeSeconds % 60;
-    const gameCost = Math.floor(fullMinutes * 2000 + remainingSeconds * 0.6);
+    const gameCost = getCurrentGameCost();
+    updateCoinUsageGraphLive(gameCost);
     if (gameCost > 0) {
       memoryStore.coins -= gameCost;
       addCoinHistory(t('coin_game_time_cost'), -gameCost, memoryStore.coins);
@@ -3478,6 +3598,12 @@ function drawFrame() {
   else if (currentGame === 'blackboard') renderBlackboardGame();
   else if (currentGame === 'flag') renderFlagGame();
   else if (currentGame === 'vs') renderVsGame();
+  const liveCost = getCurrentGameCost();
+  ctx.fillStyle = 'rgba(0,0,0,0.68)';
+  ctx.fillRect(10, h - 38, Math.min(260, w - 20), 28);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`💸 myfinger消費: ${formatCoinAmount(liveCost)}`, 18, h - 19);
   ctx.restore();
 }
 
@@ -3562,6 +3688,10 @@ function handleCanvasPointer(e) {
           // 🦄 ユニコーン：8秒間ゆめかわ色に変身
           yumekawaUntil = Date.now() + 8000;
           currentScore += 30;
+        } else if (type === 'funny') {
+          // 😂 5秒間すべてのブロックを😂に変身
+          funnyBlockUntil = Date.now() + 5000;
+          currentScore += 35;
         } else {
           currentScore += 10;
         }
@@ -3842,6 +3972,21 @@ function updateSiteTimeElapsed() {
   if (el) el.textContent = str;
 }
 setInterval(updateSiteTimeElapsed, 50);
+
+async function recordCoinUsageGraphVideo(){
+  const c=document.getElementById('coinUsageGraphCanvas');
+  if(!c || !coinUsageGraphData.length){showModal('myfingerグラフ','録画できるグラフデータがありません。');return;}
+  const stream=c.captureStream(30);
+  const mimeCandidates=['video/mp4;codecs=h264','video/mp4','video/webm;codecs=vp9','video/webm'];
+  const mime=mimeCandidates.find(x=>MediaRecorder.isTypeSupported?.(x));
+  if(!mime){showModal('録画','このブラウザはCanvas動画録画に対応していません。');return;}
+  const recorder=new MediaRecorder(stream,{mimeType:mime}),chunks=[];
+  recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+  recorder.onstop=()=>{const isMp4=mime.startsWith('video/mp4');downloadBlob(new Blob(chunks,{type:mime}),isMp4?'myfinger-consumption.mp4':'myfinger-consumption.webm');showModal('録画完了',isMp4?'myfinger-consumption.mp4 を保存しました。':'このブラウザではMP4録画に対応していないためWebMで保存しました。');};
+  coinUsageGraphPlaying=true;coinUsageGraphPlaybackIndex=0;recorder.start();
+  const step=()=>{drawCoinUsageGraph();if(coinUsageGraphPlaybackIndex<coinUsageGraphData.length-1){coinUsageGraphPlaybackIndex++;setTimeout(step,33);}else recorder.stop();};
+  step();
+}
 
 async function recordAndDownloadKaisetuVideo() {
   const recCanvas = document.createElement('canvas');
@@ -5105,7 +5250,10 @@ window.addEventListener('load', async () => {
   const savedLang = (config && config.lang) ? config.lang : (localStorage.getItem('airplane_game_lang') || 'ja');
   changeLanguage(savedLang);
   if (memoryStore.customSiteTitle) document.title = memoryStore.customSiteTitle;
+  loadCoinUsageGraph();
   updateCoinDisplays();
+  startCoinUsageGraphLoop();
+  drawCoinUsageGraph();
   runCoinAutoGrants();
   setInterval(runCoinAutoGrants, 30000);
   renderCoinHistoryTable();
