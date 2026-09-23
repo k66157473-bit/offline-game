@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -1346,7 +1345,11 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       <div style="margin-top:8px; letter-spacing:3px;">SIMULATED 3D CARD</div>
       <div class="card-balance" id="coinCardVisualBalance">2,800,000,000</div>
     </div>
-    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;">
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; align-items:center;">
+      <label style="display:flex; gap:6px; align-items:center; font-weight:bold;">
+        <span data-i18n="coin_balance_add_amount">クレカ残高の追加金額</span>:
+        <input type="number" id="coinBalanceAddAmount" min="0" step="1" value="800000" style="width:120px;" oninput="saveCoinBalanceAddAmount()">
+      </label>
       <button class="btn" onclick="addCoinBalance()" data-i18n="coin_add_balance">残高追加</button>
       <button class="btn btn-secondary" onclick="addCreditCardBalance()" data-i18n="coin_add_card">クレカ残高を増やす</button>
     </div>
@@ -1417,6 +1420,8 @@ const I18N_DICTIONARY = {
   tab_coin: { ja: "コイン", en: "Coins", hira: "こいん", ko: "코인", zh: "金币", ar: "العملات", eo: "Moneroj" },
   coin_title: { ja: "🪙 コイン", en: "🪙 Coins", hira: "🪙 こいん", ko: "🪙 코인", zh: "🪙 金币", ar: "🪙 العملات", eo: "🪙 Moneroj" },
   coin_add_balance: { ja: "残高追加", en: "Add Balance", hira: "ざんだか ついか", ko: "잔액 추가", zh: "增加余额", ar: "إضافة الرصيد", eo: "Aldoni Saldo" },
+  coin_balance_add_amount: { ja: "クレカ残高の追加金額", en: "Credit-card balance addition amount", hira: "くれか ざんだかの ついか きんがく", ko: "카드 잔액 추가 금액", zh: "信用卡余额增加金额", ar: "مبلغ إضافة رصيد البطاقة", eo: "Kvanto de aldono al kartsaldo" },
+  coin_game_time_cost: { ja: "ゲームプレイ料金", en: "Game play cost", hira: "げーむ ぷれい りょうきん", ko: "게임 플레이 요금", zh: "游戏游玩费用", ar: "تكلفة اللعب", eo: "Ludkosto" },
   coin_add_card: { ja: "クレカ残高を増やす", en: "Increase Card Balance", hira: "くれか ざんだかを ふやす", ko: "카드 잔액 늘리기", zh: "增加信用卡余额", ar: "زيادة رصيد البطاقة", eo: "Pliigi Kartan Saldon" },
   coin_item_title: { ja: "アイテム購入", en: "Item Purchase", hira: "あいてむ こうにゅう", ko: "아이템 구매", zh: "购买物品", ar: "شراء العناصر", eo: "Aĉeto de Eroj" },
   coin_title_item: { ja: "サイトタイトル変更", en: "Change Site Title", hira: "さいとたいとる へんこう", ko: "사이트 제목 변경", zh: "更改网站标题", ar: "تغيير عنوان الموقع", eo: "Ŝanĝi Titolo de Retejo" },
@@ -1597,6 +1602,7 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+{ pinned: false, date: '2026/09/23 17:50', desc: { ja: 'コイン機能を修正：クレカ残高から追加するコイン残高の追加金額を設定可能にし、通常値を800,000コインにしました。また、ゲームをプレイした時間に応じて1分ごとに2,000コイン、1分未満の残り時間は1秒あたり0.6コインで計算し、小数点以下を切り捨てて自動消費するようにしました', en: 'Updated the coin system: the amount added from the credit-card balance is now configurable, with a default of 800,000 coins. Game play now automatically consumes 2,000 coins per minute, with under-one-minute time charged at 0.6 coins per second and fractional coins truncated', hira: 'こいんきのうを しゅうせい：くれか ざんだから ついかする こいんざんだかの ついかきんがくを せってい かのうにし、つうじょうちを 800,000こいんにしました。また、げーむを ぷれいした じかんに おうじて 1ぷんごとに 2,000こいん、1ぷんみまんの のこりじかんは 1びょうあたり 0.6こいんで けいさんし、しょうすうてんいかを きりすてて じどうしょうひするようにしました', ko: '코인 기능 수정: 신용카드 잔액에서 추가되는 코인 금액을 설정할 수 있게 하고 기본값을 800,000코인으로 변경했습니다. 또한 게임 플레이 시간에 따라 1분마다 2,000코인을 자동 소비하고, 1분 미만의 남은 시간은 초당 0.6코인으로 계산한 뒤 소수점 이하를 버리도록 했습니다', zh: '更新金币功能：现在可以设置从信用卡余额追加的金币数量，默认值为800,000金币。游戏游玩时间每1分钟自动消耗2,000金币，不满1分钟的剩余时间按每秒0.6金币计算，并舍去小数部分', ar: 'تم تحديث نظام العملات: أصبح من الممكن ضبط مقدار العملات المضافة من رصيد البطاقة، والقيمة الافتراضية 800000 عملة. كما يتم استهلاك 2000 عملة لكل دقيقة لعب، ويُحسب الوقت المتبقي الأقل من دقيقة بمقدار 0.6 عملة لكل ثانية مع حذف الجزء العشري', eo: 'Ĝisdatigis la monersistemon: la kvanto aldonata el la kartsaldo estas agordebla, kun defaŭlto de 800 000 moneroj. Dum ludado 2 000 moneroj estas aŭtomate konsumataj por ĉiu minuto, kaj la resto sub unu minuto estas kalkulata je 0,6 monero por sekundo kun forigo de la frakcia parto' } },
 { pinned: false, date: '2026/09/23 10:48', desc: { ja: '今回の8件の不具合を修正：設定保存時にゲーム内データを意図せず変更する問題、更新履歴のピン留め情報の保存・復元不一致、同じバックアップファイルを再選択できない問題、IndexedDBを復元時に消去・破損させる問題、IndexedDB復元の完了を待たない問題、.itsmeバックアップの保存データ不足、ファイル読み込み・復元エラー処理不足、プロフィール等の二重保存による不整合を修正しました', en: 'Fixed 8 bugs: unintended game-data changes during settings save, update-history pin save/restore mismatch, inability to reselect the same backup file, IndexedDB clearing or corruption during restore, restore transactions not being awaited, incomplete .itsme backup data, insufficient file/restore error handling, and inconsistencies caused by duplicate profile/config saves', hira: 'こんかいの8けんの ふぐあいを しゅうせい：せっていほぞんじに げーむないでーたを いとせず へんこうするもんだい、こうしんりれきの ぴんどめじょうほうの ほぞん・ふくげんふいっち、おなじ ばっくあっぷふぁいるを さいせんたくできないもんだい、IndexedDBを ふくげんじに しょうきょ・はそんさせるもんだい、IndexedDBふくげんの かんりょうを またないもんだい、.itsmeばっくあっぷの ほぞんでーたぶそく、ふぁいるよみこみ・ふくげんえらーしょりぶそく、ぷろふぃーるなどの にじゅうほぞんによる ふせいごうを しゅうせいしました', ko: '이번 8건의 버그 수정: 설정 저장 중 게임 데이터가 의도하지 않게 변경되는 문제, 업데이트 기록의 고정 정보 저장·복원 불일치, 같은 백업 파일을 다시 선택할 수 없는 문제, 복원 중 IndexedDB가 삭제되거나 손상되는 문제, IndexedDB 복원이 완료되기 전에 다음 처리가 진행되는 문제, .itsme 백업 데이터 부족, 파일 읽기·복원 오류 처리 부족, 프로필 등의 중복 저장으로 인한 불일치를 수정했습니다', zh: '修复本次8项问题：设置保存时意外修改游戏数据、更新记录置顶信息保存与恢复不一致、无法重新选择相同备份文件、恢复时清空或损坏IndexedDB、未等待IndexedDB恢复事务完成、.itsme备份数据不足、文件读取与恢复错误处理不足，以及个人资料等重复保存导致的数据不一致', ar: 'تم إصلاح 8 مشكلات: تغيير بيانات اللعبة دون قصد عند حفظ الإعدادات، وعدم تطابق حفظ واستعادة تثبيت سجل التحديثات، وعدم إمكانية اختيار ملف النسخ الاحتياطي نفسه مرة أخرى، ومسح أو إتلاف IndexedDB أثناء الاستعادة، وعدم انتظار اكتمال معاملة IndexedDB، ونقص بيانات النسخ الاحتياطي .itsme، وضعف معالجة أخطاء قراءة واستعادة الملفات، وعدم الاتساق الناتج عن الحفظ المكرر للملف الشخصي والإعدادات', eo: 'Korektis 8 problemojn: neintencan ŝanĝon de luddatumoj dum konservado de agordoj, malkongruon de konservado kaj restaŭrado de fiksitaj ĝisdatigaj registroj, neeblon reelekti la saman sekurkopian dosieron, forigon aŭ damaĝon de IndexedDB dum restaŭrado, neatendon de la kompletigo de IndexedDB-transakcioj, mankantajn datumojn en .itsme-sekurkopioj, nesufiĉan erartraktadon por dosierlegado kaj restaŭrado, kaj malkongruojn pro duobla konservado de profilo kaj agordoj' } },
 { pinned: false, date: '2026/09/22 20:33', desc: { ja: 'マスター音量・スコア保存ページネーション・100の質問・設定整理・30アクションプリセットを追加', en: 'Added master-volume mute behavior, paginated score exports, 100 questions, organized game settings, and 30 action presets', hira: 'ますたーおんりょう・すこあほぞんぺーじねーしょん・100のしつもん・せっていせいり・30あくしょんぷりせっとを ついか', ko: '마스터 볼륨 음소거 동작, 점수 저장 페이지네이션, 100개의 질문, 게임 설정 정리 및 30개 액션 프리셋 추가', zh: '新增主音量静音行为、得分分页导出、100个问题、游戏设置整理及30个动作预设', ar: 'إضافة سلوك كتم الصوت الرئيسي وتصدير النتائج مع الصفحات و100 سؤال وتنظيم إعدادات الألعاب و30 إجراءً مسبقًا', eo: 'Aldonis silentigan konduton, paĝigitajn poentarajn elportojn, 100 demandojn, organizitajn ludajn agordojn kaj 30 ago-prezeteojn' } },
 { pinned: false, date: '2026/09/21 02:22', desc: { ja: 'コインシステム・使用履歴・疑似決済・タイトル変更を追加', en: 'Added the coin system, usage history, simulated payment, and title customization', hira: 'こいんしすてむ・しようりれき・ぎじけっさい・たいとるへんこうを ついか', ko: '코인 시스템, 사용 기록, 모의 결제 및 제목 변경 기능 추가', zh: '新增金币系统、使用记录、模拟支付和标题自定义', ar: 'إضافة نظام العملات وسجل الاستخدام والدفع التجريبي وتخصيص العنوان', eo: 'Aldonis moneran sistemon, uzhistorion, simulitan pagon kaj titolan agordon' } },
@@ -1763,7 +1769,8 @@ function saveAllConfig() {
     flagRegion: document.getElementById('cfgFlagRegion').value,
     flightHours: document.getElementById('cfgFlightHours').value,
     flightMinutes: document.getElementById('cfgFlightMinutes').value,
-    timezoneDiff: document.getElementById('cfgTimezoneDiff').value
+    timezoneDiff: document.getElementById('cfgTimezoneDiff').value,
+    coinBalanceAddAmount: getCoinBalanceAddAmount()
   };
 
   localStorage.setItem('airplane_game_config', JSON.stringify(config));
@@ -1782,6 +1789,16 @@ function saveAllConfig() {
   localStorage.setItem('airplane_game_pinned_ids', JSON.stringify(pinnedIds));
 }
 
+function getCoinBalanceAddAmount() {
+  const el = document.getElementById('coinBalanceAddAmount');
+  const value = el ? Number(el.value) : NaN;
+  return Number.isFinite(value) && value >= 0 ? Math.floor(value) : 800000;
+}
+function saveCoinBalanceAddAmount() {
+  const el = document.getElementById('coinBalanceAddAmount');
+  if (el) el.value = String(getCoinBalanceAddAmount());
+  saveAllConfig();
+}
 function formatCoinAmount(n) { return Number(n || 0).toLocaleString('ja-JP'); }
 function updateCoinDisplays() {
   const coin = formatCoinAmount(memoryStore.coins);
@@ -1822,7 +1839,7 @@ function useMyFinger() {
   saveCoinState();
 }
 function addCoinBalance() {
-  const add = 8000000;
+  const add = getCoinBalanceAddAmount();
   const fee = 28000000;
   if (memoryStore.creditCardBalance < fee) { showModal(t('coin_title'), t('coin_card_insufficient')); return; }
   memoryStore.creditCardBalance -= fee;
@@ -2552,6 +2569,7 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let isGameRunning = false;
 let gameTimer = null;
+let gameSessionStartedAt = 0;
 let timeLeft = 60;
 let currentScore = 0;
 let stars = [];
@@ -3363,6 +3381,7 @@ function toggleCurrentGame() {
 
 function startGame() {
   isGameRunning = true;
+  gameSessionStartedAt = Date.now();
   document.getElementById('gameActionBtn').textContent = t('btn_stop');
   document.getElementById('gameActionBtn').classList.add('btn-secondary');
 
@@ -3397,6 +3416,21 @@ function startGame() {
 function stopGame() {
   isGameRunning = false;
   if (gameTimer) clearInterval(gameTimer);
+  if (gameSessionStartedAt > 0) {
+    const elapsedMs = Math.max(0, Date.now() - gameSessionStartedAt);
+    const totalWholeSeconds = Math.floor(elapsedMs / 1000);
+    const fullMinutes = Math.floor(totalWholeSeconds / 60);
+    const remainingSeconds = totalWholeSeconds % 60;
+    const gameCost = Math.floor(fullMinutes * 2000 + remainingSeconds * 0.6);
+    if (gameCost > 0) {
+      memoryStore.coins -= gameCost;
+      addCoinHistory(t('coin_game_time_cost'), -gameCost, memoryStore.coins);
+      updateCoinDisplays();
+      saveAllConfig();
+      renderCoinHistoryTable();
+    }
+    gameSessionStartedAt = 0;
+  }
   document.getElementById('gameActionBtn').textContent = t('btn_start');
   document.getElementById('gameActionBtn').classList.remove('btn-secondary');
   document.getElementById('flagQuizOverlay').style.display = 'none';
@@ -4756,7 +4790,7 @@ async function buildCompleteBackupPayload(){
   const fullBackupData={
     activeTab:currentActiveTab,selectedGame:currentGame,
     scores:memoryStore.scores,coins:memoryStore.coins,coinBankBalance:memoryStore.coinBankBalance,creditCardBalance:memoryStore.creditCardBalance,coinHistory:memoryStore.coinHistory,customSiteTitle:memoryStore.customSiteTitle,myProfile:memoryStore.myProfile,shortcuts:shortcutData,customQuestions:customQuestions,language:currentLang,
-    config:{gameEnabled:document.getElementById('cfgGameEnabled')?.checked,saveScore:document.getElementById('cfgSaveScore')?.checked,useIndexedDB:document.getElementById('cfgUseIndexedDB')?.checked,mouseStalkerType:document.getElementById('cfgMouseStalkerType')?.value,stalkerCustomText:document.getElementById('cfgStalkerCustomText')?.value,stalkerImageData:localStorage.getItem('airplane_game_stalker_img')||'',gcSimulation:document.getElementById('cfgGcSimulation')?.checked,bgColor:document.getElementById('cfgBgColor')?.value,bgColorText:document.getElementById('cfgBgColorText')?.value,textColor:document.getElementById('cfgTextColor')?.value,textColorText:document.getElementById('cfgTextColorText')?.value,fontFamily:document.getElementById('cfgFontFamily')?.value,fontSizeNum:document.getElementById('cfgFontSizeNum')?.value,fontSizeUnit:document.getElementById('cfgFontSizeUnit')?.value,showSearchGame:document.getElementById('cfgShowSearchGame')?.checked,showSearchOther:document.getElementById('cfgShowSearchOther')?.checked,showHeader:document.getElementById('cfgShowHeader')?.checked,colorTheme:document.getElementById('cfgColorTheme')?.value,stickMaxHeight:document.getElementById('stickMaxHeight')?.value,stickMaxPillars:document.getElementById('stickMaxPillars')?.value,nightFlight:document.getElementById('cfgNightFlight')?.checked,reducedMotion:document.getElementById('cfgReducedMotion')?.checked,batterySaver:document.getElementById('cfgBatterySaver')?.checked,masterVolume:document.getElementById('cfgMasterVolume')?.value,muteAudio:document.getElementById('cfgMuteAudio')?.checked,dpadPosition:document.getElementById('cfgDpadPosition')?.value,dpadSize:document.getElementById('cfgDpadSize')?.value,dpadOpacity:document.getElementById('cfgDpadOpacity')?.value,vibrate:document.getElementById('cfgVibrate')?.checked,gameSpeed:document.getElementById('cfgGameSpeed')?.value,invincible:document.getElementById('cfgInvincible')?.checked,konjacMaterial:document.getElementById('cfgKonjacMaterial')?.value,konjacKnife:document.getElementById('cfgKonjacKnife')?.value,flagRegion:document.getElementById('cfgFlagRegion')?.value,flightHours:document.getElementById('cfgFlightHours')?.value,flightMinutes:document.getElementById('cfgFlightMinutes')?.value,timezoneDiff:document.getElementById('cfgTimezoneDiff')?.value},
+    config:{gameEnabled:document.getElementById('cfgGameEnabled')?.checked,saveScore:document.getElementById('cfgSaveScore')?.checked,useIndexedDB:document.getElementById('cfgUseIndexedDB')?.checked,mouseStalkerType:document.getElementById('cfgMouseStalkerType')?.value,stalkerCustomText:document.getElementById('cfgStalkerCustomText')?.value,stalkerImageData:localStorage.getItem('airplane_game_stalker_img')||'',gcSimulation:document.getElementById('cfgGcSimulation')?.checked,bgColor:document.getElementById('cfgBgColor')?.value,bgColorText:document.getElementById('cfgBgColorText')?.value,textColor:document.getElementById('cfgTextColor')?.value,textColorText:document.getElementById('cfgTextColorText')?.value,fontFamily:document.getElementById('cfgFontFamily')?.value,fontSizeNum:document.getElementById('cfgFontSizeNum')?.value,fontSizeUnit:document.getElementById('cfgFontSizeUnit')?.value,showSearchGame:document.getElementById('cfgShowSearchGame')?.checked,showSearchOther:document.getElementById('cfgShowSearchOther')?.checked,showHeader:document.getElementById('cfgShowHeader')?.checked,colorTheme:document.getElementById('cfgColorTheme')?.value,stickMaxHeight:document.getElementById('stickMaxHeight')?.value,stickMaxPillars:document.getElementById('stickMaxPillars')?.value,nightFlight:document.getElementById('cfgNightFlight')?.checked,reducedMotion:document.getElementById('cfgReducedMotion')?.checked,batterySaver:document.getElementById('cfgBatterySaver')?.checked,masterVolume:document.getElementById('cfgMasterVolume')?.value,muteAudio:document.getElementById('cfgMuteAudio')?.checked,dpadPosition:document.getElementById('cfgDpadPosition')?.value,dpadSize:document.getElementById('cfgDpadSize')?.value,dpadOpacity:document.getElementById('cfgDpadOpacity')?.value,vibrate:document.getElementById('cfgVibrate')?.checked,gameSpeed:document.getElementById('cfgGameSpeed')?.value,invincible:document.getElementById('cfgInvincible')?.checked,konjacMaterial:document.getElementById('cfgKonjacMaterial')?.value,konjacKnife:document.getElementById('cfgKonjacKnife')?.value,flagRegion:document.getElementById('cfgFlagRegion')?.value,flightHours:document.getElementById('cfgFlightHours')?.value,flightMinutes:document.getElementById('cfgFlightMinutes')?.value,timezoneDiff:document.getElementById('cfgTimezoneDiff')?.value,coinBalanceAddAmount:getCoinBalanceAddAmount()},
     storage:{localStorage:storageLocal,sessionStorage:storageSession},
     formState:snapshotFormState(),
     uiState:{scrollX:window.scrollX,scrollY:window.scrollY},
@@ -4898,7 +4932,7 @@ async function handleRestoreFile(e){
       if(restored.config){
         const c=restored.config;
         const set=(id,v,prop='value')=>{const el=document.getElementById(id);if(el&&v!==undefined)el[prop]=v;};
-        set('cfgGameEnabled',c.gameEnabled,'checked');set('cfgSaveScore',c.saveScore,'checked');set('cfgUseIndexedDB',c.useIndexedDB,'checked');set('cfgMouseStalkerType',c.mouseStalkerType);set('cfgStalkerCustomText',c.stalkerCustomText);set('cfgGcSimulation',c.gcSimulation,'checked');set('cfgBgColor',c.bgColor);set('cfgBgColorText',c.bgColorText);set('cfgTextColor',c.textColor);set('cfgTextColorText',c.textColorText);set('cfgFontFamily',c.fontFamily);set('cfgFontSizeNum',c.fontSizeNum);set('cfgFontSizeUnit',c.fontSizeUnit);set('cfgShowSearchGame',c.showSearchGame,'checked');set('cfgShowSearchOther',c.showSearchOther,'checked');set('cfgShowHeader',c.showHeader,'checked');set('cfgColorTheme',c.colorTheme);set('stickMaxHeight',c.stickMaxHeight);set('stickMaxPillars',c.stickMaxPillars);set('cfgJumpForce',c.jumpForce);set('cfgNightFlight',c.nightFlight,'checked');set('cfgReducedMotion',c.reducedMotion,'checked');set('cfgBatterySaver',c.batterySaver,'checked');set('cfgMasterVolume',c.masterVolume);set('cfgMuteAudio',c.muteAudio,'checked');set('cfgDpadPosition',c.dpadPosition);set('cfgDpadSize',c.dpadSize);set('cfgDpadOpacity',c.dpadOpacity);set('cfgVibrate',c.vibrate,'checked');set('cfgGameSpeed',c.gameSpeed);set('cfgInvincible',c.invincible,'checked');set('cfgKonjacMaterial',c.konjacMaterial);set('cfgKonjacKnife',c.konjacKnife);set('cfgFlagRegion',c.flagRegion);set('cfgFlightHours',c.flightHours);set('cfgFlightMinutes',c.flightMinutes);set('cfgTimezoneDiff',c.timezoneDiff);
+        set('cfgGameEnabled',c.gameEnabled,'checked');set('cfgSaveScore',c.saveScore,'checked');set('cfgUseIndexedDB',c.useIndexedDB,'checked');set('cfgMouseStalkerType',c.mouseStalkerType);set('cfgStalkerCustomText',c.stalkerCustomText);set('cfgGcSimulation',c.gcSimulation,'checked');set('cfgBgColor',c.bgColor);set('cfgBgColorText',c.bgColorText);set('cfgTextColor',c.textColor);set('cfgTextColorText',c.textColorText);set('cfgFontFamily',c.fontFamily);set('cfgFontSizeNum',c.fontSizeNum);set('cfgFontSizeUnit',c.fontSizeUnit);set('cfgShowSearchGame',c.showSearchGame,'checked');set('cfgShowSearchOther',c.showSearchOther,'checked');set('cfgShowHeader',c.showHeader,'checked');set('cfgColorTheme',c.colorTheme);set('stickMaxHeight',c.stickMaxHeight);set('stickMaxPillars',c.stickMaxPillars);set('cfgJumpForce',c.jumpForce);set('cfgNightFlight',c.nightFlight,'checked');set('cfgReducedMotion',c.reducedMotion,'checked');set('cfgBatterySaver',c.batterySaver,'checked');set('cfgMasterVolume',c.masterVolume);set('cfgMuteAudio',c.muteAudio,'checked');set('cfgDpadPosition',c.dpadPosition);set('cfgDpadSize',c.dpadSize);set('cfgDpadOpacity',c.dpadOpacity);set('cfgVibrate',c.vibrate,'checked');set('cfgGameSpeed',c.gameSpeed);set('cfgInvincible',c.invincible,'checked');set('cfgKonjacMaterial',c.konjacMaterial);set('cfgKonjacKnife',c.konjacKnife);set('cfgFlagRegion',c.flagRegion);set('cfgFlightHours',c.flightHours);set('cfgFlightMinutes',c.flightMinutes);set('cfgTimezoneDiff',c.timezoneDiff);set('coinBalanceAddAmount',c.coinBalanceAddAmount);
         if(c.stalkerImageData)localStorage.setItem('airplane_game_stalker_img',c.stalkerImageData);
       }
       restoreFormState(restored.formState);
@@ -5014,6 +5048,7 @@ window.addEventListener('load', async () => {
     if (config.flightHours) document.getElementById('cfgFlightHours').value = config.flightHours;
     if (config.flightMinutes) document.getElementById('cfgFlightMinutes').value = config.flightMinutes;
     if (config.timezoneDiff) document.getElementById('cfgTimezoneDiff').value = config.timezoneDiff;
+    if (config.coinBalanceAddAmount !== undefined) document.getElementById('coinBalanceAddAmount').value = Math.max(0, Math.floor(Number(config.coinBalanceAddAmount) || 800000));
   }
 
   if ('serviceWorker' in navigator) {
