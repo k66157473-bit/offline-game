@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -1596,6 +1597,7 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+{ pinned: false, date: '2026/09/23 10:48', desc: { ja: '今回の8件の不具合を修正：設定保存時にゲーム内データを意図せず変更する問題、更新履歴のピン留め情報の保存・復元不一致、同じバックアップファイルを再選択できない問題、IndexedDBを復元時に消去・破損させる問題、IndexedDB復元の完了を待たない問題、.itsmeバックアップの保存データ不足、ファイル読み込み・復元エラー処理不足、プロフィール等の二重保存による不整合を修正しました', en: 'Fixed 8 bugs: unintended game-data changes during settings save, update-history pin save/restore mismatch, inability to reselect the same backup file, IndexedDB clearing or corruption during restore, restore transactions not being awaited, incomplete .itsme backup data, insufficient file/restore error handling, and inconsistencies caused by duplicate profile/config saves', hira: 'こんかいの8けんの ふぐあいを しゅうせい：せっていほぞんじに げーむないでーたを いとせず へんこうするもんだい、こうしんりれきの ぴんどめじょうほうの ほぞん・ふくげんふいっち、おなじ ばっくあっぷふぁいるを さいせんたくできないもんだい、IndexedDBを ふくげんじに しょうきょ・はそんさせるもんだい、IndexedDBふくげんの かんりょうを またないもんだい、.itsmeばっくあっぷの ほぞんでーたぶそく、ふぁいるよみこみ・ふくげんえらーしょりぶそく、ぷろふぃーるなどの にじゅうほぞんによる ふせいごうを しゅうせいしました', ko: '이번 8건의 버그 수정: 설정 저장 중 게임 데이터가 의도하지 않게 변경되는 문제, 업데이트 기록의 고정 정보 저장·복원 불일치, 같은 백업 파일을 다시 선택할 수 없는 문제, 복원 중 IndexedDB가 삭제되거나 손상되는 문제, IndexedDB 복원이 완료되기 전에 다음 처리가 진행되는 문제, .itsme 백업 데이터 부족, 파일 읽기·복원 오류 처리 부족, 프로필 등의 중복 저장으로 인한 불일치를 수정했습니다', zh: '修复本次8项问题：设置保存时意外修改游戏数据、更新记录置顶信息保存与恢复不一致、无法重新选择相同备份文件、恢复时清空或损坏IndexedDB、未等待IndexedDB恢复事务完成、.itsme备份数据不足、文件读取与恢复错误处理不足，以及个人资料等重复保存导致的数据不一致', ar: 'تم إصلاح 8 مشكلات: تغيير بيانات اللعبة دون قصد عند حفظ الإعدادات، وعدم تطابق حفظ واستعادة تثبيت سجل التحديثات، وعدم إمكانية اختيار ملف النسخ الاحتياطي نفسه مرة أخرى، ومسح أو إتلاف IndexedDB أثناء الاستعادة، وعدم انتظار اكتمال معاملة IndexedDB، ونقص بيانات النسخ الاحتياطي .itsme، وضعف معالجة أخطاء قراءة واستعادة الملفات، وعدم الاتساق الناتج عن الحفظ المكرر للملف الشخصي والإعدادات', eo: 'Korektis 8 problemojn: neintencan ŝanĝon de luddatumoj dum konservado de agordoj, malkongruon de konservado kaj restaŭrado de fiksitaj ĝisdatigaj registroj, neeblon reelekti la saman sekurkopian dosieron, forigon aŭ damaĝon de IndexedDB dum restaŭrado, neatendon de la kompletigo de IndexedDB-transakcioj, mankantajn datumojn en .itsme-sekurkopioj, nesufiĉan erartraktadon por dosierlegado kaj restaŭrado, kaj malkongruojn pro duobla konservado de profilo kaj agordoj' } },
 { pinned: false, date: '2026/09/22 20:33', desc: { ja: 'マスター音量・スコア保存ページネーション・100の質問・設定整理・30アクションプリセットを追加', en: 'Added master-volume mute behavior, paginated score exports, 100 questions, organized game settings, and 30 action presets', hira: 'ますたーおんりょう・すこあほぞんぺーじねーしょん・100のしつもん・せっていせいり・30あくしょんぷりせっとを ついか', ko: '마스터 볼륨 음소거 동작, 점수 저장 페이지네이션, 100개의 질문, 게임 설정 정리 및 30개 액션 프리셋 추가', zh: '新增主音量静音行为、得分分页导出、100个问题、游戏设置整理及30个动作预设', ar: 'إضافة سلوك كتم الصوت الرئيسي وتصدير النتائج مع الصفحات و100 سؤال وتنظيم إعدادات الألعاب و30 إجراءً مسبقًا', eo: 'Aldonis silentigan konduton, paĝigitajn poentarajn elportojn, 100 demandojn, organizitajn ludajn agordojn kaj 30 ago-prezeteojn' } },
 { pinned: false, date: '2026/09/21 02:22', desc: { ja: 'コインシステム・使用履歴・疑似決済・タイトル変更を追加', en: 'Added the coin system, usage history, simulated payment, and title customization', hira: 'こいんしすてむ・しようりれき・ぎじけっさい・たいとるへんこうを ついか', ko: '코인 시스템, 사용 기록, 모의 결제 및 제목 변경 기능 추가', zh: '新增金币系统、使用记录、模拟支付和标题自定义', ar: 'إضافة نظام العملات وسجل الاستخدام والدفع التجريبي وتخصيص العنوان', eo: 'Aldonis moneran sistemon, uzhistorion, simulitan pagon kaj titolan agordon' } },
 { pinned: false, date: '2026/09/21 12:37', desc: { ja: 'ゲームスコア記録表の検索・日付指定・並び順切替、多言語対応を強化', en: 'Enhanced score table search, date filtering, sorting, and multilingual support', hira: 'すこあきろくひょうの けんさく・ひづけしてい・ならびじゅんきりかえ と たげんごたいおうを きょうか', ko: '게임 점수표 검색, 날짜 필터, 정렬 및 다국어 지원 강화', zh: '增强得分记录表的搜索、日期筛选、排序及多语言支持', ar: 'تعزيز البحث وتصفية التاريخ والفرز ودعم اللغات المتعددة في جدول النتائج', eo: 'Plibonigis serĉon, datan filtradon, ordigon kaj plurlingvan subtenon en la poentotabelo' } },
@@ -1776,7 +1778,7 @@ function saveAllConfig() {
     customSiteTitle: memoryStore.customSiteTitle
   }));
 
-  const pinnedIds = KOUSHIN_DATA.filter(k => k.pinned).map(k => k.id);
+  const pinnedIds = KOUSHIN_DATA.filter(k => k.pinned).map(k => k.date);
   localStorage.setItem('airplane_game_pinned_ids', JSON.stringify(pinnedIds));
 }
 
@@ -1907,10 +1909,6 @@ function runCoinAutoGrants() {
 }
 let coinHistoryPage = 1;
 function saveConfig() {
-  if (document.getElementById('cfgGcSimulation').checked) {
-    if (blocks3D.length > 20) blocks3D.splice(0, 5);
-    if (konjacSlices.length > 50) konjacSlices.splice(0, 10);
-  }
   saveAllConfig();
 }
 
@@ -2125,8 +2123,8 @@ function loadScoresFromIndexedDB() {
         memoryStore.scores = (req.result || []).reverse();
         resolve(memoryStore.scores);
       };
-      req.onerror = () => resolve([]);
-    } catch (e) { resolve([]); }
+      req.onerror = () => { console.error('IndexedDBスコア読み込みエラー:', req.error); resolve([]); };
+    } catch (e) { console.error('IndexedDBスコア読み込みエラー:', e); resolve([]); }
   });
 }
 
@@ -3882,7 +3880,6 @@ function escapeHtml(str) {
 
 function saveMyProfile() {
   updateMyProfileLive();
-  saveAllConfig();
   showModal(t('btn_save'), 'Profile saved!');
 }
 
@@ -4726,7 +4723,7 @@ async function restoreIndexedDB(snapshot){
     }
   }
 
-  try{await initIndexedDB();await loadScoresFromIndexedDB();}catch(e){}
+  try{await initIndexedDB();await loadScoresFromIndexedDB();}catch(e){result.errors.push(`IndexedDB再初期化: ${e.message}`);}
   return result;
 }
 function snapshotFormState(){
@@ -4779,6 +4776,7 @@ async function exportDataFile(type){
 function validateBackupPayload(parsed){
   if(!parsed||parsed.app!=='AirplaneGames')throw new Error('不審なファイル形式または互換性のないデータです。');
   if(parsed.version&&parsed.version>CURRENT_DATA_VERSION)throw new Error(`バージョン(v${parsed.version})はまだリリースされていない番号です。`);
+  if(parsed.backupSchema!==undefined&&Number(parsed.backupSchema)>ITSMe_BACKUP_SCHEMA)throw new Error(`バックアップ形式(v${parsed.backupSchema})はこのサイトではまだ復元できません。`);
   const data=parsed.data||parsed;
   if(typeof data!=='object')throw new Error('バックアップのデータ本体がありません。');
   if(data.storage&&typeof data.storage!=='object')throw new Error('Storageデータが壊れています。');
@@ -4868,7 +4866,7 @@ async function handleRestoreFile(e){
             if(src.desc&&typeof src.desc==='object')k.desc=src.desc;
             k.pinned=!!src.pinned;
           });
-          try{localStorage.setItem('airplane_game_pinned_ids',JSON.stringify(KOUSHIN_DATA.filter(k=>k.pinned).map(k=>k.id)));}catch(err){report.errors.push('更新履歴ピン保存: '+err.message);}
+          try{localStorage.setItem('airplane_game_pinned_ids',JSON.stringify(KOUSHIN_DATA.filter(k=>k.pinned).map(k=>k.date)));}catch(err){report.errors.push('更新履歴ピン保存: '+err.message);}
           renderHistoryTable();
         }catch(err){report.errors.push('更新履歴: '+err.message);}
       }
@@ -4965,7 +4963,6 @@ window.addEventListener('beforeunload', () => {
   // リロード前の古いDOM状態で上書きしない。
   if (window.__itsmeRestoreReloadPending) return;
   if (typeof updateMyProfileLive === 'function') updateMyProfileLive();
-  if (typeof saveAllConfig === 'function') saveAllConfig();
 });
 
 /* ==========================================================================
@@ -5048,9 +5045,11 @@ window.addEventListener('load', async () => {
           try{
             const tx=dbInstance.transaction('scores','readwrite');
             const store=tx.objectStore('scores');
-            store.clear();
-            pendingScores.forEach(record=>{try{store.add(record);}catch(e){}});
-          }catch(e){}
+            pendingScores.forEach(record=>store.put(record));
+            await idbTxDone(tx);
+          }catch(e){
+            console.error('IndexedDBスコア復元エラー:', e);
+          }
         }
       }
       sessionStorage.removeItem('airplane_game_itsme_pending_scores');
