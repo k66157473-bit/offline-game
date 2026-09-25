@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -1513,6 +1514,83 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 </div>
 
 <script>
+/* =========================================================
+   Global fault-isolation layer
+   - A broken optional operation is logged and skipped.
+   - Other independent app features continue to run.
+   - Event callbacks are isolated individually.
+   ========================================================= */
+(function installGlobalFaultIsolation(){
+  const wrappedListeners = new WeakMap();
+  const toKey = (listener) => listener && (typeof listener === 'function' || typeof listener === 'object') ? listener : null;
+
+  window.__airplaneSafeRun = function(label, fn, fallback){
+    try {
+      return typeof fn === 'function' ? fn() : fallback;
+    } catch (error) {
+      console.warn('[AirplaneGames] skipped failed operation:', label, error);
+      return fallback;
+    }
+  };
+
+  window.__airplaneSafeAsync = async function(label, fn, fallback){
+    try {
+      return typeof fn === 'function' ? await fn() : fallback;
+    } catch (error) {
+      console.warn('[AirplaneGames] skipped failed async operation:', label, error);
+      return fallback;
+    }
+  };
+
+  window.__airplaneSafeAddEventListener = function(target, type, listener, options){
+    const key = toKey(listener);
+    if (!target || !key || typeof target.addEventListener !== 'function') {
+      console.warn('[AirplaneGames] skipped invalid event listener:', type);
+      return;
+    }
+    let map = wrappedListeners.get(target);
+    if (!map) { map = new WeakMap(); wrappedListeners.set(target, map); }
+    let wrapped = map.get(key);
+    if (!wrapped) {
+      wrapped = function safeEventCallback(...args){
+        try {
+          if (typeof key === 'function') return key.apply(this, args);
+          if (key && typeof key.handleEvent === 'function') return key.handleEvent.apply(key, args);
+        } catch (error) {
+          console.warn('[AirplaneGames] skipped failed event callback:', type, error);
+        }
+      };
+      map.set(key, wrapped);
+    }
+    EventTarget.prototype.addEventListener.call(target, type, wrapped, options);
+  };
+
+  window.__airplaneSafeRemoveEventListener = function(target, type, listener, options){
+    try {
+      const key = toKey(listener);
+      const map = target ? wrappedListeners.get(target) : null;
+      const wrapped = map && key ? map.get(key) : null;
+      EventTarget.prototype.removeEventListener.call(target, type, wrapped || listener, options);
+    } catch (error) {
+      console.warn('[AirplaneGames] skipped invalid event removal:', type, error);
+    }
+  };
+
+  window.addEventListener('error', function(event){
+    try {
+      console.warn('[AirplaneGames] runtime error isolated; failed operation was skipped:', event.error || event.message || event);
+    } catch (_) {}
+  });
+
+  window.addEventListener('unhandledrejection', function(event){
+    try {
+      console.warn('[AirplaneGames] async error isolated; failed operation was skipped:', event.reason || event);
+      if (event && typeof event.preventDefault === 'function') event.preventDefault();
+    } catch (_) {}
+  });
+
+  window.__airplaneFaultIsolationReady = true;
+})();
 /* ==========================================================================
    多言語辞書システム (7言語完全対応)
    ========================================================================== */
@@ -1999,24 +2077,40 @@ function getCoinUsageGameColor(gameKey) {
   return ({stick:'#2196f3',block:'#ff9800',konjac:'#4caf50',blackboard:'#9c27b0',flag:'#f44336',vs:'#00acc1'})[gameKey] || '#607d8b';
 }
 function updateCoinUsageGraphLive(cost) {
-  const now = Date.now();
-  const last = coinUsageGraphData[coinUsageGraphData.length - 1];
-  if (!last || now - last.time >= 250 || cost !== last.cost || last.sessionId !== gameSessionId) {
-    coinUsageGraphData.push({ time: now, cost, gameKey: gameSessionGame || currentGame, sessionId: gameSessionId || `legacy-${now}`, sessionDate: gameSessionDate || formatCoinUsageDate(now) });
-    if (coinUsageGraphData.length > 3600) coinUsageGraphData.shift();
-    if (coinUsageGraphPlaying) coinUsageGraphPlaybackIndex = Math.max(0, coinUsageGraphData.length - 1);
-    localStorage.setItem('airplane_game_coin_usage_graph', JSON.stringify(coinUsageGraphData));
-    updateCoinUsageGraphControls();
-    updateCoinUsageGraphMeta();
+  try {
+    const numericCost = Number(cost);
+    if (!Number.isFinite(numericCost) || numericCost < 0) {
+      console.warn('[myfingerグラフ] 不正な消費量のため、このサンプルだけ記録をスキップしました:', cost);
+      return;
+    }
+    const now = Date.now();
+    const last = coinUsageGraphData[coinUsageGraphData.length - 1];
+    if (!last || now - Number(last.time) >= 250 || numericCost !== Number(last.cost) || last.sessionId !== gameSessionId) {
+      coinUsageGraphData.push({ time: now, cost: numericCost, gameKey: gameSessionGame || currentGame, sessionId: gameSessionId || `legacy-${now}`, sessionDate: gameSessionDate || formatCoinUsageDate(now) });
+      if (coinUsageGraphData.length > 3600) coinUsageGraphData.shift();
+      if (coinUsageGraphPlaying) coinUsageGraphPlaybackIndex = Math.max(0, coinUsageGraphData.length - 1);
+      try { localStorage.setItem('airplane_game_coin_usage_graph', JSON.stringify(coinUsageGraphData)); }
+      catch(e) { console.warn('[myfingerグラフ] 保存だけ失敗しました。ゲーム処理は継続します:', e); }
+      try { updateCoinUsageGraphControls(); } catch(e) { console.warn('[myfingerグラフ] コントロール更新をスキップしました:', e); }
+      try { updateCoinUsageGraphMeta(); } catch(e) { console.warn('[myfingerグラフ] メタ情報更新をスキップしました:', e); }
+    }
+  } catch(e) {
+    console.warn('[myfingerグラフ] リアルタイム記録をスキップしました。ゲーム本体は継続します:', e);
   }
 }
 function loadCoinUsageGraph() {
+  coinUsageGraphLoadAttempted = true;
+  const previousData = Array.isArray(coinUsageGraphData) ? coinUsageGraphData.slice() : [];
   try {
     const raw = JSON.parse(localStorage.getItem('airplane_game_coin_usage_graph') || '[]');
     coinUsageGraphData = Array.isArray(raw) ? raw.filter(p => p && Number.isFinite(Number(p.time)) && Number.isFinite(Number(p.cost))).map(p => ({
       time:Number(p.time), cost:Number(p.cost), gameKey:p.gameKey || '', sessionId:p.sessionId || `legacy-${p.time}`, sessionDate:p.sessionDate || formatCoinUsageDate(p.time)
     })) : [];
-  } catch(e) { coinUsageGraphData = []; }
+  } catch(e) {
+    console.warn('[myfingerグラフ] 保存データの読み込みをスキップしました:', e);
+    // 読み込みだけ失敗した場合は、現在メモリにある正常なデータを保持する。
+    coinUsageGraphData = previousData;
+  }
 
   // 以前のゲーム履歴にはグラフ専用データが存在しない場合があるため、
   // 保存済みのコイン使用履歴から過去のプレイ料金を復元する。
@@ -2089,56 +2183,102 @@ function updateCoinUsageGraphControls() {
   updateCoinUsageGraphMeta();
 }
 function seekCoinUsageGraph(value){
-  coinUsageGraphPlaybackIndex=Math.max(0,Math.min(Number(value)||0,coinUsageGraphData.length-1));
-  coinUsageGraphPlaying=false; updateCoinUsageGraphControls(); drawCoinUsageGraph();
+  try {
+    if (!coinUsageGraphData.length) { console.warn('[myfingerグラフ] シーク対象のデータがないため、シーク処理だけスキップしました。'); return; }
+    coinUsageGraphPlaybackIndex=Math.max(0,Math.min(Number(value)||0,coinUsageGraphData.length-1));
+    coinUsageGraphPlaying=false;
+    updateCoinUsageGraphControls();
+    drawCoinUsageGraph();
+  } catch(e) { console.warn('[myfingerグラフ] シーク処理をスキップしました:', e); }
 }
 function playCoinUsageGraph(){
-  coinUsageGraphPlaying=true; if(coinUsageGraphPlaybackIndex>=coinUsageGraphData.length-1) coinUsageGraphPlaybackIndex=0; animateCoinUsageGraph();
+  try {
+    if (!coinUsageGraphData.length) { loadCoinUsageGraph(); }
+    if (!coinUsageGraphData.length) { console.warn('[myfingerグラフ] 再生対象のデータがないため、再生処理だけスキップしました。'); return; }
+    coinUsageGraphPlaying=true;
+    if (coinUsageGraphPlaybackIndex>=coinUsageGraphData.length-1) coinUsageGraphPlaybackIndex=0;
+    animateCoinUsageGraph();
+  } catch(e) { console.warn('[myfingerグラフ] 再生処理をスキップしました:', e); }
 }
-function pauseCoinUsageGraph(){ coinUsageGraphPlaying=false; if(coinUsageGraphAnimationId)cancelAnimationFrame(coinUsageGraphAnimationId); coinUsageGraphAnimationId=null; drawCoinUsageGraph(); }
-function resumeCoinUsageGraph(){ coinUsageGraphPlaying=true; animateCoinUsageGraph(); }
+function pauseCoinUsageGraph(){
+  try {
+    coinUsageGraphPlaying=false;
+    if(coinUsageGraphAnimationId)cancelAnimationFrame(coinUsageGraphAnimationId);
+    coinUsageGraphAnimationId=null;
+    drawCoinUsageGraph();
+  } catch(e) { console.warn('[myfingerグラフ] 一時停止処理をスキップしました:', e); }
+}
+function resumeCoinUsageGraph(){
+  try {
+    if (!coinUsageGraphData.length) { console.warn('[myfingerグラフ] 再開対象のデータがないため、再開処理だけスキップしました。'); return; }
+    coinUsageGraphPlaying=true;
+    animateCoinUsageGraph();
+  } catch(e) { console.warn('[myfingerグラフ] 再開処理をスキップしました:', e); }
+}
 function animateCoinUsageGraph(){
-  if(!coinUsageGraphPlaying){drawCoinUsageGraph();return;} drawCoinUsageGraph();
-  if(coinUsageGraphPlaybackIndex < coinUsageGraphData.length-1){ coinUsageGraphPlaybackIndex++; coinUsageGraphAnimationId=requestAnimationFrame(()=>setTimeout(animateCoinUsageGraph,30)); } else coinUsageGraphAnimationId=null;
+  try {
+    if(!coinUsageGraphPlaying){drawCoinUsageGraph();return;}
+    drawCoinUsageGraph();
+    if(coinUsageGraphPlaybackIndex < coinUsageGraphData.length-1){
+      coinUsageGraphPlaybackIndex++;
+      coinUsageGraphAnimationId=requestAnimationFrame(()=>setTimeout(animateCoinUsageGraph,30));
+    } else coinUsageGraphAnimationId=null;
+  } catch(e) {
+    console.warn('[myfingerグラフ] アニメーションのこのフレームだけスキップしました:', e);
+    coinUsageGraphAnimationId=null;
+  }
 }
 function drawCoinUsageGraph(){
-  const c=document.getElementById('coinUsageGraphCanvas'); if(!c)return;
-  const dpr=window.devicePixelRatio||1, cssW=c.clientWidth||900, cssH=320;
-  if(c.width!==Math.floor(cssW*dpr)||c.height!==Math.floor(cssH*dpr)){c.width=Math.floor(cssW*dpr);c.height=Math.floor(cssH*dpr);}
-  const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,cssW,cssH);
-  const textColor=getComputedStyle(document.body).getPropertyValue('--text-color')||'#333';
-  g.fillStyle=textColor; g.font='bold 14px sans-serif'; g.fillText(t('coin_graph_title').replace(/^🪙\s*/, ''),16,22);
-  const left=48,top=36,right=16,bottom=34,w=Math.max(10,cssW-left-right),h=Math.max(10,cssH-top-bottom);
-  g.strokeStyle='rgba(120,120,120,.35)';g.lineWidth=1; for(let i=0;i<5;i++){const y=top+h*i/4;g.beginPath();g.moveTo(left,y);g.lineTo(left+w,y);g.stroke();}
-  if(!coinUsageGraphData.length){g.fillStyle=textColor;g.fillText(t('coin_graph_empty'),left+10,top+h/2);updateCoinUsageGraphControls();return;}
-  const end=Math.min(coinUsageGraphPlaybackIndex,coinUsageGraphData.length-1), start=Math.max(0,end-599), pts=coinUsageGraphData.slice(start,end+1);
-  const maxObserved=Math.max(0,...pts.map(p=>Number(p.cost)||0));
-  const maxCost=Math.max(10,Math.ceil(maxObserved/10)*10);
-  g.fillStyle=textColor;g.font='12px sans-serif';g.fillText(formatCoinAmount(maxCost),2,top+4);g.fillText('0',20,top+h);
-  if(pts.length<2){
-    const p=pts[0];
-    const x=left+w/2, y=top+h-((Number(p.cost)||0)/maxCost)*h;
-    g.fillStyle=getCoinUsageGameColor(p.gameKey||''); g.beginPath(); g.arc(x,y,5,0,Math.PI*2); g.fill();
-    g.fillStyle=textColor;g.fillText(formatCoinAmount(p.cost)+' myfinger',left,top+h/2);updateCoinUsageGraphControls();return;
+  try {
+    const c=document.getElementById('coinUsageGraphCanvas');
+    if(!c){ console.warn('[myfingerグラフ] canvasがないため、この描画だけスキップしました。'); return; }
+    if (!coinUsageGraphData.length && !coinUsageGraphLoadAttempted) {
+      try { loadCoinUsageGraph(); } catch(e) { console.warn('[myfingerグラフ] 過去データの再読み込みをスキップしました:', e); }
+    }
+    const dpr=window.devicePixelRatio||1, cssW=c.clientWidth||900, cssH=320;
+    if(c.width!==Math.floor(cssW*dpr)||c.height!==Math.floor(cssH*dpr)){c.width=Math.floor(cssW*dpr);c.height=Math.floor(cssH*dpr);}
+    const g=c.getContext('2d');
+    if(!g){ console.warn('[myfingerグラフ] 2D描画コンテキストを取得できないため、この描画だけスキップしました。'); return; }
+    g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,cssW,cssH);
+    const textColor=getComputedStyle(document.body).getPropertyValue('--text-color')||'#333';
+    g.fillStyle=textColor; g.font='bold 14px sans-serif'; g.fillText(t('coin_graph_title').replace(/^🪙\s*/, ''),16,22);
+    const left=48,top=36,right=16,bottom=34,w=Math.max(10,cssW-left-right),h=Math.max(10,cssH-top-bottom);
+    g.strokeStyle='rgba(120,120,120,.35)';g.lineWidth=1; for(let i=0;i<5;i++){const y=top+h*i/4;g.beginPath();g.moveTo(left,y);g.lineTo(left+w,y);g.stroke();}
+    if(!coinUsageGraphData.length){g.fillStyle=textColor;g.fillText(t('coin_graph_empty'),left+10,top+h/2);updateCoinUsageGraphControls();return;}
+    const end=Math.min(coinUsageGraphPlaybackIndex,coinUsageGraphData.length-1), start=Math.max(0,end-599), pts=coinUsageGraphData.slice(start,end+1).filter(p=>p&&Number.isFinite(Number(p.time))&&Number.isFinite(Number(p.cost)));
+    if(!pts.length){ console.warn('[myfingerグラフ] 有効な描画点がないため、この描画だけスキップしました。'); return; }
+    const maxObserved=Math.max(0,...pts.map(p=>Number(p.cost)||0));
+    const maxCost=Math.max(10,Math.ceil(maxObserved/10)*10);
+    g.fillStyle=textColor;g.font='12px sans-serif';g.fillText(formatCoinAmount(maxCost),2,top+4);g.fillText('0',20,top+h);
+    if(pts.length<2){
+      const p=pts[0];
+      const x=left+w/2, y=top+h-((Number(p.cost)||0)/maxCost)*h;
+      g.fillStyle=getCoinUsageGameColor(p.gameKey||''); g.beginPath(); g.arc(x,y,5,0,Math.PI*2); g.fill();
+      g.fillStyle=textColor;g.fillText(formatCoinAmount(p.cost)+' myfinger',left,top+h/2);updateCoinUsageGraphControls();return;
+    }
+    const groups = new Map();
+    pts.forEach((p,i)=>{const key=p.sessionId || p.gameKey || 'legacy';if(!groups.has(key))groups.set(key,[]);groups.get(key).push({p,i});});
+    groups.forEach(items=>{
+      try {
+        const key=items[0].p.gameKey || '';
+        g.strokeStyle=getCoinUsageGameColor(key); g.lineWidth=4; g.lineJoin='round'; g.lineCap='round'; g.beginPath();
+        items.forEach((item,j)=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-((Number(item.p.cost)||0)/maxCost)*h;j?g.lineTo(x,y):g.moveTo(x,y);}); g.stroke();
+        items.forEach(item=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-((Number(item.p.cost)||0)/maxCost)*h;g.fillStyle=getCoinUsageGameColor(key);g.beginPath();g.arc(x,y,2.5,0,Math.PI*2);g.fill();});
+      } catch(e) { console.warn('[myfingerグラフ] 1つのゲーム系列だけ描画をスキップしました:', e); }
+    });
+    g.fillStyle=textColor;g.fillText(`${t('coin_graph_current')}: ${formatCoinAmount(pts[pts.length-1].cost)} myfinger`,left,cssH-10); updateCoinUsageGraphControls();
+  } catch(e) {
+    console.warn('[myfingerグラフ] 描画処理をスキップしました。グラフ以外の処理は継続します:', e);
   }
-  const groups = new Map();
-  pts.forEach((p,i)=>{const key=p.sessionId || p.gameKey || 'legacy';if(!groups.has(key))groups.set(key,[]);groups.get(key).push({p,i});});
-  groups.forEach(items=>{
-    const key=items[0].p.gameKey || '';
-    g.strokeStyle=getCoinUsageGameColor(key); g.lineWidth=4; g.lineJoin='round'; g.lineCap='round'; g.beginPath();
-    items.forEach((item,j)=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-((Number(item.p.cost)||0)/maxCost)*h;j?g.lineTo(x,y):g.moveTo(x,y);}); g.stroke();
-    items.forEach(item=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-((Number(item.p.cost)||0)/maxCost)*h;g.fillStyle=getCoinUsageGameColor(key);g.beginPath();g.arc(x,y,2.5,0,Math.PI*2);g.fill();});
-  });
-  g.fillStyle=textColor;g.fillText(`${t('coin_graph_current')}: ${formatCoinAmount(pts[pts.length-1].cost)} myfinger`,left,cssH-10); updateCoinUsageGraphControls();
 }
 function startCoinUsageGraphLoop(){
   if(coinUsageGraphSampleTimer)clearInterval(coinUsageGraphSampleTimer);
   coinUsageGraphSampleTimer=setInterval(()=>{
-    updateGameCostDisplay();
-    if (document.getElementById('dataTab')?.classList.contains('active')) drawCoinUsageGraph();
+    try { updateGameCostDisplay(); } catch(e) { console.warn('[myfingerグラフ] ゲーム料金更新だけスキップしました:', e); }
+    try { if (document.getElementById('dataTab')?.classList.contains('active')) drawCoinUsageGraph(); } catch(e) { console.warn('[myfingerグラフ] 定期描画だけスキップしました:', e); }
   },250);
-  window.addEventListener('resize', () => {
-    if (document.getElementById('dataTab')?.classList.contains('active')) drawCoinUsageGraph();
+  window.__airplaneSafeAddEventListener(window, 'resize', () => {
+    try { if (document.getElementById('dataTab')?.classList.contains('active')) drawCoinUsageGraph(); } catch(e) { console.warn('[myfingerグラフ] リサイズ時描画だけスキップしました:', e); }
   });
 }
 function addCoinHistory(action, amount, balance) {
@@ -2890,8 +3030,8 @@ async function startPedometer() {
       if (permission !== 'granted') throw new Error(t('pedometer_permission_denied'));
     }
     await requestPedometerWakeLock();
-    window.removeEventListener('devicemotion', handlePedometerMotion);
-    window.addEventListener('devicemotion', handlePedometerMotion, { passive: true });
+    window.__airplaneSafeRemoveEventListener(window, 'devicemotion', handlePedometerMotion);
+    window.__airplaneSafeAddEventListener(window, 'devicemotion', handlePedometerMotion, { passive: true });
     pedometerRunning = true;
     setPedometerStatus(t('pedometer_detecting'), true);
     if (startButton) startButton.textContent = t('pedometer_detecting_button');
@@ -2903,7 +3043,7 @@ async function startPedometer() {
 
 function stopPedometer() {
   pedometerRunning = false;
-  window.removeEventListener('devicemotion', handlePedometerMotion);
+  window.__airplaneSafeRemoveEventListener(window, 'devicemotion', handlePedometerMotion);
   if (pedometerWakeLock) { try { pedometerWakeLock.release(); } catch(e) {} }
   pedometerWakeLock = null;
   const startButton = document.getElementById('pedometerStartBtn');
@@ -2949,7 +3089,7 @@ function initPedometer() {
   }, 30000);
 }
 
-window.addEventListener('visibilitychange', () => {
+window.__airplaneSafeAddEventListener(window, 'visibilitychange', () => {
   if (document.visibilityState === 'visible') reacquirePedometerWakeLock();
 });
 
@@ -3086,10 +3226,10 @@ function recordKey(inputElement, index) {
     shortcutData[index].key = e.code;
     inputElement.value = e.code;
     inputElement.classList.remove('recording');
-    window.removeEventListener('keydown', keyHandler);
+    window.__airplaneSafeRemoveEventListener(window, 'keydown', keyHandler);
     saveAllConfig();
   };
-  window.addEventListener('keydown', keyHandler, { once: true });
+  window.__airplaneSafeAddEventListener(window, 'keydown', keyHandler, { once: true });
 }
 
 function performShortcutAction(action){
@@ -3103,7 +3243,7 @@ function performShortcutAction(action){
   if(action==='score_next'){const max=Math.max(1,Math.ceil(getFilteredScoreRowsForExport().length/10));scorePage=Math.min(max,scorePage+1);renderScoreTable();return;} if(action==='score_prev'){scorePage=Math.max(1,scorePage-1);renderScoreTable();return;}
   if(action==='stalker'){const c=document.getElementById('cfgMouseStalkerType');c.value=c.value==='none'?'★':'none';updateMouseStalker();saveConfig();return;} if(action==='focus_search'){switchTab('gameTab');document.getElementById('gameSearchInput')?.focus();return;} if(action==='profile_questions'){switchTab('profileTab');showQuestionsPage('admin');document.getElementById('questions100Card')?.scrollIntoView({behavior:'smooth'});return;}
 }
-window.addEventListener('keydown', (e) => {
+window.__airplaneSafeAddEventListener(window, 'keydown', (e) => {
   if (e.target.tagName === 'INPUT' && !e.target.readOnly) return;
 
   if (currentGame === 'stick' && isGameRunning && (e.code === 'ArrowUp' || e.code === 'Space')) {
@@ -3139,6 +3279,7 @@ let coinUsageGraphPlaying = true;
 let coinUsageGraphPlaybackIndex = 0;
 let coinUsageGraphAnimationId = null;
 let coinUsageGraphSampleTimer = null;
+let coinUsageGraphLoadAttempted = false;
 let currentScore = 0;
 let stars = [];
 let lastFrameTime = 0;
@@ -3154,7 +3295,7 @@ function resizeGameCanvas() {
     initBlackboardGame();
   }
 }
-window.addEventListener('resize', () => {
+window.__airplaneSafeAddEventListener(window, 'resize', () => {
   resizeGameCanvas();
   drawFrame();
 });
@@ -4163,10 +4304,10 @@ function handleCanvasPointer(e) {
   }
 }
 
-canvas.addEventListener('mousedown', handleCanvasPointer);
-canvas.addEventListener('mousemove', (e) => { if (e.buttons === 1) handleCanvasPointer(e); });
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleCanvasPointer(e.touches[0]); }, { passive: false });
-canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleCanvasPointer(e.touches[0]); }, { passive: false });
+window.__airplaneSafeAddEventListener(canvas, 'mousedown', handleCanvasPointer);
+window.__airplaneSafeAddEventListener(canvas, 'mousemove', (e) => { if (e.buttons === 1) handleCanvasPointer(e); });
+window.__airplaneSafeAddEventListener(canvas, 'touchstart', (e) => { e.preventDefault(); handleCanvasPointer(e.touches[0]); }, { passive: false });
+window.__airplaneSafeAddEventListener(canvas, 'touchmove', (e) => { e.preventDefault(); handleCanvasPointer(e.touches[0]); }, { passive: false });
 
 /* ==========================================================================
    2. 使い方タブ アニメーション
@@ -4200,7 +4341,7 @@ function startHowToAnimation() {
    4. 設定機能群
    ========================================================================== */
 const mouseStalker = document.getElementById('mouseStalker');
-window.addEventListener('mousemove', (e) => {
+window.__airplaneSafeAddEventListener(window, 'mousemove', (e) => {
   const type = document.getElementById('cfgMouseStalkerType').value;
   if (type === 'none') {
     mouseStalker.style.display = 'none';
@@ -5635,7 +5776,7 @@ function downloadBlob(blob, filename) {
    ========================================================================== */
 window.__itsmeRestoreReloadPending = false;
 window.__itsmeRestoreInProgress = false;
-window.addEventListener('beforeunload', () => {
+window.__airplaneSafeAddEventListener(window, 'beforeunload', () => {
   // .itsme復元直後のlocation.reload()では、復元したStorageを
   // リロード前の古いDOM状態で上書きしない。
   if (window.__itsmeRestoreReloadPending) return;
@@ -5645,7 +5786,7 @@ window.addEventListener('beforeunload', () => {
 /* ==========================================================================
    初期ロード処理 (★ 表示順序と初期描画の最適化)
    ========================================================================== */
-window.addEventListener('load', async () => {
+window.__airplaneSafeAddEventListener(window, 'load', async () => {
   const savedConfigStr = localStorage.getItem('airplane_game_config');
   let config = null;
   if (savedConfigStr) {
@@ -5811,7 +5952,7 @@ if (savedPinnedIds) {
   }, 50);
 });
 
-window.addEventListener('DOMContentLoaded', () => { relocateGameSettings(); showQuestionsPage('admin'); ensureQuestionTranslations(currentLang); renderQuestions(); });
+window.__airplaneSafeAddEventListener(window, 'DOMContentLoaded', () => { relocateGameSettings(); showQuestionsPage('admin'); ensureQuestionTranslations(currentLang); renderQuestions(); });
 </script>
 </body>
 </html>
