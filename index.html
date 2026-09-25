@@ -2435,7 +2435,7 @@ function changeLanguage(lang) {
     el.textContent = t(k);
   });
 
-  document.querySelectorAll('[data-i18n-aria]').forEach(el => { const key = el.getAttribute('data-i18n-aria'); if (key && I18N[key]) el.setAttribute('aria-label', I18N[key][lang] || I18N[key].ja || Object.values(I18N[key])[0] || ''); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { const key = el.getAttribute('data-i18n-aria'); if (key && I18N_DICTIONARY[key]) el.setAttribute('aria-label', I18N_DICTIONARY[key][lang] || I18N_DICTIONARY[key].ja || Object.values(I18N_DICTIONARY[key])[0] || ''); });
   localizeGameOptionPresets();
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     const k = el.getAttribute('data-i18n-ph');
@@ -5230,9 +5230,10 @@ async function restoreIndexedDB(snapshot){
   const result={restored:0,errors:[],databases:0};
   if(!window.indexedDB||!Array.isArray(snapshot))return result;
 
-  // 重要: 復元時に deleteDatabase() は絶対に実行しない。
-  // 既存DB・既存レコードは保持し、バックアップにあるレコードだけを put() で
-  // 上書き/追加する。バックアップに存在しないレコードはそのまま残す。
+  // .itsme は「現在のDBへ追加」ではなく「バックアップ時点へ復元」する。
+  // そのため、バックアップに含まれる各ストアは一度空にしてから、保存時のキーを
+  // 保ったまま全レコードを書き戻す。これにより復元後の再読み込みで旧レコードが
+  // 混ざったり、autoIncrement のキーがずれて重複したりする問題を防ぐ。
   for(const spec of snapshot){
     if(!spec?.name)continue;
     try{
@@ -5315,17 +5316,34 @@ async function restoreIndexedDB(snapshot){
         r.onsuccess=async()=>{
           const db=r.result;
           try{
-            // put() のみを使用。clear/delete/remove は行わない。
+            // バックアップ時点と同じ内容にするため対象ストアを同期する。
             for(const st of stores){
               if(!db.objectStoreNames.contains(st.name))continue;
               const tx=db.transaction(st.name,'readwrite');
               const store=tx.objectStore(st.name);
+              store.clear();
               for(const rec of (st.records||[])){
                 const refs=new Map();
-                const val=decodeBackupValue(rec.value,refs);
+                let val=decodeBackupValue(rec.value,refs);
                 const key=decodeBackupValue(rec.key,refs);
-                if(store.keyPath===null||store.keyPath===undefined)store.put(val,key);
-                else store.put(val);
+                if(store.keyPath===null||store.keyPath===undefined){
+                  store.put(val,key);
+                }else{
+                  // autoIncrement + inline keyPath の古いレコードは、保存時のキーが
+                  // value側に入っていないことがある。その場合だけキーを復元する。
+                  const kp=store.keyPath;
+                  if(typeof kp==='string' && key!==undefined && key!==null && val && typeof val==='object'){
+                    const parts=kp.split('.');
+                    let target=val;
+                    for(let i=0;i<parts.length-1;i++){
+                      if(!target[parts[i]] || typeof target[parts[i]]!=='object')target[parts[i]]={};
+                      target=target[parts[i]];
+                    }
+                    const leaf=parts[parts.length-1];
+                    if(target[leaf]===undefined)target[leaf]=key;
+                  }
+                  store.put(val);
+                }
               }
               await idbTxDone(tx);
             }
@@ -5380,6 +5398,7 @@ async function buildCompleteBackupPayload(){
     scores:memoryStore.scores,coins:memoryStore.coins,coinBankBalance:memoryStore.coinBankBalance,creditCardBalance:memoryStore.creditCardBalance,coinHistory:memoryStore.coinHistory,customSiteTitle:memoryStore.customSiteTitle,myProfile:memoryStore.myProfile,shortcuts:shortcutData,customQuestions:customQuestions,language:currentLang,
     config:{gameEnabled:document.getElementById('cfgGameEnabled')?.checked,saveScore:document.getElementById('cfgSaveScore')?.checked,useIndexedDB:document.getElementById('cfgUseIndexedDB')?.checked,mouseStalkerType:document.getElementById('cfgMouseStalkerType')?.value,stalkerCustomText:document.getElementById('cfgStalkerCustomText')?.value,stalkerImageData:localStorage.getItem('airplane_game_stalker_img')||'',gcSimulation:document.getElementById('cfgGcSimulation')?.checked,bgColor:document.getElementById('cfgBgColor')?.value,bgColorText:document.getElementById('cfgBgColorText')?.value,textColor:document.getElementById('cfgTextColor')?.value,textColorText:document.getElementById('cfgTextColorText')?.value,fontFamily:document.getElementById('cfgFontFamily')?.value,fontSizeNum:document.getElementById('cfgFontSizeNum')?.value,fontSizeUnit:document.getElementById('cfgFontSizeUnit')?.value,showSearchGame:document.getElementById('cfgShowSearchGame')?.checked,showSearchOther:document.getElementById('cfgShowSearchOther')?.checked,showHeader:document.getElementById('cfgShowHeader')?.checked,colorTheme:document.getElementById('cfgColorTheme')?.value,stickMaxHeight:document.getElementById('stickMaxHeight')?.value,stickMaxPillars:document.getElementById('stickMaxPillars')?.value,nightFlight:document.getElementById('cfgNightFlight')?.checked,reducedMotion:document.getElementById('cfgReducedMotion')?.checked,batterySaver:document.getElementById('cfgBatterySaver')?.checked,masterVolume:document.getElementById('cfgMasterVolume')?.value,muteAudio:document.getElementById('cfgMuteAudio')?.checked,dpadPosition:document.getElementById('cfgDpadPosition')?.value,dpadSize:document.getElementById('cfgDpadSize')?.value,dpadOpacity:document.getElementById('cfgDpadOpacity')?.value,vibrate:document.getElementById('cfgVibrate')?.checked,gameSpeed:document.getElementById('cfgGameSpeed')?.value,invincible:document.getElementById('cfgInvincible')?.checked,konjacMaterial:document.getElementById('cfgKonjacMaterial')?.value,konjacKnife:document.getElementById('cfgKonjacKnife')?.value,flagRegion:document.getElementById('cfgFlagRegion')?.value,flightHours:document.getElementById('cfgFlightHours')?.value,flightMinutes:document.getElementById('cfgFlightMinutes')?.value,timezoneDiff:document.getElementById('cfgTimezoneDiff')?.value,coinBalanceAddAmount:getCoinBalanceAddAmount()},
     storage:{localStorage:storageLocal,sessionStorage:storageSession},
+    coinUsageGraphData:Array.isArray(coinUsageGraphData)?coinUsageGraphData:[],
     formState:snapshotFormState(),
     uiState:{scrollX:window.scrollX,scrollY:window.scrollY},
     indexedDB:await snapshotIndexedDB(),
@@ -5502,6 +5521,15 @@ async function handleRestoreFile(e){
       if(restored.creditCardBalance!==undefined)memoryStore.creditCardBalance=Number(restored.creditCardBalance)||0;
       if(Array.isArray(restored.coinHistory))memoryStore.coinHistory=restored.coinHistory;
       if(typeof restored.customSiteTitle==='string')memoryStore.customSiteTitle=restored.customSiteTitle;
+      if(Array.isArray(restored.coinUsageGraphData)){
+        try{
+          coinUsageGraphData=restored.coinUsageGraphData.filter(p=>p&&Number.isFinite(Number(p.time))&&Number.isFinite(Number(p.cost))).map(p=>({
+            time:Number(p.time),cost:Number(p.cost),gameKey:p.gameKey||'',sessionId:p.sessionId||`legacy-${p.time}`,sessionDate:p.sessionDate||formatCoinUsageDate(p.time)
+          })).sort((a,b)=>a.time-b.time).slice(-3600);
+          localStorage.setItem('airplane_game_coin_usage_graph',JSON.stringify(coinUsageGraphData));
+          coinUsageGraphPlaybackIndex=Math.max(0,coinUsageGraphData.length-1);
+        }catch(err){report.errors.push('グラフ復元: '+err.message);}
+      }
       if(Array.isArray(restored.customQuestions)&&restored.customQuestions.length===100){
         customQuestions=restored.customQuestions;
         try{
@@ -5527,11 +5555,22 @@ async function handleRestoreFile(e){
       if(restored.language)changeLanguage(restored.language);
       toggleGameFeatureSetting();relocateGameSettings();applyColors();applyFontSettings();applyColorTheme(document.getElementById('cfgColorTheme')?.value);applyNightFlightMode();applyReducedMotion();updateMasterVolume();applyDpadSettings();initFlightTimer();updateWorldClock();toggleSearchBarVisibility();toggleHeader(document.getElementById('cfgShowHeader')?.checked);updateMouseStalker();updateMyProfileLive();
       if(restored.selectedGame){const btn=document.querySelector(`.game-select-btn[data-game="${CSS.escape(restored.selectedGame)}"]`);selectGame(restored.selectedGame,btn);}
-      if(restored.activeTab)switchTab(restored.activeTab);
+      if(restored.activeTab){
+        const savedTab=restored.activeTab;
+        if(savedTab==='gameTab' && document.getElementById('cfgGameEnabled')){
+          document.getElementById('cfgGameEnabled').checked=true;
+        }
+        switchTab(savedTab);
+      }
       if(restored.uiState&&Number.isFinite(restored.uiState.scrollX)&&Number.isFinite(restored.uiState.scrollY))window.scrollTo(restored.uiState.scrollX,restored.uiState.scrollY);
       renderScoreTable();renderHistoryTable();updateCoinDisplays();renderCoinHistoryTable();if(memoryStore.customSiteTitle)document.title=memoryStore.customSiteTitle;
 
+      // ここまででDOM・メモリ上の復元値が揃ったので、復元フラグを解除してから
+      // 現在の復元状態を正規のLocalStorageへ一度だけ同期する。
+      // これを行わないと、再読み込み時の初期化処理が復元前の古いDOM状態を
+      // LocalStorageへ書き戻してしまうことがある。
       window.__itsmeRestoreInProgress=false;
+      try{saveAllConfig();}catch(err){report.errors.push('復元状態の永続化: '+err.message);}
       window.__itsmeRestoreReloadPending=true;
       const partial=report.errors.length>0;
       const details=`Storage ${report.storage}件、sessionStorage ${report.session}件、IndexedDB ${report.indexedDB}DBを処理しました。<br><br>${partial?'一部の項目でエラーが発生しました。':'すべての復元処理が完了しました。'}<br><br>復元した状態を確実に読み込むため、再読み込みしてください。`;
@@ -5656,25 +5695,14 @@ window.addEventListener('load', async () => {
 
   await initIndexedDB();
   await loadScoresFromIndexedDB();
-  // .itsme復元直後だけ、バックアップに含まれていたメモリ上のスコアを最終値として採用する。
-  // IndexedDB無効時にもスコアが消えず、IndexedDB復元が部分失敗した場合もUI側を救済できる。
+  // .itsme復元直後は、バックアップのスコアをUI側へ反映する。
+  // IndexedDBへの書き戻しは restoreIndexedDB() 側で完了しているため、ここでは
+  // 再度 put() しない。これによりautoIncrementキーの重複・増殖を防ぐ。
   try{
     const pendingScoresRaw=sessionStorage.getItem('airplane_game_itsme_pending_scores');
     if(pendingScoresRaw){
       const pendingScores=JSON.parse(pendingScoresRaw);
-      if(Array.isArray(pendingScores)){
-        memoryStore.scores=pendingScores;
-        if(dbInstance && document.getElementById('cfgUseIndexedDB').checked){
-          try{
-            const tx=dbInstance.transaction('scores','readwrite');
-            const store=tx.objectStore('scores');
-            pendingScores.forEach(record=>store.put(record));
-            await idbTxDone(tx);
-          }catch(e){
-            console.error('IndexedDBスコア復元エラー:', e);
-          }
-        }
-      }
+      if(Array.isArray(pendingScores)) memoryStore.scores=pendingScores;
       sessionStorage.removeItem('airplane_game_itsme_pending_scores');
     }
   }catch(e){}
