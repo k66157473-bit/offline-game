@@ -2090,7 +2090,13 @@ function drawCoinUsageGraph(){
 }
 function startCoinUsageGraphLoop(){
   if(coinUsageGraphSampleTimer)clearInterval(coinUsageGraphSampleTimer);
-  coinUsageGraphSampleTimer=setInterval(()=>{updateGameCostDisplay();drawCoinUsageGraph();},250);
+  coinUsageGraphSampleTimer=setInterval(()=>{
+    updateGameCostDisplay();
+    if (document.getElementById('dataTab')?.classList.contains('active')) drawCoinUsageGraph();
+  },250);
+  window.addEventListener('resize', () => {
+    if (document.getElementById('dataTab')?.classList.contains('active')) drawCoinUsageGraph();
+  });
 }
 function addCoinHistory(action, amount, balance) {
   memoryStore.coinHistory.unshift({ id: Date.now() + Math.random(), date: new Date().toLocaleString('sv-SE').replace('T',' '), action, amount, balance });
@@ -2921,7 +2927,14 @@ function switchTab(tabId, btnElement) {
   }
 
   if (tabId === 'historyTab') renderHistoryTable();
-  if (tabId === 'dataTab') renderScoreTable();
+  if (tabId === 'dataTab') {
+    renderScoreTable();
+    // データタブ表示後に実際の表示幅を取得してグラフを確実に再描画
+    requestAnimationFrame(() => {
+      updateCoinUsageGraphControls();
+      drawCoinUsageGraph();
+    });
+  }
   if (tabId === 'pedometerTab') { loadPedometerState(); renderPedometerLegend(); }
   if (tabId === 'howToTab') startHowToAnimation();
   if (tabId === 'profileTab') updateMyProfileLive();
