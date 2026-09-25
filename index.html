@@ -2029,19 +2029,21 @@ function loadCoinUsageGraph() {
       gameKey: getScoreGameKey(s) || s.gameKey || ''
     })).filter(x => Number.isFinite(x.time));
     const history = Array.isArray(memoryStore.coinHistory) ? memoryStore.coinHistory : [];
+    const gameCostLabels = Object.values(I18N_DICTIONARY.coin_game_time_cost || {}).map(String);
     history.forEach((h, index) => {
       const amount = Number(h.amount);
       const action = String(h.action || '');
-      if (!(amount < 0) || !action.includes(t('coin_game_time_cost'))) return;
+      const isGameCost = gameCostLabels.some(label => label && (action === label || action.includes(label)));
+      if (!(amount < 0) || !isGameCost) return;
       const time = Date.parse(String(h.date || '').replace(/\//g, '-'));
       if (!Number.isFinite(time)) return;
       const sec = Math.round(time / 1000);
       if (existingTimes.has(sec)) return;
-      let gameKey = '';
+      let gameKey = ['stick','block','konjac','blackboard','flag','vs'].includes(h.gameKey) ? h.gameKey : '';
       let bestDiff = Infinity;
       scoreTimes.forEach(st => {
         const diff = Math.abs(st.time - time);
-        if (diff <= 5 * 60 * 1000 && diff < bestDiff) { bestDiff = diff; gameKey = st.gameKey; }
+        if (diff <= 5 * 60 * 1000 && diff < bestDiff) { bestDiff = diff; gameKey = gameKey || st.gameKey; }
       });
       coinUsageGraphData.push({
         time, cost: Math.abs(amount), gameKey,
@@ -2140,7 +2142,8 @@ function startCoinUsageGraphLoop(){
   });
 }
 function addCoinHistory(action, amount, balance) {
-  memoryStore.coinHistory.unshift({ id: Date.now() + Math.random(), date: new Date().toLocaleString('sv-SE').replace('T',' '), action, amount, balance });
+  const isGameCost = String(action || '') === t('coin_game_time_cost');
+  memoryStore.coinHistory.unshift({ id: Date.now() + Math.random(), date: new Date().toLocaleString('sv-SE').replace('T',' '), action, amount, balance, gameKey: isGameCost ? (gameSessionGame || currentGame || '') : '' });
   if (memoryStore.coinHistory.length > 1000) memoryStore.coinHistory.length = 1000;
 }
 function saveCoinState() { updateCoinDisplays(); saveAllConfig(); renderCoinHistoryTable(); }
@@ -2226,7 +2229,17 @@ function renderCoinHistoryTable() {
   const perPage=10, totalPages=Math.ceil(list.length/perPage)||1;
   if (coinHistoryPage>totalPages) coinHistoryPage=totalPages;
   const paged=list.slice((coinHistoryPage-1)*perPage,coinHistoryPage*perPage);
-  body.innerHTML=paged.length ? paged.map(r=>`<tr><td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.action)}</td><td>${escapeHtml(formatCoinAmount(r.amount))}</td><td>${escapeHtml(formatCoinAmount(r.balance))}</td></tr>`).join('') : `<tr><td colspan="4" style="text-align:center;color:#888;">${escapeHtml(t('coin_history_empty'))}</td></tr>`;
+  const scoreTimes = memoryStore.scores.map(s=>({time:Date.parse(String(s.date||'').replace(/\//g,'-')),gameKey:getScoreGameKey(s)||''})).filter(x=>Number.isFinite(x.time));
+  body.innerHTML=paged.length ? paged.map(r=>{
+    let gameKey = ['stick','block','konjac','blackboard','flag','vs'].includes(r.gameKey) ? r.gameKey : '';
+    const labels=Object.values(I18N_DICTIONARY.coin_game_time_cost||{}).map(String);
+    const isGameCost=Number(r.amount)<0 && labels.some(label=>label && (String(r.action||'')===label || String(r.action||'').includes(label)));
+    if(isGameCost && !gameKey){ const rt=Date.parse(String(r.date||'').replace(/\//g,'-')); let best=Infinity; scoreTimes.forEach(x=>{const d=Math.abs(x.time-rt);if(d<=300000&&d<best){best=d;gameKey=x.gameKey;}}); }
+    const color=isGameCost?getCoinUsageGameColor(gameKey):'';
+    const style=color?`style="border-left:5px solid ${color};background:${color}12;"`:'';
+    const actionStyle=color?`style="color:${color};font-weight:bold;"`:'';
+    return `<tr ${style}><td>${escapeHtml(r.date)}</td><td ${actionStyle}>${escapeHtml(r.action)}</td><td>${escapeHtml(formatCoinAmount(r.amount))}</td><td>${escapeHtml(formatCoinAmount(r.balance))}</td></tr>`;
+  }).join('') : `<tr><td colspan="4" style="text-align:center;color:#888;">${escapeHtml(t('coin_history_empty'))}</td></tr>`;
   const pag=document.getElementById('coinHistoryPagination');
   if (!pag) return;
   pag.innerHTML='';
@@ -4996,8 +5009,11 @@ function renderScoreTable() {
     paged.forEach(row => {
       const tr = document.createElement('tr');
       const diff = String(row.diff ?? '');
+      const gameColor = getCoinUsageGameColor(getScoreGameKey(row) || '');
+      tr.style.borderLeft = `5px solid ${gameColor}`;
+      tr.style.background = `${gameColor}12`;
       tr.innerHTML = `
-        <td><strong>${escapeHtml(getScoreGameName(row))}</strong></td>
+        <td><strong style="color:${gameColor};">${escapeHtml(getScoreGameName(row))}</strong></td>
         <td>${escapeHtml(row.date || '')}</td>
         <td>${escapeHtml(row.limit || '')}</td>
         <td>${escapeHtml(row.score ?? '')}</td>
