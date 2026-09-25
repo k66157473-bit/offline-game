@@ -858,6 +858,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
     <button class="tab-btn" onclick="switchTab('historyTab', this)" data-i18n="tab_history">更新履歴</button>
     <button class="tab-btn" onclick="switchTab('dataTab', this)" data-i18n="tab_data">データ</button>
     <button class="tab-btn" onclick="switchTab('coinTab', this)" data-i18n="tab_coin">コイン</button>
+    <button class="tab-btn" onclick="switchTab('pedometerTab', this)" data-i18n="tab_pedometer">歩数計</button>
     <select id="langSelector" class="lang-select-header" onchange="changeLanguage(this.value)">
       <option value="ja">日本語</option>
       <option value="en">English</option>
@@ -1321,6 +1322,46 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
   </section>
 
   <!-- 7. データタブ -->
+  <!-- 歩数計タブ -->
+  <section id="pedometerTab" class="tab-content">
+    <div id="pedometerPanel" style="background:#000000; color:#ffffff; min-height:70vh; padding:24px; border-radius:16px; position:relative; overflow:hidden;">
+      <div class="pedometer-shift-target">
+        <h2 style="color:#ffffff; margin-bottom:8px;" data-i18n="pedometer_title">📱 歩数計</h2>
+        <p style="font-size:12px; opacity:.8; margin-bottom:18px;" data-i18n="pedometer_desc">0.5歩を1回検知するごとに160コイン。1歩あたり320コイン。</p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-bottom:18px;">
+          <div style="background:#111111; border:1px solid #333; border-radius:14px; padding:18px;">
+            <div style="font-size:12px; opacity:.75;" data-i18n="pedometer_half_steps">0.5歩カウント</div>
+            <div id="pedometerHalfSteps" style="font-size:38px; font-weight:900; margin-top:4px;">0</div>
+          </div>
+          <div style="background:#111111; border:1px solid #333; border-radius:14px; padding:18px;">
+            <div style="font-size:12px; opacity:.75;" data-i18n="pedometer_steps">歩数換算</div>
+            <div id="pedometerSteps" style="font-size:38px; font-weight:900; margin-top:4px;">0.0</div>
+          </div>
+          <div style="background:#111111; border:1px solid #333; border-radius:14px; padding:18px;">
+            <div style="font-size:12px; opacity:.75;" data-i18n="pedometer_coins">獲得コイン</div>
+            <div id="pedometerCoins" style="font-size:32px; font-weight:900; margin-top:7px;">0</div>
+            <div style="font-size:11px; opacity:.65;" data-i18n="pedometer_coin_unit">coin</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px;">
+          <button class="btn" id="pedometerStartBtn" onclick="startPedometer()" data-i18n="pedometer_start">📳 センサーを許可して開始</button>
+          <button class="btn btn-secondary" onclick="stopPedometer()" data-i18n="pedometer_stop">■ 停止</button>
+          <span id="pedometerSensorStatus" style="font-size:12px; opacity:.8;" data-i18n="pedometer_waiting">待機中</span>
+        </div>
+
+        <div style="background:#111111; border:1px solid #333; border-radius:14px; padding:14px; margin-bottom:14px;">
+          <div style="font-weight:bold; margin-bottom:8px;" data-i18n="pedometer_post_title">非同期POST送信先</div>
+          <input id="pedometerPostUrl" type="url" value="/api/pedometer" placeholder="https://example.com/api/pedometer" style="width:100%; box-sizing:border-box; padding:9px; border-radius:8px; border:1px solid #555; background:#000; color:#fff;" oninput="savePedometerConfig()">
+          <div id="pedometerPostStatus" style="font-size:12px; margin-top:8px; opacity:.8;" data-i18n="pedometer_post_default">ローカル保存を優先します。送信先が利用できない場合も歩数・コインは保持されます。</div>
+        </div>
+
+        <div style="font-size:12px; line-height:1.7; opacity:.8;" data-i18n="pedometer_specs">判定閾値: 11.0　/　デバウンス: 300ms　/　1回: 160コイン　/　保存: LocalStorage</div>
+      </div>
+    </div>
+  </section>
+
   <section id="dataTab" class="tab-content">
     <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="data_title">ゲームスコア & バックアップ・復元</h2>
     
@@ -1363,21 +1404,26 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
 
     <hr style="margin: 25px 0; border: none; border-top: 2px dashed var(--border-color);">
 
+    <div style="background: #000000; color: #ffffff; border:1px solid var(--border-color); border-radius:14px; padding:14px; margin-bottom:14px;">
+      <div data-i18n="game_color_legend_title" style="font-weight:bold; margin-bottom:8px; color:#ffffff;">ゲーム種類・タイトル別カラー</div>
+      <div id="pedometerGameLegend" style="display:flex; gap:10px; flex-wrap:wrap; font-size:12px;"></div>
+    </div>
+
     <div id="coinUsageGraphPanel" style="margin-bottom:25px;">
-      <h3 style="font-size:16px; margin-bottom:10px;">🪙 myfinger消費量リアルタイムグラフ</h3>
+      <h3 data-i18n="coin_graph_title" style="font-size:16px; margin-bottom:10px;">🪙 myfinger消費量リアルタイムグラフ</h3>
       <div id="coinUsageGraphMeta" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px; font-size:12px; line-height:1.5;">
         <div id="coinUsageGraphCurrentMeta"></div>
         <div id="coinUsageGraphSessionList"></div>
       </div>
       <canvas id="coinUsageGraphCanvas" width="900" height="320" style="width:100%; max-width:100%; border:1px solid var(--border-color); border-radius:10px; background:rgba(255,255,255,0.65);"></canvas>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px;">
-        <button class="btn" onclick="playCoinUsageGraph()">▶ 再生</button>
-        <button class="btn btn-secondary" onclick="pauseCoinUsageGraph()">⏸ 一時停止</button>
-        <button class="btn btn-outline" onclick="resumeCoinUsageGraph()">⏯ 再開</button>
-        <label for="coinUsageGraphSeek" style="font-size:12px; font-weight:bold; white-space:nowrap;">シーク</label>
-        <input type="range" id="coinUsageGraphSeek" min="0" max="0" value="0" step="1" aria-label="myfingerグラフのシークバー" oninput="seekCoinUsageGraph(this.value)">
+        <button class="btn" onclick="playCoinUsageGraph()" data-i18n="coin_graph_play">▶ 再生</button>
+        <button class="btn btn-secondary" onclick="pauseCoinUsageGraph()" data-i18n="coin_graph_pause">⏸ 一時停止</button>
+        <button class="btn btn-outline" onclick="resumeCoinUsageGraph()" data-i18n="coin_graph_resume">⏯ 再開</button>
+        <label for="coinUsageGraphSeek" style="font-size:12px; font-weight:bold; white-space:nowrap;" data-i18n="coin_graph_seek">シーク</label>
+        <input type="range" id="coinUsageGraphSeek" min="0" max="0" value="0" step="1" aria-label="myfingerグラフのシークバー" data-i18n-aria="coin_graph_seek_aria" oninput="seekCoinUsageGraph(this.value)">
         <span id="coinUsageGraphStatus" style="font-size:12px;">0 / 0</span>
-        <button class="btn btn-outline" onclick="recordCoinUsageGraphVideo()">🎥 .mp4で録画</button>
+        <button class="btn btn-outline" onclick="recordCoinUsageGraphVideo()" data-i18n="coin_graph_record">🎥 .mp4で録画</button>
       </div>
     </div>
 
@@ -1483,6 +1529,32 @@ const I18N_DICTIONARY = {
   tab_history: { ja: "更新履歴", en: "History", hira: "こうしん りれき", ko: "업데이트 내역", zh: "更新历史", ar: "سجل التحديثات", eo: "Historio" },
   tab_data: { ja: "データ", en: "Data", hira: "でーた", ko: "데이터", zh: "数据", ar: "البيانات", eo: "Datumoj" },
   tab_coin: { ja: "コイン", en: "Coins", hira: "こいん", ko: "코인", zh: "金币", ar: "العملات", eo: "Moneroj" },
+  tab_pedometer: { ja: "歩数計", en: "Pedometer", hira: "ほすうけい", ko: "만보기", zh: "计步器", ar: "عداد الخطوات", eo: "Paŝmezurilo" },
+  pedometer_title: { ja: "📱 歩数計", en: "📱 Pedometer", hira: "📱 ほすうけい", ko: "📱 만보기", zh: "📱 计步器", ar: "📱 عداد الخطوات", eo: "📱 Paŝmezurilo" },
+  pedometer_desc: { ja: "0.5歩を1回検知するごとに160コイン。1歩あたり320コイン。", en: "160 coins per detected half-step. 320 coins per full step.", hira: "0.5ぽを 1かい けんちするごとに 160こいん。1ぽあたり 320こいん。", ko: "0.5걸음을 감지할 때마다 160코인. 한 걸음당 320코인.", zh: "每检测到0.5步增加160金币。每1步增加320金币。", ar: "160 عملة لكل نصف خطوة مكتشفة. 320 عملة لكل خطوة كاملة.", eo: "160 moneroj por ĉiu detektita duonpaŝo. 320 moneroj por plena paŝo." },
+  pedometer_half_steps: { ja: "0.5歩カウント", en: "Half-step count", hira: "0.5ぽ かうんと", ko: "0.5걸음 횟수", zh: "0.5步计数", ar: "عدد أنصاف الخطوات", eo: "Nombro de duonpaŝoj" },
+  pedometer_steps: { ja: "歩数換算", en: "Step equivalent", hira: "ほすう かんさん", ko: "걸음 수 환산", zh: "步数换算", ar: "ما يعادل الخطوات", eo: "Paŝekvivalento" },
+  pedometer_coins: { ja: "獲得コイン", en: "Coins earned", hira: "かくとく こいん", ko: "획득 코인", zh: "获得金币", ar: "العملات المكتسبة", eo: "Gajnitaj moneroj" },
+  pedometer_coin_unit: { ja: "coin", en: "coin", hira: "こいん", ko: "코인", zh: "金币", ar: "عملة", eo: "moneroj" },
+  pedometer_start: { ja: "📳 センサーを許可して開始", en: "📳 Allow sensor and start", hira: "📳 せんさーを きょかして かいし", ko: "📳 센서를 허용하고 시작", zh: "📳 允许传感器并开始", ar: "📳 السماح بالمستشعر والبدء", eo: "📳 Permesi sensilon kaj komenci" },
+  pedometer_stop: { ja: "■ 停止", en: "■ Stop", hira: "■ ていし", ko: "■ 중지", zh: "■ 停止", ar: "■ إيقاف", eo: "■ Halti" },
+  pedometer_waiting: { ja: "待機中", en: "Waiting", hira: "たいきちゅう", ko: "대기 중", zh: "等待中", ar: "في الانتظار", eo: "Atendante" },
+  pedometer_post_title: { ja: "非同期POST送信先", en: "Async POST destination", hira: "ひどうき POST そうしんさき", ko: "비동기 POST 전송 대상", zh: "异步POST发送目标", ar: "وجهة إرسال POST غير متزامن", eo: "Celo de nesinkrona POST" },
+  pedometer_post_default: { ja: "ローカル保存を優先します。送信先が利用できない場合も歩数・コインは保持されます。", en: "Local storage has priority. Steps and coins are retained even when the destination is unavailable.", hira: "ろーかる ほぞんを ゆうせんします。そうしんさきが りようできない ばあいも ほすう・こいんは ほじされます。", ko: "로컬 저장을 우선합니다. 전송 대상이 unavailable이어도 걸음 수와 코인은 유지됩니다.", zh: "优先使用本地保存。即使发送目标不可用，步数和金币也会保留。", ar: "يُعطى التخزين المحلي الأولوية. تبقى الخطوات والعملات محفوظة حتى عند تعذر الوصول إلى وجهة الإرسال.", eo: "Loka konservado havas prioritaton. Paŝoj kaj moneroj restas konservitaj eĉ se la celo ne disponeblas." },
+  pedometer_specs: { ja: "判定閾値: 11.0　/　デバウンス: 300ms　/　1回: 160コイン　/　保存: LocalStorage", en: "Threshold: 11.0 / Debounce: 300 ms / Each detection: 160 coins / Storage: LocalStorage", hira: "はんてい しきいち: 11.0 / でばうんす: 300ms / 1かい: 160こいん / ほぞん: LocalStorage", ko: "판정 임계값: 11.0 / 디바운스: 300ms / 1회: 160코인 / 저장: LocalStorage", zh: "判定阈值：11.0 / 防抖：300ms / 每次：160金币 / 保存：LocalStorage", ar: "العتبة: 11.0 / إزالة الارتداد: 300 مللي ثانية / كل كشف: 160 عملة / التخزين: LocalStorage", eo: "Sojlo: 11.0 / Debounce: 300 ms / Ĉiu detekto: 160 moneroj / Konservado: LocalStorage" },
+  pedometer_wakelock_unsupported: { ja: "Wake Lock API非対応。センサーは利用できます。", en: "Wake Lock API is not supported. The sensor can still be used.", hira: "Wake Lock APIに たいおうしていません。せんさーは りようできます。", ko: "Wake Lock API를 지원하지 않습니다. 센서는 사용할 수 있습니다.", zh: "不支持Wake Lock API。仍可使用传感器。", ar: "واجهة Wake Lock API غير مدعومة. يمكن الاستمرار في استخدام المستشعر.", eo: "Wake Lock API ne estas subtenata. La sensilo ankoraŭ uzeblas." },
+  pedometer_wakelock_failed: { ja: "画面スリープ防止を開始できませんでした。", en: "Could not start screen wake lock.", hira: "がめん すりーぷぼうしを かいしできませんでした。", ko: "화면 깨우기 잠금을 시작할 수 없습니다.", zh: "无法启动屏幕保持唤醒。", ar: "تعذر بدء إبقاء الشاشة مستيقظة.", eo: "Ne eblis komenci ekranan vekŝlosilon." },
+  pedometer_post_unset: { ja: "送信先未設定。ローカル保存済みです。", en: "No destination set. Saved locally.", hira: "そうしんさき みせってい。ろーかる ほぞんずみです。", ko: "전송 대상이 설정되지 않았습니다. 로컬에 저장했습니다.", zh: "未设置发送目标。已保存到本地。", ar: "لم يتم تعيين وجهة. تم الحفظ محليًا.", eo: "Celo ne estas agordita. Konservite loke." },
+  pedometer_post_success: { ja: "POST送信成功", en: "POST sent successfully", hira: "POSTそうしん せいこう", ko: "POST 전송 성공", zh: "POST发送成功", ar: "تم إرسال POST بنجاح", eo: "POST sukcese sendita" },
+  pedometer_post_error: { ja: "POST送信エラー（ローカル保存済み）", en: "POST error (saved locally)", hira: "POSTそうしん えらー（ろーかる ほぞんずみ）", ko: "POST 전송 오류 (로컬 저장됨)", zh: "POST发送错误（已本地保存）", ar: "خطأ في POST (تم الحفظ محليًا)", eo: "POST-eraro (konservite loke)" },
+  pedometer_network_failed: { ja: "通信失敗", en: "Network failure", hira: "つうしん しっぱい", ko: "통신 실패", zh: "通信失败", ar: "فشل الاتصال", eo: "Reta malsukceso" },
+  pedometer_motion_unsupported: { ja: "DeviceMotionEvent非対応", en: "DeviceMotionEvent is not supported", hira: "DeviceMotionEventに たいおうしていません", ko: "DeviceMotionEvent를 지원하지 않습니다", zh: "不支持DeviceMotionEvent", ar: "DeviceMotionEvent غير مدعوم", eo: "DeviceMotionEvent ne estas subtenata" },
+  pedometer_permission_denied: { ja: "加速度センサーの利用が許可されませんでした", en: "Accelerometer permission was not granted", hira: "かそくど せんさーの りようが きょかされませんでした", ko: "가속도 센서 사용 권한이 허용되지 않았습니다", zh: "未获得加速度传感器使用权限", ar: "لم يتم منح إذن استخدام مستشعر التسارع", eo: "Permeso por la akcelometro ne estis donita" },
+  pedometer_detecting: { ja: "歩行検知中", en: "Detecting steps", hira: "ほこう けんちちゅう", ko: "걸음 감지 중", zh: "正在检测步行", ar: "اكتشاف الخطوات", eo: "Detektante paŝojn" },
+  pedometer_detecting_button: { ja: "📳 歩行検知中", en: "📳 Detecting steps", hira: "📳 ほこう けんちちゅう", ko: "📳 걸음 감지 중", zh: "📳 正在检测步行", ar: "📳 جارٍ اكتشاف الخطوات", eo: "📳 Detektante paŝojn" },
+  pedometer_start_failed: { ja: "開始できません", en: "Could not start", hira: "かいしできません", ko: "시작할 수 없습니다", zh: "无法开始", ar: "تعذر البدء", eo: "Ne eblas komenci" },
+  pedometer_device_unsupported: { ja: "権限または端末非対応", en: "Permission or device not supported", hira: "けんげん または たんまつ ひたいおう", ko: "권한 또는 기기 미지원", zh: "权限或设备不支持", ar: "الإذن أو الجهاز غير مدعوم", eo: "Permeso aŭ aparato ne subtenata" },
+  pedometer_stopped: { ja: "停止中", en: "Stopped", hira: "ていしちゅう", ko: "중지됨", zh: "已停止", ar: "متوقف", eo: "Haltita" },
   coin_title: { ja: "🪙 コイン", en: "🪙 Coins", hira: "🪙 こいん", ko: "🪙 코인", zh: "🪙 金币", ar: "🪙 العملات", eo: "🪙 Moneroj" },
   coin_add_balance: { ja: "残高追加", en: "Add Balance", hira: "ざんだか ついか", ko: "잔액 추가", zh: "增加余额", ar: "إضافة الرصيد", eo: "Aldoni Saldo" },
   coin_balance_add_amount: { ja: "クレカ残高の追加金額", en: "Credit-card balance addition amount", hira: "くれか ざんだかの ついか きんがく", ko: "카드 잔액 추가 금액", zh: "信用卡余额增加金额", ar: "مبلغ إضافة رصيد البطاقة", eo: "Kvanto de aldono al kartsaldo" },
@@ -1511,6 +1583,20 @@ const I18N_DICTIONARY = {
   coin_title_changed: { ja: "サイトタイトルを変更しました。", en: "The site title has been changed.", hira: "さいとたいとるを へんこうしました。", ko: "사이트 제목을 변경했습니다.", zh: "网站标题已更改。", ar: "تم تغيير عنوان الموقع.", eo: "La reteja titolo estis ŝanĝita." },
   coin_history_empty: { ja: "使用履歴はありません。", en: "No usage history.", hira: "しようりれきは ありません。", ko: "사용 기록이 없습니다.", zh: "暂无使用记录。", ar: "لا يوجد سجل استخدام.", eo: "Neniu uzhistorio." },
   coin_hour_grant: { ja: "毎時間の自動付与", en: "Hourly automatic grant", hira: "まいじかんの じどうふよ", ko: "매시간 자동 지급", zh: "每小时自动发放", ar: "منحة تلقائية كل ساعة", eo: "Aŭtomata hora donaco" },
+
+  game_color_legend_title: { ja: "ゲーム種類・タイトル別カラー", en: "Game Type & Title Colors", hira: "げーむしゅるい・たいとるべつ からー", ko: "게임 종류 및 제목별 색상", zh: "游戏类型与标题颜色", ar: "ألوان نوع اللعبة والعنوان", eo: "Koloroj laŭ ludtipo kaj titolo" },
+  coin_graph_title: { ja: "🪙 myfinger消費量リアルタイムグラフ", en: "🪙 Real-time myfinger Consumption Graph", hira: "🪙 myfingerしょうひりょう りあるたいむ ぐらふ", ko: "🪙 myfinger 실시간 소비 그래프", zh: "🪙 myfinger实时消费图表", ar: "🪙 مخطط استهلاك myfinger في الوقت الفعلي", eo: "🪙 Realtempa Grafiko de Konsumo de myfinger" },
+  coin_graph_play: { ja: "▶ 再生", en: "▶ Play", hira: "▶ さいせい", ko: "▶ 재생", zh: "▶ 播放", ar: "▶ تشغيل", eo: "▶ Ludi" },
+  coin_graph_pause: { ja: "⏸ 一時停止", en: "⏸ Pause", hira: "⏸ いちじていし", ko: "⏸ 일시정지", zh: "⏸ 暂停", ar: "⏸ إيقاف مؤقت", eo: "⏸ Paŭzi" },
+  coin_graph_resume: { ja: "⏯ 再開", en: "⏯ Resume", hira: "⏯ さいかい", ko: "⏯ 재개", zh: "⏯ 계속", ar: "⏯ استئناف", eo: "⏯ Daŭrigi" },
+  coin_graph_seek: { ja: "シーク", en: "Seek", hira: "しーく", ko: "탐색", zh: "搜索", ar: "بحث", eo: "Serĉi" },
+  coin_graph_seek_aria: { ja: "myfingerグラフのシークバー", en: "myfinger graph seek bar", hira: "myfingerぐらふの しーくばー", ko: "myfinger 그래프 탐색 막대", zh: "myfinger图表搜索栏", ar: "شريط البحث في مخطط myfinger", eo: "Serĉobreto de la grafiko de myfinger" },
+  coin_graph_record: { ja: "🎥 .mp4で録画", en: "🎥 Record as .mp4", hira: "🎥 .mp4で ろくが", ko: "🎥 .mp4로 녹화", zh: "🎥 录制为 .mp4", ar: "🎥 تسجيل بصيغة .mp4", eo: "🎥 Registri kiel .mp4" },
+  coin_graph_played_date: { ja: "遊んだ日時", en: "Played date/time", hira: "あそんだ にちじ", ko: "플레이한 날짜/시간", zh: "游玩日期时间", ar: "تاريخ ووقت اللعب", eo: "Dato/horo de ludado" },
+  coin_graph_mode: { ja: "モード", en: "Mode", hira: "もーど", ko: "모드", zh: "模式", ar: "الوضع", eo: "Reĝimo" },
+  coin_graph_history: { ja: "遊んだ履歴", en: "Play history", hira: "あそんだ りれき", ko: "플레이 기록", zh: "游玩记录", ar: "سجل اللعب", eo: "Ludhistorio" },
+  coin_graph_current: { ja: "現在", en: "Current", hira: "げんざい", ko: "현재", zh: "当前", ar: "الحالي", eo: "Nuna" },
+  coin_graph_empty: { ja: "ゲームを開始するとリアルタイムで線が描かれます", en: "The line will be drawn in real time when you start a game", hira: "げーむを はじめると りあるたいむで せんが えがかれます", ko: "게임을 시작하면 실시간으로 선이 그려집니다", zh: "开始游戏后将实时绘制曲线", ar: "سيتم رسم الخط في الوقت الفعلي عند بدء اللعبة", eo: "La linio estos desegnita realtempe kiam vi komencos ludon" },
 
   game_stick: { ja: "棒とビ", en: "Stick & Jump", hira: "ぼうとび", ko: "봉 넘기", zh: "火柴人跳跃", ar: "القفز فوق العصي", eo: "Baston-Salto" },
   game_block: { ja: "ブロック消し", en: "Block Breaker", hira: "ぶろっく けし", ko: "블록 깨기", zh: "消除方块", ar: "تكسير الكتل", eo: "Blok-Rompo" },
@@ -1668,6 +1754,7 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+{ pinned: false, date: '2026/09/25 19:00', desc: { ja: '歩数計タブを追加：0.5歩判定、160コイン加算、画面スリープ防止、OLED向けピクセルシフト、LocalStorage自動保存、非同期POST送信、iOS・Androidのセンサー権限要求に対応しました。ゲーム種類・タイトル別カラー表示にも対応しました', en: 'Added a pedometer tab with 0.5-step detection, 160-coin rewards, screen wake lock, OLED-oriented pixel shifting, LocalStorage autosave, asynchronous POST sending, and iOS/Android sensor permission requests. Also added game-type/title color display', hira: 'ほすうけいたぶを ついか：0.5ぽ はんてい、160こいん かさん、がめん すりーぷぼうし、OLEDむけ ぴくせるしふと、LocalStorageじどうほぞん、ひどうきPOSTそうしん、iOS・Androidの せんさーけんげん ようきゅうに たいおうしました。げーむしゅるい・たいとるべつからーひょうじにも たいおうしました', ko: '걸음 수 탭을 추가했습니다: 0.5걸음 판정, 160코인 추가, 화면 깨우기 잠금, OLED용 픽셀 시프트, LocalStorage 자동 저장, 비동기 POST 전송, iOS·Android 센서 권한 요청을 지원합니다. 게임 종류·제목별 색상 표시도 지원합니다', zh: '新增计步器标签页：支持0.5步判定、每次增加160金币、屏幕保持唤醒、OLED像素偏移、LocalStorage自动保存、异步POST发送以及iOS和Android传感器权限请求。还支持按游戏类型和标题显示颜色', ar: 'تمت إضافة تبويب عداد الخطوات: اكتشاف نصف الخطوة، إضافة 160 عملة، إبقاء الشاشة مستيقظة، إزاحة بكسلات لشاشات OLED، الحفظ التلقائي في LocalStorage، الإرسال غير المتزامن عبر POST، وطلب أذونات المستشعر في iOS وAndroid. كما تمت إضافة عرض الألوان حسب نوع اللعبة والعنوان', eo: 'Aldonis paŝmezurilan langeton kun 0,5-paŝa detekto, 160-monera rekompenco, ekranveka ŝlosilo, piksela movo por OLED, aŭtomata LocalStorage-konservado, nesinkrona POST-sendado kaj sensilaj permespetoj por iOS kaj Android. Ankaŭ subtenata estas kolorigo laŭ ludtipo kaj titolo' } },
 { pinned: false, date: '2026/09/24 06:02', desc: { ja: 'myfinger消費量リアルタイムグラフをゲーム別の色線で表示し、遊んだ日時とモードをグラフ枠外に表示するようにしました。リアルタイム描画、再生・一時停止・再開・シーク、MP4録画保存にも対応しました', en: 'Updated the real-time myfinger consumption graph with separate colored lines for each game and displayed the played date/time and mode outside the graph frame. Real-time drawing, playback, pause, resume, seeking, and MP4 recording are supported', hira: 'myfingerしょうひりょう りあるたいむぐらふを げーむべつの いろせんで ひょうじし、あそんだ にちじと もーどを ぐらふわくがいに ひょうじするようにしました。りあるたいむびょうが、さいせい・いちじていし・さいかい・しーく、MP4ろくがほぞんにも たいおうしました', ko: 'myfinger 실시간 소비 그래프를 게임별 색상 선으로 표시하고 플레이한 날짜/시간과 모드를 그래프 바깥에 표시하도록 업데이트했습니다. 실시간 그리기, 재생, 일시정지, 재개, 탐색 및 MP4 녹화를 지원합니다', zh: '更新myfinger实时消费图表：按游戏使用不同颜色的线，并在图表框外显示游玩日期时间和模式。支持实时绘制、播放、暂停、继续、搜索和MP4录制保存', ar: 'تم تحديث مخطط استهلاك myfinger اللحظي لعرض خط بلون مختلف لكل لعبة وإظهار تاريخ ووقت اللعب والوضع خارج إطار المخطط. كما يدعم الرسم اللحظي والتشغيل والإيقاف والاستئناف والبحث وتسجيل MP4', eo: 'Ĝisdatigis la realtempan grafikon de myfinger-konsumo per apartkoloraj linioj por ĉiu ludo kaj montris la luddaton, horon kaj reĝimon ekster la grafika kadro. Subtenataj estas realtempa desegnado, ludado, paŭzo, rekomenco, serĉado kaj MP4-registrado' } },
 { pinned: false, date: '2026/09/23 18:06', desc: { ja: 'ゲーム速度の自由入力、コイン残高5回確認リセット、ブロック消しの😂特殊ブロック、ゲーム内myfinger消費量リアルタイム表示、データタブのmyfinger消費量リアルタイム折れ線グラフと再生・一時停止・再開・シーク・MP4録画を追加', en: 'Added free game-speed input, a five-step myfinger balance reset, the 😂 special block, real-time in-game myfinger cost display, and a real-time data-tab line graph with playback, pause, resume, seeking, and MP4 recording', hira: 'げーむすぴーどの じゆうにゅうりょく、こいんざんだか ごかいかくにん りせっと、ぶろっくけしの 😂 とくしゅぶろっく、げーむない myfingerしょうひりょう りあるたいむひょうじ、でーたたぶの りあるたいむ おれせんぐらふと さいせい・いちじていし・さいかい・しーく・MP4ろくがを ついか', ko: '게임 속도 자유 입력, 5단계 myfinger 잔액 초기화, 😂 특수 블록, 게임 내 myfinger 실시간 소비량 표시, 데이터 탭 실시간 선 그래프 재생·일시정지·재개·탐색·MP4 녹화를 추가했습니다', zh: '新增游戏速度自由输入、五次确认的myfinger余额重置、😂特殊方块、游戏内myfinger实时消费显示，以及数据标签页实时折线图的播放、暂停、继续、搜索和MP4录制', ar: 'تمت إضافة إدخال سرعة اللعبة بحرية، وإعادة ضبط رصيد myfinger بعد خمس تأكيدات، وكتلة 😂 الخاصة، وعرض استهلاك myfinger في اللعبة لحظيًا، ومخطط خطي لحظي في تبويب البيانات مع التشغيل والإيقاف والاستئناف والبحث وتسجيل MP4', eo: 'Aldonis liberan ludrapidan enigon, kvinpaŝan konfirmitan restarigon de myfinger-saldo, la specialan 😂 blokon, realtempan myfinger-konsumon en la ludo, kaj realtempan linian grafikon en Datumoj kun ludado, paŭzo, rekomenco, serĉo kaj MP4-registrado' } },
 { pinned: false, date: '2026/09/23 16:40', desc: { ja: 'コイン機能を修正：クレカ残高から追加するコイン残高の追加金額を設定可能にし、通常値を800,000コインにしました。また、ゲームをプレイした時間に応じて1分ごとに2,000コイン、1分未満の残り時間は1秒あたり0.6コインで計算し、小数点以下を切り捨てて自動消費するようにしました', en: 'Updated the coin system: the amount added from the credit-card balance is now configurable, with a default of 800,000 coins. Game play now automatically consumes 2,000 coins per minute, with under-one-minute time charged at 0.6 coins per second and fractional coins truncated', hira: 'こいんきのうを しゅうせい：くれか ざんだから ついかする こいんざんだかの ついかきんがくを せってい かのうにし、つうじょうちを 800,000こいんにしました。また、げーむを ぷれいした じかんに おうじて 1ぷんごとに 2,000こいん、1ぷんみまんの のこりじかんは 1びょうあたり 0.6こいんで けいさんし、しょうすうてんいかを きりすてて じどうしょうひするようにしました', ko: '코인 기능 수정: 신용카드 잔액에서 추가되는 코인 금액을 설정할 수 있게 하고 기본값을 800,000코인으로 변경했습니다. 또한 게임 플레이 시간에 따라 1분마다 2,000코인을 자동 소비하고, 1분 미만의 남은 시간은 초당 0.6코인으로 계산한 뒤 소수점 이하를 버리도록 했습니다', zh: '更新金币功能：现在可以设置从信用卡余额追加的金币数量，默认值为800,000金币。游戏游玩时间每1分钟自动消耗2,000金币，不满1分钟的剩余时间按每秒0.6金币计算，并舍去小数部分', ar: 'تم تحديث نظام العملات: أصبح من الممكن ضبط مقدار العملات المضافة من رصيد البطاقة، والقيمة الافتراضية 800000 عملة. كما يتم استهلاك 2000 عملة لكل دقيقة لعب، ويُحسب الوقت المتبقي الأقل من دقيقة بمقدار 0.6 عملة لكل ثانية مع حذف الجزء العشري', eo: 'Ĝisdatigis la monersistemon: la kvanto aldonata el la kartsaldo estas agordebla, kun defaŭlto de 800 000 moneroj. Dum ludado 2 000 moneroj estas aŭtomate konsumataj por ĉiu minuto, kaj la resto sub unu minuto estas kalkulata je 0,6 monero por sekundo kun forigo de la frakcia parto' } },
@@ -1944,10 +2031,10 @@ function updateCoinUsageGraphMeta() {
   });
   if (current) {
     const p = coinUsageGraphData[Math.min(Math.max(0, coinUsageGraphPlaybackIndex), Math.max(0, coinUsageGraphData.length - 1))];
-    current.innerHTML = p ? `<strong>遊んだ日時:</strong> ${escapeHtml(p.sessionDate || formatCoinUsageDate(p.time))}　<strong>モード:</strong> ${escapeHtml(getCoinUsageGameLabel(p.gameKey))}` : '<strong>遊んだ日時:</strong> ---　<strong>モード:</strong> ---';
+    current.innerHTML = p ? `<strong>${escapeHtml(t('coin_graph_played_date'))}:</strong> ${escapeHtml(p.sessionDate || formatCoinUsageDate(p.time))}　<strong>${escapeHtml(t('coin_graph_mode'))}:</strong> ${escapeHtml(getCoinUsageGameLabel(p.gameKey))}` : `<strong>${escapeHtml(t('coin_graph_played_date'))}:</strong> ---　<strong>${escapeHtml(t('coin_graph_mode'))}:</strong> ---`;
   }
   if (list) {
-    list.innerHTML = sessions.length ? '<strong>遊んだ履歴:</strong> ' + sessions.slice(-30).reverse().map(x => `<span style="display:inline-block; margin:2px 8px 2px 0;"><span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:${getCoinUsageGameColor(x.gameKey)}; margin-right:4px;"></span>${escapeHtml(x.date)} / ${escapeHtml(getCoinUsageGameLabel(x.gameKey))}</span>`).join('') : '';
+    list.innerHTML = sessions.length ? `<strong>${escapeHtml(t('coin_graph_history'))}:</strong> ` + sessions.slice(-30).reverse().map(x => `<span style="display:inline-block; margin:2px 8px 2px 0;"><span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:${getCoinUsageGameColor(x.gameKey)}; margin-right:4px;"></span>${escapeHtml(x.date)} / ${escapeHtml(getCoinUsageGameLabel(x.gameKey))}</span>`).join('') : '';
   }
 }
 function updateCoinUsageGraphControls() {
@@ -1977,10 +2064,10 @@ function drawCoinUsageGraph(){
   if(c.width!==Math.floor(cssW*dpr)||c.height!==Math.floor(cssH*dpr)){c.width=Math.floor(cssW*dpr);c.height=Math.floor(cssH*dpr);}
   const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,cssW,cssH);
   const textColor=getComputedStyle(document.body).getPropertyValue('--text-color')||'#333';
-  g.fillStyle=textColor; g.font='bold 14px sans-serif'; g.fillText('myfinger消費量',16,22);
+  g.fillStyle=textColor; g.font='bold 14px sans-serif'; g.fillText(t('coin_graph_title').replace(/^🪙\s*/, ''),16,22);
   const left=48,top=36,right=16,bottom=34,w=Math.max(10,cssW-left-right),h=Math.max(10,cssH-top-bottom);
   g.strokeStyle='rgba(120,120,120,.35)';g.lineWidth=1; for(let i=0;i<5;i++){const y=top+h*i/4;g.beginPath();g.moveTo(left,y);g.lineTo(left+w,y);g.stroke();}
-  if(!coinUsageGraphData.length){g.fillStyle=textColor;g.fillText('ゲームを開始するとリアルタイムで線が描かれます',left+10,top+h/2);updateCoinUsageGraphControls();return;}
+  if(!coinUsageGraphData.length){g.fillStyle=textColor;g.fillText(t('coin_graph_empty'),left+10,top+h/2);updateCoinUsageGraphControls();return;}
   const end=Math.min(coinUsageGraphPlaybackIndex,coinUsageGraphData.length-1), start=Math.max(0,end-599), pts=coinUsageGraphData.slice(start,end+1);
   const maxObserved=Math.max(0,...pts.map(p=>Number(p.cost)||0));
   const maxCost=Math.max(10,Math.ceil(maxObserved/10)*10);
@@ -1999,7 +2086,7 @@ function drawCoinUsageGraph(){
     items.forEach((item,j)=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-((Number(item.p.cost)||0)/maxCost)*h;j?g.lineTo(x,y):g.moveTo(x,y);}); g.stroke();
     items.forEach(item=>{const x=left+(item.i/(pts.length-1))*w,y=top+h-((Number(item.p.cost)||0)/maxCost)*h;g.fillStyle=getCoinUsageGameColor(key);g.beginPath();g.arc(x,y,2.5,0,Math.PI*2);g.fill();});
   });
-  g.fillStyle=textColor;g.fillText(`現在: ${formatCoinAmount(pts[pts.length-1].cost)} myfinger`,left,cssH-10); updateCoinUsageGraphControls();
+  g.fillStyle=textColor;g.fillText(`${t('coin_graph_current')}: ${formatCoinAmount(pts[pts.length-1].cost)} myfinger`,left,cssH-10); updateCoinUsageGraphControls();
 }
 function startCoinUsageGraphLoop(){
   if(coinUsageGraphSampleTimer)clearInterval(coinUsageGraphSampleTimer);
@@ -2300,6 +2387,8 @@ function changeLanguage(lang) {
     const k = el.getAttribute('data-i18n');
     el.textContent = t(k);
   });
+
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { const key = el.getAttribute('data-i18n-aria'); if (key && I18N[key]) el.setAttribute('aria-label', I18N[key][lang] || I18N[key].ja || Object.values(I18N[key])[0] || ''); });
   localizeGameOptionPresets();
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     const k = el.getAttribute('data-i18n-ph');
@@ -2313,6 +2402,9 @@ function changeLanguage(lang) {
   renderShortcuts();
   updateQuestionsResetButton();
   updateMyProfileLive();
+  renderPedometerLegend();
+  updateCoinUsageGraphMeta();
+  drawCoinUsageGraph();
   saveAllConfig();
 }
 
@@ -2607,6 +2699,200 @@ draw3DTitle();
 /* ==========================================================================
    タブ切り替え & モーダル (★ 画面復帰時の自動リサイズ修正)
    ========================================================================== */
+
+/* --- 歩数計 --- */
+const PEDOMETER_THRESHOLD = 11.0;
+const PEDOMETER_DEBOUNCE_MS = 300;
+const PEDOMETER_COIN_PER_HALF_STEP = 160;
+let pedometerHalfSteps = 0;
+let pedometerCoins = 0;
+let pedometerLastDetection = 0;
+let pedometerRunning = false;
+let pedometerWakeLock = null;
+let pedometerPixelShiftTimer = null;
+
+function formatPedometerNumber(n) {
+  return Math.floor(Number(n) || 0).toLocaleString('ja-JP');
+}
+
+function updatePedometerDisplay() {
+  const half = document.getElementById('pedometerHalfSteps');
+  const steps = document.getElementById('pedometerSteps');
+  const coins = document.getElementById('pedometerCoins');
+  if (half) half.textContent = formatPedometerNumber(pedometerHalfSteps);
+  if (steps) steps.textContent = (pedometerHalfSteps / 2).toFixed(1);
+  if (coins) coins.textContent = formatPedometerNumber(pedometerCoins);
+}
+
+function savePedometerState() {
+  const state = { halfSteps: pedometerHalfSteps, coins: pedometerCoins, savedAt: Date.now() };
+  try { localStorage.setItem('airplane_game_pedometer_state', JSON.stringify(state)); } catch(e) {}
+  updatePedometerDisplay();
+}
+
+function loadPedometerState() {
+  try {
+    const state = JSON.parse(localStorage.getItem('airplane_game_pedometer_state') || '{}');
+    pedometerHalfSteps = Math.max(0, Math.floor(Number(state.halfSteps) || 0));
+    pedometerCoins = Math.max(0, Math.floor(Number(state.coins) || 0));
+  } catch(e) { pedometerHalfSteps = 0; pedometerCoins = 0; }
+  const url = localStorage.getItem('airplane_game_pedometer_post_url');
+  const input = document.getElementById('pedometerPostUrl');
+  if (input && url !== null) input.value = url;
+  updatePedometerDisplay();
+}
+
+function savePedometerConfig() {
+  const input = document.getElementById('pedometerPostUrl');
+  if (!input) return;
+  try { localStorage.setItem('airplane_game_pedometer_post_url', input.value.trim()); } catch(e) {}
+}
+
+function setPedometerStatus(message, ok=false) {
+  const el = document.getElementById('pedometerSensorStatus');
+  if (el) el.textContent = message;
+  if (el) el.style.color = ok ? '#69f0ae' : '#ffffff';
+}
+
+function setPedometerPostStatus(message, ok=false) {
+  const el = document.getElementById('pedometerPostStatus');
+  if (el) { el.textContent = message; el.style.color = ok ? '#69f0ae' : '#ffffff'; }
+}
+
+async function requestPedometerWakeLock() {
+  if (!('wakeLock' in navigator)) {
+    setPedometerStatus(t('pedometer_wakelock_unsupported'));
+    return;
+  }
+  try {
+    if (pedometerWakeLock && !pedometerWakeLock.released) return;
+    pedometerWakeLock = await navigator.wakeLock.request('screen');
+    pedometerWakeLock.addEventListener?.('release', () => { pedometerWakeLock = null; });
+  } catch(e) {
+    setPedometerStatus(t('pedometer_wakelock_failed'));
+  }
+}
+
+async function handlePedometerMotion(event) {
+  if (!pedometerRunning) return;
+  const a = event.accelerationIncludingGravity;
+  if (!a) return;
+  const x = Number(a.x) || 0, y = Number(a.y) || 0, z = Number(a.z) || 0;
+  const power = Math.sqrt(x*x + y*y + z*z);
+  const now = Date.now();
+  if (power < PEDOMETER_THRESHOLD || now - pedometerLastDetection < PEDOMETER_DEBOUNCE_MS) return;
+  pedometerLastDetection = now;
+  pedometerHalfSteps += 1;
+  pedometerCoins += PEDOMETER_COIN_PER_HALF_STEP;
+  savePedometerState();
+  if (navigator.vibrate) { try { navigator.vibrate(12); } catch(e) {} }
+  sendPedometerStep(power);
+}
+
+async function sendPedometerStep(power) {
+  const url = (document.getElementById('pedometerPostUrl')?.value || '').trim();
+  savePedometerConfig();
+  if (!url) {
+    setPedometerPostStatus(t('pedometer_post_unset'));
+    return;
+  }
+  const payload = {
+    halfStep: 1,
+    steps: 0.5,
+    coins: PEDOMETER_COIN_PER_HALF_STEP,
+    totalHalfSteps: pedometerHalfSteps,
+    totalSteps: pedometerHalfSteps / 2,
+    totalCoins: pedometerCoins,
+    accelerationPower: power,
+    detectedAt: new Date().toISOString()
+  };
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    setPedometerPostStatus(`${t('pedometer_post_success')}: ${new Date().toLocaleTimeString()}`, true);
+  } catch(e) {
+    setPedometerPostStatus(`${t('pedometer_post_error')}（${e.message || t('pedometer_network_failed')}）`);
+  }
+}
+
+async function startPedometer() {
+  loadPedometerState();
+  const startButton = document.getElementById('pedometerStartBtn');
+  try {
+    if (typeof DeviceMotionEvent === 'undefined') throw new Error(t('pedometer_motion_unsupported'));
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      const permission = await DeviceMotionEvent.requestPermission();
+      if (permission !== 'granted') throw new Error(t('pedometer_permission_denied'));
+    }
+    await requestPedometerWakeLock();
+    window.removeEventListener('devicemotion', handlePedometerMotion);
+    window.addEventListener('devicemotion', handlePedometerMotion, { passive: true });
+    pedometerRunning = true;
+    setPedometerStatus(t('pedometer_detecting'), true);
+    if (startButton) startButton.textContent = t('pedometer_detecting_button');
+  } catch(e) {
+    pedometerRunning = false;
+    setPedometerStatus(`${t('pedometer_start_failed')}: ${e.message || t('pedometer_device_unsupported')}`);
+  }
+}
+
+function stopPedometer() {
+  pedometerRunning = false;
+  window.removeEventListener('devicemotion', handlePedometerMotion);
+  if (pedometerWakeLock) { try { pedometerWakeLock.release(); } catch(e) {} }
+  pedometerWakeLock = null;
+  const startButton = document.getElementById('pedometerStartBtn');
+  if (startButton) startButton.textContent = t('pedometer_start');
+  setPedometerStatus(t('pedometer_stopped'));
+}
+
+async function reacquirePedometerWakeLock() {
+  if (!pedometerRunning || document.visibilityState !== 'visible') return;
+  await requestPedometerWakeLock();
+}
+
+function applyPedometerPixelShift() {
+  const target = document.querySelector('#pedometerPanel .pedometer-shift-target');
+  if (!target) return;
+  const x = Math.floor(Math.random() * 11) - 5;
+  const y = Math.floor(Math.random() * 11) - 5;
+  target.style.transform = `translate(${x}px, ${y}px)`;
+}
+
+function getPedometerGameColors() {
+  return [
+    ['stick', '#2196f3'], ['block', '#ff9800'], ['konjac', '#4caf50'],
+    ['blackboard', '#9c27b0'], ['flag', '#f44336'], ['vs', '#00acc1']
+  ];
+}
+
+function renderPedometerLegend() {
+  const el = document.getElementById('pedometerGameLegend');
+  if (!el) return;
+  el.innerHTML = getPedometerGameColors().map(([key,color]) => {
+    const title = escapeHtml(t(`game_${key}`) || key);
+    return `<span style="display:inline-flex;align-items:center;gap:5px;background:#000;border:1px solid #333;border-radius:999px;padding:5px 9px;"><span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;"></span>${title}</span>`;
+  }).join('');
+}
+
+function initPedometer() {
+  loadPedometerState();
+  renderPedometerLegend();
+  if (pedometerPixelShiftTimer) clearInterval(pedometerPixelShiftTimer);
+  pedometerPixelShiftTimer = setInterval(() => {
+    if (document.getElementById('pedometerTab')?.classList.contains('active')) applyPedometerPixelShift();
+  }, 30000);
+}
+
+window.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') reacquirePedometerWakeLock();
+});
+
 function switchTab(tabId, btnElement) {
   if (tabId === 'gameTab' && !document.getElementById('cfgGameEnabled').checked) {
     tabId = 'howToTab';
@@ -2636,6 +2922,7 @@ function switchTab(tabId, btnElement) {
 
   if (tabId === 'historyTab') renderHistoryTable();
   if (tabId === 'dataTab') renderScoreTable();
+  if (tabId === 'pedometerTab') { loadPedometerState(); renderPedometerLegend(); }
   if (tabId === 'howToTab') startHowToAnimation();
   if (tabId === 'profileTab') updateMyProfileLive();
 
@@ -5352,6 +5639,7 @@ window.addEventListener('load', async () => {
   const savedLang = (config && config.lang) ? config.lang : (localStorage.getItem('airplane_game_lang') || 'ja');
   changeLanguage(savedLang);
   if (memoryStore.customSiteTitle) document.title = memoryStore.customSiteTitle;
+  initPedometer();
   loadCoinUsageGraph();
   updateCoinDisplays();
   startCoinUsageGraphLoop();
