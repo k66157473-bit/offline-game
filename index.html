@@ -2015,8 +2015,49 @@ function loadCoinUsageGraph() {
     const raw = JSON.parse(localStorage.getItem('airplane_game_coin_usage_graph') || '[]');
     coinUsageGraphData = Array.isArray(raw) ? raw.filter(p => p && Number.isFinite(Number(p.time)) && Number.isFinite(Number(p.cost))).map(p => ({
       time:Number(p.time), cost:Number(p.cost), gameKey:p.gameKey || '', sessionId:p.sessionId || `legacy-${p.time}`, sessionDate:p.sessionDate || formatCoinUsageDate(p.time)
-    })).slice(-3600) : [];
+    })) : [];
   } catch(e) { coinUsageGraphData = []; }
+
+  // 以前のゲーム履歴にはグラフ専用データが存在しない場合があるため、
+  // 保存済みのコイン使用履歴から過去のプレイ料金を復元する。
+  // 現在のリアルタイム記録がある場合は重複させない。
+  try {
+    const existingTimes = new Set(coinUsageGraphData.map(p => Math.round(Number(p.time) / 1000)));
+    const scores = Array.isArray(memoryStore.scores) ? memoryStore.scores : [];
+    const scoreTimes = scores.map(s => ({
+      time: Date.parse(String(s.date || '').replace(/\//g, '-')),
+      gameKey: getScoreGameKey(s) || s.gameKey || ''
+    })).filter(x => Number.isFinite(x.time));
+    const history = Array.isArray(memoryStore.coinHistory) ? memoryStore.coinHistory : [];
+    history.forEach((h, index) => {
+      const amount = Number(h.amount);
+      const action = String(h.action || '');
+      if (!(amount < 0) || !action.includes(t('coin_game_time_cost'))) return;
+      const time = Date.parse(String(h.date || '').replace(/\//g, '-'));
+      if (!Number.isFinite(time)) return;
+      const sec = Math.round(time / 1000);
+      if (existingTimes.has(sec)) return;
+      let gameKey = '';
+      let bestDiff = Infinity;
+      scoreTimes.forEach(st => {
+        const diff = Math.abs(st.time - time);
+        if (diff <= 5 * 60 * 1000 && diff < bestDiff) { bestDiff = diff; gameKey = st.gameKey; }
+      });
+      coinUsageGraphData.push({
+        time, cost: Math.abs(amount), gameKey,
+        sessionId: `history-${time}-${index}`,
+        sessionDate: formatCoinUsageDate(time)
+      });
+      existingTimes.add(sec);
+    });
+
+    coinUsageGraphData.sort((a,b) => Number(a.time) - Number(b.time));
+    coinUsageGraphData = coinUsageGraphData.slice(-3600);
+    localStorage.setItem('airplane_game_coin_usage_graph', JSON.stringify(coinUsageGraphData));
+  } catch(e) {
+    console.warn('過去のmyfingerグラフ復元をスキップ:', e);
+  }
+
   coinUsageGraphPlaybackIndex = Math.max(0, coinUsageGraphData.length - 1);
   updateCoinUsageGraphMeta();
 }
