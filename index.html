@@ -842,7 +842,7 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
   <span>✈️</span>
   <span data-i18n="banner_predownload">【飛行機に乗る前に】機内ではネット通信が遮断されます。事前にこのページをホーム画面に追加しておくことを強く推奨します！</span>
 </div>
--- >
+-->
 <!-- ヘッダー表示ボタン -->
 <button id="headerShowBtn" onclick="toggleHeader(true)" data-i18n="btn_show_header">ヘッダー表示</button>
 
@@ -1269,6 +1269,8 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
           <button class="btn btn-outline" onclick="exportProfileCard('jpeg')">JPG</button>
           <button class="btn btn-outline" onclick="exportProfileCard('gif')">GIF</button>
           <button class="btn btn-outline" onclick="exportProfileCard('html')">HTML</button>
+          <label class="btn btn-secondary" for="profileRestoreInput" data-i18n="partial_restore">復元</label>
+          <input type="file" id="profileRestoreInput" accept=".html,.json" hidden onchange="handlePartialRestore(event,'profile')">
         </div>
       </div>
     </div>
@@ -1281,6 +1283,8 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <button class="btn btn-outline" onclick="showQuestionsPage('custom')" data-i18n="questions_custom">自作版</button>
         <button class="btn btn-outline" onclick="downloadQuestionsHTML('admin')" data-i18n="questions_download_admin">管理人版HTML</button>
         <button class="btn btn-outline" onclick="downloadQuestionsHTML('custom')" data-i18n="questions_download_custom">自作版HTML</button>
+        <label class="btn btn-secondary" for="questionsRestoreInput" data-i18n="partial_restore">復元</label>
+        <input type="file" id="questionsRestoreInput" accept=".html,.json" hidden onchange="handlePartialRestore(event,'questions')">
         <button class="btn btn-secondary" id="questionsResetButton" onclick="toggleQuestionsReset()" data-i18n="questions_reset_custom">管理人版にリセット</button>
         <button class="btn btn-outline" id="questionsClearButton" onclick="clearCustomQuestions()" data-i18n="questions_clear_custom">自作版を一気に空白にする</button>
       </div>
@@ -1375,6 +1379,8 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <button class="btn btn-outline" onclick="exportScoreTable('webp')">WebP</button>
         <button class="btn btn-outline" onclick="exportScoreTable('html')">HTML</button>
         <button class="btn btn-outline" onclick="exportScoreTable('gif')">GIF</button>
+        <label class="btn btn-secondary" for="scoreRestoreInput" data-i18n="partial_restore">復元</label>
+        <input type="file" id="scoreRestoreInput" accept=".html,.json" hidden onchange="handlePartialRestore(event,'scores')">
       </div>
     </div>
 
@@ -1424,6 +1430,9 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <label for="coinUsageGraphSeek" style="font-size:12px; font-weight:bold; white-space:nowrap;" data-i18n="coin_graph_seek">シーク</label>
         <input type="range" id="coinUsageGraphSeek" min="0" max="0" value="0" step="1" aria-label="myfingerグラフのシークバー" data-i18n-aria="coin_graph_seek_aria" oninput="seekCoinUsageGraph(this.value)">
         <span id="coinUsageGraphStatus" style="font-size:12px;">0 / 0</span>
+        <label for="coinUsageGraphSpeed" style="font-size:12px; font-weight:bold;" data-i18n="coin_graph_speed">再生速度</label>
+        <input type="number" id="coinUsageGraphSpeed" min="1" max="1000" step="1" value="30" style="width:78px;" oninput="setCoinUsageGraphSpeed(this.value)">
+        <span style="font-size:12px;" data-i18n="coin_graph_speed_unit">ms/サンプル</span>
         <button class="btn btn-outline" onclick="recordCoinUsageGraphVideo()" data-i18n="coin_graph_record">🎥 .mp4で録画</button>
       </div>
     </div>
@@ -1487,6 +1496,8 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
       </select>
       <button class="btn btn-outline" onclick="exportCoinHistory('txt')" data-i18n="coin_export_txt">TXT保存</button>
       <button class="btn btn-outline" onclick="exportCoinHistory('html')" data-i18n="coin_export_html">HTML保存</button>
+      <label class="btn btn-secondary" for="coinHistoryRestoreInput" data-i18n="partial_restore">復元</label>
+      <input type="file" id="coinHistoryRestoreInput" accept=".html,.txt,.json" hidden onchange="handlePartialRestore(event,'coinHistory')">
     </div>
     <div class="table-responsive">
       <table id="coinHistoryTable">
@@ -1669,6 +1680,9 @@ const I18N_DICTIONARY = {
   coin_graph_resume: { ja: "⏯ 再開", en: "⏯ Resume", hira: "⏯ さいかい", ko: "⏯ 재개", zh: "⏯ 계속", ar: "⏯ استئناف", eo: "⏯ Daŭrigi" },
   coin_graph_seek: { ja: "シーク", en: "Seek", hira: "しーく", ko: "탐색", zh: "搜索", ar: "بحث", eo: "Serĉi" },
   coin_graph_seek_aria: { ja: "myfingerグラフのシークバー", en: "myfinger graph seek bar", hira: "myfingerぐらふの しーくばー", ko: "myfinger 그래프 탐색 막대", zh: "myfinger图表搜索栏", ar: "شريط البحث في مخطط myfinger", eo: "Serĉobreto de la grafiko de myfinger" },
+  coin_graph_speed: { ja: "再生速度", en: "Playback speed", hira: "さいせい そくど", ko: "재생 속도", zh: "播放速度", ar: "سرعة التشغيل", eo: "Rapido de reproduktado" },
+  coin_graph_speed_unit: { ja: "ms/サンプル", en: "ms/sample", hira: "ms/さんぷる", ko: "ms/샘플", zh: "毫秒/样本", ar: "مللي ثانية/عينة", eo: "ms/specimeno" },
+  partial_restore: { ja: "復元", en: "Restore", hira: "ふくげん", ko: "복원", zh: "恢复", ar: "استعادة", eo: "Restarigi" },
   coin_graph_record: { ja: "🎥 .mp4で録画", en: "🎥 Record as .mp4", hira: "🎥 .mp4で ろくが", ko: "🎥 .mp4로 녹화", zh: "🎥 录制为 .mp4", ar: "🎥 تسجيل بصيغة .mp4", eo: "🎥 Registri kiel .mp4" },
   coin_graph_played_date: { ja: "遊んだ日時", en: "Played date/time", hira: "あそんだ にちじ", ko: "플레이한 날짜/시간", zh: "游玩日期时间", ar: "تاريخ ووقت اللعب", eo: "Dato/horo de ludado" },
   coin_graph_mode: { ja: "モード", en: "Mode", hira: "もーど", ko: "모드", zh: "模式", ar: "الوضع", eo: "Reĝimo" },
@@ -1841,7 +1855,8 @@ const KOUSHIN_DATA = [
   ar: 'تمت إضافة زر لمسح ذاكرة التخزين المؤقت.',
   eo: 'Aldonis butonon por forigi la kaŝmemoron.'
 } },
-{ pinned: false, date: '2026/09/25 19:00', desc: { ja: '歩数計タブを追加しました。0.5歩を検知するたびに160コインを獲得でき、画面スリープ防止、OLED向けのピクセルシフト、LocalStorageへの自動保存、非同期POST送信、iOS・Androidでのセンサー権限要求に対応しています。さらに、ゲームの種類とタイトルに応じた色分け表示も追加しました。', en: 'Added a pedometer tab. It detects half-steps and awards 160 coins for each detection, while supporting screen wake lock, OLED pixel shifting, automatic LocalStorage saving, asynchronous POST requests, and sensor permission requests on iOS and Android. Game colors can now also be displayed by game type and title.', hira: 'ほすうけい たぶを ついかしました。0.5ぽを けんちする たびに 160こいんを かくとくでき、がめんの すりーぷぼうし、OLEDむけの ぴくせるしふと、LocalStorageへの じどうほぞん、ひどうきPOSTそうしん、iOS・Androidでの せんさーけんげん ようきゅうに たいおうしています。さらに、げーむの しゅるいと たいとるに おうじた いろわけひょうじも ついかしました。', ko: '걸음 수 탭을 추가했습니다. 0.5걸음을 감지할 때마다 160코인을 받을 수 있으며, 화면 깨우기 잠금, OLED용 픽셀 시프트, LocalStorage 자동 저장, 비동기 POST 요청, iOS 및 Android 센서 권한 요청을 지원합니다. 또한 게임 종류와 제목에 따른 색상 표시도 추가했습니다.', zh: '新增了计步器标签页。每检测到半步即可获得160金币，并支持保持屏幕唤醒、OLED像素偏移、自动保存到LocalStorage、异步POST请求，以及在iOS和Android上请求传感器权限。此外，还新增了按游戏类型和标题显示不同颜色的功能。', ar: 'تمت إضافة تبويب لعداد الخطوات. يمنحك التبويب 160 عملة عند اكتشاف كل نصف خطوة، ويدعم إبقاء الشاشة مستيقظة، وتحريك البكسلات لشاشات OLED، والحفظ التلقائي في LocalStorage، وإرسال طلبات POST بشكل غير متزامن، وطلب أذونات المستشعر على نظامي iOS وAndroid. كما تمت إضافة عرض الألوان بحسب نوع اللعبة وعنوانها.', eo: 'Aldonis paŝmezurilan langeton. Ĝi detektas duonpaŝojn kaj donas 160 monerojn por ĉiu detekto, kaj ĝi subtenas ekranan vekŝlosilon, pikselan movon por OLED-ekranoj, aŭtomatan konservadon en LocalStorage, nesinkronajn POST-petojn kaj petadon de sensilaj permesoj ĉe iOS kaj Android. Aldoniĝis ankaŭ kolorigo laŭ ludtipo kaj titolo.' } },
+  { pinned: false, date: '2026/09/26 16:30', desc: { ja: 'アクセスカウンターを削除し、myfinger消費量グラフの再生速度変更、ゲームスコア・使用履歴・自作プロフィール・100の質問の部分復元、グラフの再生処理を修正しました。', en: 'Removed the visitor counter, added adjustable playback speed for the myfinger graph, added partial restoration for scores, usage history, custom profiles, and 100 questions, and fixed graph playback.', hira: 'あくせす かうんたーを さくじょし、myfingerしょうひりょう ぐらふの さいせい そくど へんこう、げーむ すこあ・しよう りれき・じさく ぷろふぃーる・100の しつもんの ぶぶん ふくげん、ぐらふの さいせい しょりを しゅうせいしました。', ko: '방문자 카운터를 삭제하고 myfinger 소비량 그래프의 재생 속도 조절, 게임 점수·사용 기록·사용자 프로필·100개 질문의 부분 복원 기능을 추가했으며 그래프 재생 처리를 수정했습니다.', zh: '删除了访问计数器，新增myfinger消费图表的播放速度调节，以及游戏得分、使用记录、自定义个人资料和100个问题的部分恢复功能，并修复了图表播放处理。', ar: 'تم حذف عداد الزيارات، وإضافة إمكانية ضبط سرعة تشغيل مخطط استهلاك myfinger والاستعادة الجزئية للنتائج وسجل الاستخدام والملف الشخصي المخصص والأسئلة المئة، كما تم إصلاح تشغيل المخطط.', eo: 'Forigis la vizitnombrilon, aldonis ĝustigeblan reproduktan rapidon por la myfinger-grafiko kaj partan restaŭradon de poentaroj, uzhistorio, propra profilo kaj 100 demandoj, kaj riparis la grafikan reproduktadon.' } },
+  { pinned: false, date: '2026/09/25 19:00', desc: { ja: '歩数計タブを追加しました。0.5歩を検知するたびに160コインを獲得でき、画面スリープ防止、OLED向けのピクセルシフト、LocalStorageへの自動保存、非同期POST送信、iOS・Androidでのセンサー権限要求に対応しています。さらに、ゲームの種類とタイトルに応じた色分け表示も追加しました。', en: 'Added a pedometer tab. It detects half-steps and awards 160 coins for each detection, while supporting screen wake lock, OLED pixel shifting, automatic LocalStorage saving, asynchronous POST requests, and sensor permission requests on iOS and Android. Game colors can now also be displayed by game type and title.', hira: 'ほすうけい たぶを ついかしました。0.5ぽを けんちする たびに 160こいんを かくとくでき、がめんの すりーぷぼうし、OLEDむけの ぴくせるしふと、LocalStorageへの じどうほぞん、ひどうきPOSTそうしん、iOS・Androidでの せんさーけんげん ようきゅうに たいおうしています。さらに、げーむの しゅるいと たいとるに おうじた いろわけひょうじも ついかしました。', ko: '걸음 수 탭을 추가했습니다. 0.5걸음을 감지할 때마다 160코인을 받을 수 있으며, 화면 깨우기 잠금, OLED용 픽셀 시프트, LocalStorage 자동 저장, 비동기 POST 요청, iOS 및 Android 센서 권한 요청을 지원합니다. 또한 게임 종류와 제목에 따른 색상 표시도 추가했습니다.', zh: '新增了计步器标签页。每检测到半步即可获得160金币，并支持保持屏幕唤醒、OLED像素偏移、自动保存到LocalStorage、异步POST请求，以及在iOS和Android上请求传感器权限。此外，还新增了按游戏类型和标题显示不同颜色的功能。', ar: 'تمت إضافة تبويب لعداد الخطوات. يمنحك التبويب 160 عملة عند اكتشاف كل نصف خطوة، ويدعم إبقاء الشاشة مستيقظة، وتحريك البكسلات لشاشات OLED، والحفظ التلقائي في LocalStorage، وإرسال طلبات POST بشكل غير متزامن، وطلب أذونات المستشعر على نظامي iOS وAndroid. كما تمت إضافة عرض الألوان بحسب نوع اللعبة وعنوانها.', eo: 'Aldonis paŝmezurilan langeton. Ĝi detektas duonpaŝojn kaj donas 160 monerojn por ĉiu detekto, kaj ĝi subtenas ekranan vekŝlosilon, pikselan movon por OLED-ekranoj, aŭtomatan konservadon en LocalStorage, nesinkronajn POST-petojn kaj petadon de sensilaj permesoj ĉe iOS kaj Android. Aldoniĝis ankaŭ kolorigo laŭ ludtipo kaj titolo.' } },
 { pinned: false, date: '2026/09/24 06:02', desc: { ja: 'myfinger消費量リアルタイムグラフをゲーム別の色線で表示し、遊んだ日時とモードをグラフ枠外に表示するようにしました。リアルタイム描画、再生・一時停止・再開・シーク、MP4録画保存にも対応しました', en: 'Updated the real-time myfinger consumption graph with separate colored lines for each game and displayed the played date/time and mode outside the graph frame. Real-time drawing, playback, pause, resume, seeking, and MP4 recording are supported', hira: 'myfingerしょうひりょう りあるたいむぐらふを げーむべつの いろせんで ひょうじし、あそんだ にちじと もーどを ぐらふわくがいに ひょうじするようにしました。りあるたいむびょうが、さいせい・いちじていし・さいかい・しーく、MP4ろくがほぞんにも たいおうしました', ko: 'myfinger 실시간 소비 그래프를 게임별 색상 선으로 표시하고 플레이한 날짜/시간과 모드를 그래프 바깥에 표시하도록 업데이트했습니다. 실시간 그리기, 재생, 일시정지, 재개, 탐색 및 MP4 녹화를 지원합니다', zh: '更新myfinger实时消费图表：按游戏使用不同颜色的线，并在图表框外显示游玩日期时间和模式。支持实时绘制、播放、暂停、继续、搜索和MP4录制保存', ar: 'تم تحديث مخطط استهلاك myfinger اللحظي لعرض خط بلون مختلف لكل لعبة وإظهار تاريخ ووقت اللعب والوضع خارج إطار المخطط. كما يدعم الرسم اللحظي والتشغيل والإيقاف والاستئناف والبحث وتسجيل MP4', eo: 'Ĝisdatigis la realtempan grafikon de myfinger-konsumo per apartkoloraj linioj por ĉiu ludo kaj montris la luddaton, horon kaj reĝimon ekster la grafika kadro. Subtenataj estas realtempa desegnado, ludado, paŭzo, rekomenco, serĉado kaj MP4-registrado' } },
 { pinned: false, date: '2026/09/23 18:06', desc: { ja: 'ゲーム速度の自由入力、コイン残高5回確認リセット、ブロック消しの😂特殊ブロック、ゲーム内myfinger消費量リアルタイム表示、データタブのmyfinger消費量リアルタイム折れ線グラフと再生・一時停止・再開・シーク・MP4録画を追加', en: 'Added free game-speed input, a five-step myfinger balance reset, the 😂 special block, real-time in-game myfinger cost display, and a real-time data-tab line graph with playback, pause, resume, seeking, and MP4 recording', hira: 'げーむすぴーどの じゆうにゅうりょく、こいんざんだか ごかいかくにん りせっと、ぶろっくけしの 😂 とくしゅぶろっく、げーむない myfingerしょうひりょう りあるたいむひょうじ、でーたたぶの りあるたいむ おれせんぐらふと さいせい・いちじていし・さいかい・しーく・MP4ろくがを ついか', ko: '게임 속도 자유 입력, 5단계 myfinger 잔액 초기화, 😂 특수 블록, 게임 내 myfinger 실시간 소비량 표시, 데이터 탭 실시간 선 그래프 재생·일시정지·재개·탐색·MP4 녹화를 추가했습니다', zh: '新增游戏速度自由输入、五次确认的myfinger余额重置、😂特殊方块、游戏内myfinger实时消费显示，以及数据标签页实时折线图的播放、暂停、继续、搜索和MP4录制', ar: 'تمت إضافة إدخال سرعة اللعبة بحرية، وإعادة ضبط رصيد myfinger بعد خمس تأكيدات، وكتلة 😂 الخاصة، وعرض استهلاك myfinger في اللعبة لحظيًا، ومخطط خطي لحظي في تبويب البيانات مع التشغيل والإيقاف والاستئناف والبحث وتسجيل MP4', eo: 'Aldonis liberan ludrapidan enigon, kvinpaŝan konfirmitan restarigon de myfinger-saldo, la specialan 😂 blokon, realtempan myfinger-konsumon en la ludo, kaj realtempan linian grafikon en Datumoj kun ludado, paŭzo, rekomenco, serĉo kaj MP4-registrado' } },
 { pinned: false, date: '2026/09/23 16:40', desc: { ja: 'コイン機能を修正：クレカ残高から追加するコイン残高の追加金額を設定可能にし、通常値を800,000コインにしました。また、ゲームをプレイした時間に応じて1分ごとに2,000コイン、1分未満の残り時間は1秒あたり0.6コインで計算し、小数点以下を切り捨てて自動消費するようにしました', en: 'Updated the coin system: the amount added from the credit-card balance is now configurable, with a default of 800,000 coins. Game play now automatically consumes 2,000 coins per minute, with under-one-minute time charged at 0.6 coins per second and fractional coins truncated', hira: 'こいんきのうを しゅうせい：くれか ざんだから ついかする こいんざんだかの ついかきんがくを せってい かのうにし、つうじょうちを 800,000こいんにしました。また、げーむを ぷれいした じかんに おうじて 1ぷんごとに 2,000こいん、1ぷんみまんの のこりじかんは 1びょうあたり 0.6こいんで けいさんし、しょうすうてんいかを きりすてて じどうしょうひするようにしました', ko: '코인 기능 수정: 신용카드 잔액에서 추가되는 코인 금액을 설정할 수 있게 하고 기본값을 800,000코인으로 변경했습니다. 또한 게임 플레이 시간에 따라 1분마다 2,000코인을 자동 소비하고, 1분 미만의 남은 시간은 초당 0.6코인으로 계산한 뒤 소수점 이하를 버리도록 했습니다', zh: '更新金币功能：现在可以设置从信用卡余额追加的金币数量，默认值为800,000金币。游戏游玩时间每1分钟自动消耗2,000金币，不满1分钟的剩余时间按每秒0.6金币计算，并舍去小数部分', ar: 'تم تحديث نظام العملات: أصبح من الممكن ضبط مقدار العملات المضافة من رصيد البطاقة، والقيمة الافتراضية 800000 عملة. كما يتم استهلاك 2000 عملة لكل دقيقة لعب، ويُحسب الوقت المتبقي الأقل من دقيقة بمقدار 0.6 عملة لكل ثانية مع حذف الجزء العشري', eo: 'Ĝisdatigis la monersistemon: la kvanto aldonata el la kartsaldo estas agordebla, kun defaŭlto de 800 000 moneroj. Dum ludado 2 000 moneroj estas aŭtomate konsumataj por ĉiu minuto, kaj la resto sub unu minuto estas kalkulata je 0,6 monero por sekundo kun forigo de la frakcia parto' } },
@@ -2107,64 +2122,122 @@ function updateCoinUsageGraphLive(cost) {
     console.warn('[myfingerグラフ] リアルタイム記録をスキップしました。ゲーム本体は継続します:', e);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function loadCoinUsageGraph() {
   coinUsageGraphLoadAttempted = true;
   const previousData = Array.isArray(coinUsageGraphData) ? coinUsageGraphData.slice() : [];
   try {
     const raw = JSON.parse(localStorage.getItem('airplane_game_coin_usage_graph') || '[]');
-    coinUsageGraphData = Array.isArray(raw) ? raw.filter(p => p && Number.isFinite(Number(p.time)) && Number.isFinite(Number(p.cost))).map(p => ({
-      time:Number(p.time), cost:Number(p.cost), gameKey:p.gameKey || '', sessionId:p.sessionId || `legacy-${p.time}`, sessionDate:p.sessionDate || formatCoinUsageDate(p.time)
-    })) : [];
+    coinUsageGraphData = Array.isArray(raw) ? raw.filter(p => p && (Number.isFinite(Number(p.time)) || !isNaN(Date.parse(String(p.time).replace(/-/g, '/')))) && Number.isFinite(Number(p.cost))).map(p => {
+      const t = Number(p.time) || Date.parse(String(p.time).replace(/-/g, '/'));
+      return {
+        time: t, cost: Number(p.cost), gameKey: p.gameKey || '', sessionId: p.sessionId || `legacy-${t}`, sessionDate: p.sessionDate || formatCoinUsageDate(t)
+      };
+    }) : [];
   } catch(e) {
-    console.warn('[myfingerグラフ] 保存データの読み込みをスキップしました:', e);
-    // 読み込みだけ失敗した場合は、現在メモリにある正常なデータを保持する。
+    console.warn('[myfingerグラフ] 読み込み失敗:', e);
     coinUsageGraphData = previousData;
   }
 
-  // 以前のゲーム履歴にはグラフ専用データが存在しない場合があるため、
-  // 保存済みのコイン使用履歴から過去のプレイ料金を復元する。
-  // 現在のリアルタイム記録がある場合は重複させない。
   try {
     const existingTimes = new Set(coinUsageGraphData.map(p => Math.round(Number(p.time) / 1000)));
-    const scores = Array.isArray(memoryStore.scores) ? memoryStore.scores : [];
-    const scoreTimes = scores.map(s => ({
-      time: Date.parse(String(s.date || '').replace(/\//g, '-')),
-      gameKey: getScoreGameKey(s) || s.gameKey || ''
-    })).filter(x => Number.isFinite(x.time));
     const history = Array.isArray(memoryStore.coinHistory) ? memoryStore.coinHistory : [];
-    const gameCostLabels = Object.values(I18N_DICTIONARY.coin_game_time_cost || {}).map(String);
+    const keywords = ["my finger", "finger", "cost", "料金", "消費", "使用", "こいん", "item"];
+    
     history.forEach((h, index) => {
       const amount = Number(h.amount);
-      const action = String(h.action || '');
-      const isGameCost = gameCostLabels.some(label => label && (action === label || action.includes(label)));
-      if (!(amount < 0) || !isGameCost) return;
-      const time = Date.parse(String(h.date || '').replace(/\//g, '-'));
-      if (!Number.isFinite(time)) return;
-      const sec = Math.round(time / 1000);
-      if (existingTimes.has(sec)) return;
-      let gameKey = ['stick','block','konjac','blackboard','flag','vs'].includes(h.gameKey) ? h.gameKey : '';
-      let bestDiff = Infinity;
-      scoreTimes.forEach(st => {
-        const diff = Math.abs(st.time - time);
-        if (diff <= 5 * 60 * 1000 && diff < bestDiff) { bestDiff = diff; gameKey = gameKey || st.gameKey; }
-      });
-      coinUsageGraphData.push({
-        time, cost: Math.abs(amount), gameKey,
-        sessionId: `history-${time}-${index}`,
-        sessionDate: formatCoinUsageDate(time)
-      });
-      existingTimes.add(sec);
+      const action = String(h.action || '').toLowerCase();
+      if (amount < 0 && keywords.some(k => action.includes(k))) {
+        const dt = String(h.date || '').replace(/-/g, '/');
+        const time = Date.parse(dt);
+        if (!Number.isFinite(time)) return;
+        if (existingTimes.has(Math.round(time / 1000))) return;
+        
+        coinUsageGraphData.push({
+          time, cost: Math.abs(amount), gameKey: h.gameKey || 'legacy',
+          sessionId: `history-${time}-${index}`,
+          sessionDate: formatCoinUsageDate(time)
+        });
+        existingTimes.add(Math.round(time / 1000));
+      }
     });
 
     coinUsageGraphData.sort((a,b) => Number(a.time) - Number(b.time));
-    coinUsageGraphData = coinUsageGraphData.slice(-3600);
-    localStorage.setItem('airplane_game_coin_usage_graph', JSON.stringify(coinUsageGraphData));
-  } catch(e) {
-    console.warn('過去のmyfingerグラフ復元をスキップ:', e);
-  }
+    if (coinUsageGraphData.length > 0) {
+      coinUsageGraphData = coinUsageGraphData.slice(-3600);
+      localStorage.setItem('airplane_game_coin_usage_graph', JSON.stringify(coinUsageGraphData));
+    }
+  } catch(e) { console.warn('履歴復元失敗:', e); }
 
   coinUsageGraphPlaybackIndex = Math.max(0, coinUsageGraphData.length - 1);
   updateCoinUsageGraphMeta();
+  updateCoinUsageGraphControls();
 }
 function updateCoinUsageGraphMeta() {
   const current = document.getElementById('coinUsageGraphCurrentMeta');
@@ -2200,12 +2273,34 @@ function seekCoinUsageGraph(value){
     drawCoinUsageGraph();
   } catch(e) { console.warn('[myfingerグラフ] シーク処理をスキップしました:', e); }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function playCoinUsageGraph(){
   try {
-    if (!coinUsageGraphData.length) { loadCoinUsageGraph(); }
-    if (!coinUsageGraphData.length) { console.warn('[myfingerグラフ] 再生対象のデータがないため、再生処理だけスキップしました。'); return; }
+    loadCoinUsageGraph(); 
+    if (!coinUsageGraphData.length) { 
+      console.warn('[myfingerグラフ] 再生対象のデータがないため、再生処理だけスキップしました。'); 
+      return; 
+    }
+    if(coinUsageGraphAnimationTimer)clearTimeout(coinUsageGraphAnimationTimer);
+    coinUsageGraphAnimationTimer=null;
     coinUsageGraphPlaying=true;
-    if (coinUsageGraphPlaybackIndex>=coinUsageGraphData.length-1) coinUsageGraphPlaybackIndex=0;
+    // 既に最後まで到達しているか、まだ再生が始まっていない場合は最初から再生
+    if (coinUsageGraphPlaybackIndex >= coinUsageGraphData.length - 1 || coinUsageGraphPlaybackIndex <= 0) {
+      coinUsageGraphPlaybackIndex = 0;
+    }
     animateCoinUsageGraph();
   } catch(e) { console.warn('[myfingerグラフ] 再生処理をスキップしました:', e); }
 }
@@ -2214,12 +2309,16 @@ function pauseCoinUsageGraph(){
     coinUsageGraphPlaying=false;
     if(coinUsageGraphAnimationId)cancelAnimationFrame(coinUsageGraphAnimationId);
     coinUsageGraphAnimationId=null;
+    if(coinUsageGraphAnimationTimer)clearTimeout(coinUsageGraphAnimationTimer);
+    coinUsageGraphAnimationTimer=null;
     drawCoinUsageGraph();
   } catch(e) { console.warn('[myfingerグラフ] 一時停止処理をスキップしました:', e); }
 }
 function resumeCoinUsageGraph(){
   try {
     if (!coinUsageGraphData.length) { console.warn('[myfingerグラフ] 再開対象のデータがないため、再開処理だけスキップしました。'); return; }
+    if(coinUsageGraphAnimationTimer)clearTimeout(coinUsageGraphAnimationTimer);
+    coinUsageGraphAnimationTimer=null;
     coinUsageGraphPlaying=true;
     animateCoinUsageGraph();
   } catch(e) { console.warn('[myfingerグラフ] 再開処理をスキップしました:', e); }
@@ -2230,20 +2329,74 @@ function animateCoinUsageGraph(){
     drawCoinUsageGraph();
     if(coinUsageGraphPlaybackIndex < coinUsageGraphData.length-1){
       coinUsageGraphPlaybackIndex++;
-      coinUsageGraphAnimationId=requestAnimationFrame(()=>setTimeout(animateCoinUsageGraph,30));
+      coinUsageGraphAnimationId=requestAnimationFrame(()=>{
+        coinUsageGraphAnimationTimer=setTimeout(animateCoinUsageGraph,coinUsageGraphSpeed);
+      });
     } else coinUsageGraphAnimationId=null;
   } catch(e) {
     console.warn('[myfingerグラフ] アニメーションのこのフレームだけスキップしました:', e);
     coinUsageGraphAnimationId=null;
   }
 }
+function setCoinUsageGraphSpeed(value){
+  const parsed=Math.max(1,Math.min(1000,Math.round(Number(value)||30)));
+  coinUsageGraphSpeed=parsed;
+  const input=document.getElementById('coinUsageGraphSpeed');
+  if(input && input.value!==String(parsed))input.value=String(parsed);
+  try{localStorage.setItem('airplane_game_coin_usage_graph_speed',String(parsed));}catch(e){}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function drawCoinUsageGraph(){
   try {
     const c=document.getElementById('coinUsageGraphCanvas');
     if(!c){ console.warn('[myfingerグラフ] canvasがないため、この描画だけスキップしました。'); return; }
+    
+    // データがない場合、初回の読み込みを試みる
     if (!coinUsageGraphData.length && !coinUsageGraphLoadAttempted) {
-      try { loadCoinUsageGraph(); } catch(e) { console.warn('[myfingerグラフ] 過去データの再読み込みをスキップしました:', e); }
+      try { loadCoinUsageGraph(); } catch(e) {}
     }
+    
     const dpr=window.devicePixelRatio||1, cssW=c.clientWidth||900, cssH=320;
     if(c.width!==Math.floor(cssW*dpr)||c.height!==Math.floor(cssH*dpr)){c.width=Math.floor(cssW*dpr);c.height=Math.floor(cssH*dpr);}
     const g=c.getContext('2d');
@@ -2253,12 +2406,32 @@ function drawCoinUsageGraph(){
     g.fillStyle=textColor; g.font='bold 14px sans-serif'; g.fillText(t('coin_graph_title').replace(/^🪙\s*/, ''),16,22);
     const left=48,top=36,right=16,bottom=34,w=Math.max(10,cssW-left-right),h=Math.max(10,cssH-top-bottom);
     g.strokeStyle='rgba(120,120,120,.35)';g.lineWidth=1; for(let i=0;i<5;i++){const y=top+h*i/4;g.beginPath();g.moveTo(left,y);g.lineTo(left+w,y);g.stroke();}
-    if(!coinUsageGraphData.length){g.fillStyle=textColor;g.fillText(t('coin_graph_empty'),left+10,top+h/2);updateCoinUsageGraphControls();return;}
+    
+    // データが本当にない場合のみメッセージを表示
+    if(!coinUsageGraphData.length){
+      g.fillStyle=textColor;
+      g.textAlign = 'center';
+      g.fillText(t('coin_graph_empty'), left + w/2, top + h/2);
+      g.textAlign = 'start';
+      updateCoinUsageGraphControls();
+      return;
+    }
+    
     const end=Math.min(coinUsageGraphPlaybackIndex,coinUsageGraphData.length-1), start=Math.max(0,end-599), pts=coinUsageGraphData.slice(start,end+1).filter(p=>p&&Number.isFinite(Number(p.time))&&Number.isFinite(Number(p.cost)));
-    if(!pts.length){ console.warn('[myfingerグラフ] 有効な描画点がないため、この描画だけスキップしました。'); return; }
+    
+    if(!pts.length){
+      g.fillStyle=textColor;
+      g.textAlign = 'center';
+      g.fillText(t('coin_graph_empty'), left + w/2, top + h/2);
+      g.textAlign = 'start';
+      updateCoinUsageGraphControls();
+      return;
+    }
+    
     const maxObserved=Math.max(0,...pts.map(p=>Number(p.cost)||0));
     const maxCost=Math.max(10,Math.ceil(maxObserved/10)*10);
     g.fillStyle=textColor;g.font='12px sans-serif';g.fillText(formatCoinAmount(maxCost),2,top+4);g.fillText('0',20,top+h);
+    
     if(pts.length<2){
       const p=pts[0];
       const x=left+w/2, y=top+h-((Number(p.cost)||0)/maxCost)*h;
@@ -3287,6 +3460,8 @@ let coinUsageGraphData = [];
 let coinUsageGraphPlaying = true;
 let coinUsageGraphPlaybackIndex = 0;
 let coinUsageGraphAnimationId = null;
+let coinUsageGraphAnimationTimer = null;
+let coinUsageGraphSpeed = 30;
 let coinUsageGraphSampleTimer = null;
 let coinUsageGraphLoadAttempted = false;
 let currentScore = 0;
@@ -4590,7 +4765,7 @@ async function recordCoinUsageGraphVideo(){
   recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
   recorder.onstop=()=>{const isMp4=mime.startsWith('video/mp4');downloadBlob(new Blob(chunks,{type:mime}),isMp4?'myfinger-consumption.mp4':'myfinger-consumption.webm');showModal('録画完了',isMp4?'myfinger-consumption.mp4 を保存しました。':'このブラウザではMP4録画に対応していないためWebMで保存しました。');};
   coinUsageGraphPlaying=true;coinUsageGraphPlaybackIndex=0;recorder.start();
-  const step=()=>{drawCoinUsageGraph();if(coinUsageGraphPlaybackIndex<coinUsageGraphData.length-1){coinUsageGraphPlaybackIndex++;setTimeout(step,33);}else recorder.stop();};
+  const step=()=>{drawCoinUsageGraph();if(coinUsageGraphPlaybackIndex<coinUsageGraphData.length-1){coinUsageGraphPlaybackIndex++;setTimeout(step,coinUsageGraphSpeed);}else{coinUsageGraphPlaying=false;recorder.stop();}};
   step();
 }
 
@@ -5613,6 +5788,48 @@ function setRestoreBusy(isBusy){
   const input=document.getElementById('restoreFileInput');
   if(input)input.disabled=!!isBusy;
 }
+function parseHtmlTableRows(text){
+  const doc=new DOMParser().parseFromString(text,'text/html');
+  return Array.from(doc.querySelectorAll('table tbody tr')).map(tr=>Array.from(tr.cells).map(cell=>cell.textContent.trim())).filter(row=>row.length);
+}
+async function handlePartialRestore(event,type){
+  const input=event?.target;
+  const file=input?.files?.[0];
+  restoreInputReset(input);
+  if(!file)return;
+  try{
+    if(!/\.(html?|json)$/i.test(file.name))throw new Error('このファイル形式は部分復元に対応していません。');
+    const text=await file.text();
+    let value;
+    if(/\.json$/i.test(file.name))value=JSON.parse(text);
+    if(type==='questions'){
+      if(!value){const match=text.match(/const data=(\[[\s\S]*?\]);const labels=/);if(!match)throw new Error('100の質問データが見つかりません。');value=JSON.parse(match[1]);}
+      const rows=Array.isArray(value)?value.map(x=>({q:String(x.q??x[0]??''),a:String(x.a??x[1]??'')})):[];
+      if(rows.length!==100)throw new Error('100件の質問データが必要です。');
+      customQuestions=rows;customQuestionsExplicitlyCleared=false;saveCustomQuestions();renderQuestions();updateQuestionsResetButton();
+    }else if(type==='scores'){
+      if(!value){const match=text.match(/const rows=(\[[\s\S]*?\]);const per=/);if(!match)throw new Error('スコアデータが見つかりません。');value=JSON.parse(match[1]);}
+      const rows=Array.isArray(value)?value:[];
+      if(!rows.length)throw new Error('スコアデータがありません。');
+      memoryStore.scores=rows.map(row=>({...row,gameKey:getScoreGameKey(row)||row.gameKey||''}));
+      if(dbInstance&&document.getElementById('cfgUseIndexedDB')?.checked){const tx=dbInstance.transaction('scores','readwrite');const store=tx.objectStore('scores');store.clear();memoryStore.scores.forEach(row=>store.add(row));}
+      renderScoreTable();
+    }else if(type==='coinHistory'){
+      const rows=Array.isArray(value)?value:(/\.txt$/i.test(file.name)?text.split(/\r?\n/).map(line=>{const m=line.match(/^\[([^\]]+)\]\s*(.*?)\s*\/\s*(-?[\d,]+)\s*\/\s*([\d,]+)/);return m?[m[1],m[2],m[3],m[4]]:[]}).filter(row=>row.length):parseHtmlTableRows(text));
+      const source=rows.map(row=>({date:row[0]||'',action:row[1]||'',amount:Number(String(row[2]||'0').replace(/,/g,''))||0,balance:Number(String(row[3]||'0').replace(/,/g,''))||0})).filter(row=>row.date||row.action);
+      if(!source.length)throw new Error('使用履歴データがありません。');
+      memoryStore.coinHistory=source;saveCoinState();
+    }else if(type==='profile'){
+      if(!value){const doc=new DOMParser().parseFromString(text,'text/html');const card=doc.querySelector('.card');if(!card)throw new Error('プロフィールデータが見つかりません。');const lines=Array.from(card.querySelectorAll('p')).map(p=>{const strong=p.querySelector('strong');return (strong?p.textContent.slice(strong.textContent.length).replace(/^:\s*/,''):p.textContent).trim();});value={name:card.querySelector('h2')?.textContent.trim()||'',birth:lines[0]||'',gender:lines[1]||'',location:lines[2]||'',hobby:lines[3]||'',quote:lines[4]||'',message:lines[5]||''};}
+      const profile=value.myProfile||value.profile||value;
+      memoryStore.myProfile={...memoryStore.myProfile,name:String(profile.name??''),birth:String(profile.birth??''),gender:String(profile.gender??''),location:String(profile.location??''),hobby:String(profile.hobby??''),quote:String(profile.quote??''),message:String(profile.message??'')};
+      [['myProfName','name'],['myProfBirth','birth'],['myProfGender','gender'],['myProfLocation','location'],['myProfHobby','hobby'],['myProfQuote','quote'],['myProfMessage','message']].forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=memoryStore.myProfile[key];});
+      updateMyProfileLive();
+    }
+    saveAllConfig();
+    showRestoreModal('部分復元完了','選択したデータだけを復元しました。');
+  }catch(error){showRestoreModal('部分復元できませんでした',String(error?.message||error).replace(/[<>&"']/g,''));}
+}
 async function handleRestoreFile(e){
   const input=e?.target||document.getElementById('restoreFileInput');
   const file=input?.files?.[0];
@@ -5888,6 +6105,7 @@ window.__airplaneSafeAddEventListener(window, 'load', async () => {
   changeLanguage(savedLang);
   if (memoryStore.customSiteTitle) document.title = memoryStore.customSiteTitle;
   initPedometer();
+  setCoinUsageGraphSpeed(localStorage.getItem('airplane_game_coin_usage_graph_speed') || 30);
   loadCoinUsageGraph();
   updateCoinDisplays();
   startCoinUsageGraphLoop();
