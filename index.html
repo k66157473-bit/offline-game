@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -124,6 +125,40 @@ html[dir="rtl"] body {
 
 .text-light-adaptive { color: var(--text-white-adaptive) !important; }
 .text-dark-adaptive { color: var(--text-black-adaptive) !important; }
+
+/* 救済案内バー（言語切り替え失敗時） */
+#rescueNoticeBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: #ffeb3b;
+  color: #d32f2f;
+  padding: 12px 20px;
+  text-align: center;
+  font-weight: bold;
+  z-index: 999999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  line-height: 1.5;
+  display: none;
+  font-size: 14px;
+}
+
+html[dir="rtl"] #rescueNoticeBar {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="ltr"] #rescueNoticeBar {
+  direction: ltr;
+  text-align: center;
+}
+
+body.dark-mode #rescueNoticeBar {
+  background-color: #f9a825;
+  color: #c41c3b;
+}
 
 /* 3秒ホワイトアウト用オーバーレイ */
 #whiteoutOverlay {
@@ -841,9 +876,26 @@ html[data-script-mode="mayan"] textarea {
 html[data-script-mode="mayan"] .mayan-script-rendered {
   text-shadow: 0 0 1px rgba(0,0,0,0.4);
 }
+/* 黄色背景・赤文字の固定案内バー */
+.rescue-notice-bar {
+  width: 100%;
+  background-color: #ffeb3b; /* 鮮やかな黄色 */
+  color: #d32f2f;            /* 赤文字 */
+  border-bottom: 2px solid #fbc02d;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 999999;           /* 画面の最前面に表示 */
+  direction: ltr !important; /* アラビア語選択時でも左から右書きを維持 */
+}
 </style>
 </head>
 <body>
+<!-- 画面最上部に表示される救済案内バー（言語切り替え失敗時） -->
+<div id="rescueNoticeBar"></div>
 
 <div id="whiteoutOverlay"></div>
 <div id="arabicRescueButton" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483647;padding:18px 24px;border:3px solid #111;border-radius:14px;background:#ffffff;color:#111!important;-webkit-text-fill-color:#111!important;box-shadow:0 8px 30px rgba(0,0,0,.45);font-size:18px;font-weight:700;text-align:center;cursor:pointer;direction:ltr;">Arabic selection recovery<br><span style="font-size:13px;font-weight:400;">Return to the language selected before Arabic</span></div>
@@ -1563,6 +1615,41 @@ html[data-script-mode="mayan"] .mayan-script-rendered {
 </div>
 
 <script>
+/* =========================================================
+   ★ 超早期救済措置（ページ読み込み最初の瞬間）
+   ========================================================= */
+(function() {
+  // アラビア語の事前チェック
+  const hasRescueParam = new URLSearchParams(window.location.search).has('rescue');
+  let savedLang = null;
+  try {
+    savedLang = localStorage.getItem('airplane_game_lang');
+  } catch (e) {}
+
+  // 保存言語がアラビア語でrescueパラメータがない場合
+  if (savedLang === 'ar' && !hasRescueParam) {
+    window.__earlyArabicRescueNeeded = true;
+    // リダイレクト番号を取得
+    let rescueNum = 1;
+    try {
+      const stored = localStorage.getItem('airplane_game_rescue_counter');
+      if (stored) {
+        rescueNum = Math.min(parseInt(stored, 10) + 1, 3);
+      }
+      localStorage.setItem('airplane_game_rescue_counter', rescueNum.toString());
+    } catch (e) {}
+    
+    // 即座にリダイレクト
+    const params = new URLSearchParams(window.location.search);
+    params.set('rescue', rescueNum.toString());
+    const newUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
+    window.location.href = newUrl;
+  }
+  
+  // 安全なフォールバック言語を事前に保存
+  window.__safeFallbackLang = localStorage.getItem('airplane_game_lang_safe_fallback') || 'ja';
+})();
+
 /* =========================================================
    Global fault-isolation layer
    ========================================================= */
@@ -7729,6 +7816,54 @@ window.__airplaneSafeAddEventListener(window, 'beforeunload', () => {
    初期ロード処理
    ========================================================================== */
 window.__airplaneSafeAddEventListener(window, 'load', async () => {
+  /* ★ 多重救済その6: ロード直後の白画面即座検出 */
+  setTimeout(() => {
+    try {
+      const body = document.body;
+      const htmlEl = document.documentElement;
+      const header = document.querySelector('header');
+      const mainContent = document.querySelector('main, .container, [role="main"]');
+      
+      const bgColor = window.getComputedStyle(body).backgroundColor;
+      const htmlBgColor = window.getComputedStyle(htmlEl).backgroundColor;
+      
+      const isWhiteScreen = (
+        (bgColor === 'rgb(255, 255, 255)' || bgColor === 'white') &&
+        (htmlBgColor === 'rgba(0, 0, 0, 0)' || htmlBgColor === 'transparent' || htmlBgColor === 'white')
+      );
+      
+      const hasContent = (header && header.offsetHeight > 0) || (mainContent && mainContent.offsetHeight > 0);
+      const hasVisibleElements = document.querySelectorAll('*:not(style):not(script)').length > 20;
+      
+      // 完全に真っ白なページが検出された
+      if (isWhiteScreen && !hasContent) {
+        console.error('🚨 致命的: 白画面が検出されました。自動復旧を実行します。');
+        
+        // 安全な言語にフォールバック
+        const fallbackLang = window.__safeFallbackLang || 'ja';
+        localStorage.setItem('airplane_game_lang', fallbackLang);
+        
+        // rescueパラメータを付与
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has('rescue')) {
+          let rescueNum = 1;
+          try {
+            const stored = localStorage.getItem('airplane_game_rescue_counter');
+            if (stored) rescueNum = Math.min(parseInt(stored, 10) + 1, 3);
+            localStorage.setItem('airplane_game_rescue_counter', rescueNum.toString());
+          } catch (e) {}
+          params.set('rescue', rescueNum.toString());
+        }
+        
+        const newUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
+        window.location.href = newUrl;
+        return;
+      }
+    } catch (e) {
+      console.error('白画面検出中にエラー:', e);
+    }
+  }, 100);
+
   const savedConfigStr = localStorage.getItem('airplane_game_config');
   let config = null;
   if (savedConfigStr) {
@@ -7906,11 +8041,204 @@ window.__airplaneSafeAddEventListener(window, 'load', async () => {
   }, 50);
 });
 
+/* ==========================================================================
+   救済案内バー管理（アラビア語選択時のリダイレクト対応）
+   ========================================================================== */
+
+// URLパラメータを管理するクラス
+class RescueParameterManager {
+  static getQueryParam(name) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
+  }
+
+  static getQueryParamNumber(name) {
+    const val = this.getQueryParam(name);
+    return val ? parseInt(val, 10) : null;
+  }
+
+  static hasQueryParam(name) {
+    return new URLSearchParams(window.location.search).has(name);
+  }
+
+  static getRescueNumber() {
+    return this.getQueryParamNumber('rescue');
+  }
+
+  static getNextRescueNumber() {
+    const current = this.getRescueNumber() || 0;
+    return current + 1;
+  }
+
+  static hasRescueParam() {
+    return this.hasQueryParam('rescue');
+  }
+}
+
+// 救済案内バーを表示
+function showRescueNoticeBar() {
+  const bar = document.getElementById('rescueNoticeBar');
+  if (!bar) return;
+
+  const lang = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
+  const text = t('rescue_notice_bar');
+  
+  bar.textContent = text;
+  bar.style.display = 'block';
+  bar.style.visibility = 'visible';
+  
+  // 言語に応じてdirection属性を設定
+  if (lang === 'ar') {
+    bar.style.direction = 'rtl';
+    bar.style.textAlign = 'right';
+  } else {
+    bar.style.direction = 'ltr';
+    bar.style.textAlign = 'center';
+  }
+}
+
+// 救済案内バーを非表示
+function hideRescueNoticeBar() {
+  const bar = document.getElementById('rescueNoticeBar');
+  if (bar) {
+    bar.style.display = 'none';
+    bar.style.visibility = 'hidden';
+  }
+}
+
+// 救済案内バーの表示状態を更新
+function updateRescueNoticeBarVisibility() {
+  if (RescueParameterManager.hasRescueParam()) {
+    showRescueNoticeBar();
+  } else {
+    hideRescueNoticeBar();
+  }
+}
+
+// 翻訳辞書に救済案内バーのテキストがなければ追加（フォールバック）
+if (typeof I18N_DICTIONARY !== 'undefined' && !I18N_DICTIONARY.rescue_notice_bar) {
+  I18N_DICTIONARY.rescue_notice_bar = {
+    ja: 'アラビア語を選択して真っ白になった方のための救済措置です。パラメータはその後は削除して構いません',
+    en: 'Rescue measure for those whose screen turned white after selecting Arabic. You can delete the parameter afterwards.',
+    hira: 'あらびあごを せんたくして ましろくなった かたのための きゅうさいそちです。ぱらめーたは そのあとは さくじょして かまいません',
+    ko: '아랍어를 선택한 후 화면이 하얀색이 된 사람들을 위한 구제 조치입니다. 나중에 매개변수를 삭제해도 됩니다.',
+    'zh-CN': '针对选择阿拉伯语后屏幕变成白色的用户的救援措施。之后可以删除参数。',
+    'zh-TW': '針對選擇阿拉伯語後螢幕變成白色的使用者的救援措施。之後可以刪除參數。',
+    ar: 'إجراء إنقاذ للأشخاص الذين تحول شاشتهم إلى اللون الأبيض بعد اختيار اللغة العربية. يمكنك حذف المعامل لاحقاً.',
+    eo: 'Sava mezuro por tiuj, kies ekrano fariĝis blanka post elekti Arabon. Vi povas forigi la parametron poste.',
+    mam: 'Rescue measure for those whose screen turned white after selecting Arabic. You can delete the parameter afterwards.',
+    th: 'มาตรการช่วยเหลือสำหรับผู้ที่หน้าจออาจกลายเป็นสีขาวหลังจากเลือกภาษาอาหรับ คุณสามารถลบพารามิเตอร์ได้ในภายหลัง',
+    sw: 'Hatua ya kumwokoa wale ambao skrini yao ikakuwa nyeupe baada ya kuchagua Kiarabu. Unaweza kufuta parameta baadaye.',
+    es: 'Medida de rescate para aquellos cuya pantalla se volvió blanca al seleccionar árabe. Puede eliminar el parámetro después.',
+    fr: 'Mesure de sauvetage pour ceux dont l\'écran est devenu blanc après avoir sélectionné l\'arabe. Vous pouvez supprimer le paramètre après.',
+    de: 'Rettungsmaßnahme für diejenigen, deren Bildschirm nach Auswahl von Arabisch weiß wurde. Sie können den Parameter später löschen.',
+    pt: 'Medida de resgate para aqueles cuja tela ficou branca após selecionar árabe. Você pode excluir o parâmetro depois.',
+    hi: 'अरबी चुनने के बाद जिनकी स्क्रीन सफेद हो गई उन लोगों के लिए बचाव उपाय। आप बाद में पैरामीटर को हटा सकते हैं।',
+    id: 'Tindakan penyelamatan bagi mereka yang layarnya menjadi putih setelah memilih Bahasa Arab. Anda dapat menghapus parameter nanti.',
+    vi: 'Biện pháp cứu thương cho những người màn hình trở nên trắng sau khi chọn Tiếng Ả Rập. Bạn có thể xóa tham số sau.',
+    ru: 'Мера спасения для тех, чей экран стал белым после выбора арабского языка. Вы можете удалить параметр позже.'
+  };
+}
+
+// ★多重救済措置 その1: changeLanguage関数のオーバーライド（DOMContentLoaded内で早期に実行）
 window.__airplaneSafeAddEventListener(window, 'DOMContentLoaded', () => {
+  // 既存関数をバックアップ
+  const originalChangeLanguage = window.changeLanguage;
+  
+  // オーバーライド版を定義
+  window.changeLanguage = function(lang) {
+    if (lang === 'zh') lang = 'zh-CN';
+    
+    // ★ 多重救済その1: 事前にアラビア語以前の言語を保存
+    if (lang !== 'ar') {
+      try {
+        localStorage.setItem('airplane_game_lang_safe_fallback', lang);
+      } catch (e) {}
+    }
+    
+    // ★ 多重救済その2: アラビア語選択時のリダイレクト処理
+    if (lang === 'ar' && !RescueParameterManager.hasRescueParam()) {
+      let rescueNum = 1;
+      try {
+        const stored = localStorage.getItem('airplane_game_rescue_counter');
+        if (stored) {
+          rescueNum = Math.min(parseInt(stored, 10) + 1, 3);
+        }
+        localStorage.setItem('airplane_game_rescue_counter', rescueNum.toString());
+      } catch (e) {}
+
+      const params = new URLSearchParams(window.location.search);
+      params.set('rescue', rescueNum.toString());
+      const newUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
+      
+      window.location.href = newUrl;
+      return;
+    }
+
+    // 既存関数を呼び出し
+    if (originalChangeLanguage) {
+      originalChangeLanguage.call(this, lang);
+    }
+
+    // ★ 多重救済その3: 案内バーの表示を更新
+    updateRescueNoticeBarVisibility();
+  };
+
+  // 既存の初期化処理を継続
   initializeScriptMode();
   relocateGameSettings();
   showQuestionsPage('admin');
   renderQuestions();
+});
+
+// ★多重救済措置 その4: 白画面検出＆自動復旧（load後）
+window.__airplaneSafeAddEventListener(window, 'load', () => {
+  // 案内バーの表示を確認
+  updateRescueNoticeBarVisibility();
+
+  // ★ 白画面の自動検出と復旧（500msデイレイ後に実行）
+  setTimeout(() => {
+    try {
+      const body = document.body;
+      const header = document.querySelector('header');
+      const mainContent = document.querySelector('main, .tab-content, #gameContainer');
+      
+      // 背景が完全に白い AND コンテンツが見当たらない場合
+      const bgColor = window.getComputedStyle(body).backgroundColor;
+      const isWhiteBackground = bgColor === 'rgb(255, 255, 255)' || bgColor === 'white';
+      const hasVisibleContent = header || mainContent;
+      
+      if (isWhiteBackground && !hasVisibleContent && currentLang === 'ar') {
+        // 緊急: 白画面が検出された → 安全な言語にフォールバック
+        console.warn('⚠️ アラビア語での白画面を検出。自動復旧を実行します...');
+        
+        const fallbackLang = localStorage.getItem('airplane_game_lang_safe_fallback') || 'ja';
+        localStorage.setItem('airplane_game_lang', fallbackLang);
+        
+        // URLにrescueパラメータを付与
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has('rescue')) {
+          params.set('rescue', '1');
+        }
+        
+        const newUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
+        window.location.href = newUrl;
+      }
+    } catch (e) {
+      console.error('白画面検出エラー:', e);
+    }
+  }, 500);
+
+  // ★ 多重救済その5: URL監視 (パラメータ削除時に自動反応)
+  const observer = new MutationObserver(() => {
+    updateRescueNoticeBarVisibility();
+  });
+
+  observer.observe(document.body, {
+    attributes: true,
+    subtree: true,
+    attributeFilter: ['class', 'style']
+  });
 });
 </script>
 </body>
