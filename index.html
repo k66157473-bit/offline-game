@@ -3123,7 +3123,10 @@ function draw3DTitle() {
 
   titleCtx.save();
   titleCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  titleCtx.font = '900 18px sans-serif';
+  const titleFontFamily = document.getElementById('cfgFontFamily')?.value === 'custom'
+    ? `"${(localStorage.getItem('airplane_game_custom_font_name') || 'UploadedFont').replace(/[^a-zA-Z0-9_-]/g, '_')}"`
+    : 'sans-serif';
+  titleCtx.font = `900 18px ${titleFontFamily}`;
   titleCtx.textAlign = 'center';
   titleCtx.textBaseline = 'middle';
 
@@ -4756,9 +4759,11 @@ async function loadCustomFontFromIndexedDB() {
     renderRegisteredCustomFonts(records);
     const savedId = localStorage.getItem('airplane_game_custom_font_id') || '';
     const savedName = localStorage.getItem('airplane_game_custom_font_name') || '';
-    const selected = records.find(r => r.id === savedId) || records.find(r => String(r.name || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) === savedName) || records[records.length - 1];
+    const selected = records.find(r => r.id === savedId)
+      || records.find(r => String(r.name || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) === savedName)
+      || records[records.length - 1];
     if (selected && document.getElementById('cfgFontFamily')?.value === 'custom') {
-      await installCustomFont(selected.name || 'UploadedFont', selected.buffer, selected.mimeType || 'font/ttf', false, false);
+      await installCustomFont(selected.name || 'UploadedFont', selected.buffer, selected.mimeType || 'font/ttf', false, false, selected.id);
     }
     return true;
   } catch (e) {
@@ -4768,19 +4773,27 @@ async function loadCustomFontFromIndexedDB() {
   }
 }
 
-async function installCustomFont(name, buffer, mimeType, persist = true, selectCustom = true) {
-  const safeName = String(name || 'UploadedFont').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) || 'UploadedFont';
+function getCustomFontFamily(name, id) {
+  const idPart = String(id || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+  if (idPart) return `ItsmeUploadedFont_${idPart}`;
+  return String(name || 'UploadedFont').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) || 'UploadedFont';
+}
+
+async function installCustomFont(name, buffer, mimeType, persist = true, selectCustom = true, fontId = '') {
+  const safeName = getCustomFontFamily(name, fontId);
   const blob = new Blob([buffer], { type: mimeType || 'font/ttf' });
   const url = URL.createObjectURL(blob);
   try {
-    const font = new FontFace(safeName, `url(${url})`);
+    const font = new FontFace(safeName, `url("${url}")`);
     await font.load();
     document.fonts.add(font);
+    await document.fonts.ready;
     document.documentElement.style.setProperty('--font-family', `"${safeName}", sans-serif`);
     const select = document.getElementById('cfgFontFamily');
     if (selectCustom && select) select.value = 'custom';
     if (selectCustom) {
       localStorage.setItem('airplane_game_custom_font_name', safeName);
+      if (fontId) localStorage.setItem('airplane_game_custom_font_id', String(fontId));
       const status = document.getElementById('cfgCustomFontStatus');
       if (status) status.textContent = (I18N_DICTIONARY.font_upload_success?.[currentLang] || I18N_DICTIONARY.font_upload_success.ja);
     }
@@ -4839,7 +4852,7 @@ async function previewRegisteredCustomFont(id) {
   try {
     const record = await getRegisteredCustomFont(id);
     if (!record) return;
-    await installCustomFont(record.name, record.buffer, record.mimeType || 'font/ttf', false, false);
+    await installCustomFont(record.name, record.buffer, record.mimeType || 'font/ttf', false, false, record.id);
     const status = document.getElementById('cfgCustomFontStatus');
     if (status) status.textContent = `${record.name} — ${I18N_DICTIONARY.font_preview?.[currentLang] || '👁 プレビュー'}`;
   } catch (e) {
@@ -4851,7 +4864,7 @@ async function applyRegisteredCustomFont(id) {
   try {
     const record = await getRegisteredCustomFont(id);
     if (!record) return;
-    await installCustomFont(record.name, record.buffer, record.mimeType || 'font/ttf', false, true);
+    await installCustomFont(record.name, record.buffer, record.mimeType || 'font/ttf', false, true, record.id);
     document.getElementById('cfgFontFamily').value = 'custom';
     localStorage.setItem('airplane_game_custom_font_name', String(record.name || 'UploadedFont').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) || 'UploadedFont');
     localStorage.setItem('airplane_game_custom_font_id', String(record.id));
@@ -4888,9 +4901,10 @@ async function handleCustomFontUpload(input) {
   const status = document.getElementById('cfgCustomFontStatus');
   try {
     const buffer = await file.arrayBuffer();
-    await installCustomFont(file.name.replace(/\.[^.]+$/, ''), buffer, file.type || 'font/ttf', false, true);
-    const savedId = await saveCustomFontToIndexedDB(file.name.replace(/\.[^.]+$/, ''), buffer, file.type || 'font/ttf');
+    const displayName = file.name.replace(/\.[^.]+$/, '');
+    const savedId = await saveCustomFontToIndexedDB(displayName, buffer, file.type || 'font/ttf');
     localStorage.setItem('airplane_game_custom_font_id', savedId);
+    await installCustomFont(displayName, buffer, file.type || 'font/ttf', false, true, savedId);
     applyFontSettings();
     await renderRegisteredCustomFonts();
     if (status) status.textContent = `${file.name.replace(/\.[^.]+$/, '')} — ${(I18N_DICTIONARY.font_apply_success?.[currentLang] || '適用しました')}`;
