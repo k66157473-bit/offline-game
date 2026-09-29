@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -876,31 +875,28 @@ html[data-script-mode="mayan"] textarea {
 html[data-script-mode="mayan"] .mayan-script-rendered {
   text-shadow: 0 0 1px rgba(0,0,0,0.4);
 }
-/* 黄色背景・赤文字の固定案内バー */
+/* 黄色背景・赤文字の案内バー（固定配置をやめ、ヘッダーを押し下げて最上部に配置） */
 .rescue-notice-bar {
   width: 100%;
-  background-color: #ffeb3b; /* 鮮やかな黄色 */
-  color: #d32f2f;            /* 赤文字 */
+  background-color: #ffeb3b !important;
+  color: #d32f2f !important;
   border-bottom: 2px solid #fbc02d;
-  padding: 8px 16px;
+  padding: 10px 16px;
   font-size: 14px;
   font-weight: bold;
   text-align: center;
   box-sizing: border-box;
-  position: relative;
-  z-index: 999999;           /* 画面の最前面に表示 */
-  direction: ltr !important; /* アラビア語選択時でも左から右書きを維持 */
+  position: relative; /* fixedからrelativeに変更して重なりを解消 */
+  z-index: 1000;
+  line-height: 1.5;
+  display: none;
 }
 </style>
 </head>
 <body>
-<!-- 画面最上部に表示される救済案内バー（言語切り替え失敗時） -->
-<div id="rescueNoticeBar"></div>
-
-<div id="whiteoutOverlay"></div>
-<div id="arabicRescueButton" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483647;padding:18px 24px;border:3px solid #111;border-radius:14px;background:#ffffff;color:#111!important;-webkit-text-fill-color:#111!important;box-shadow:0 8px 30px rgba(0,0,0,.45);font-size:18px;font-weight:700;text-align:center;cursor:pointer;direction:ltr;">Arabic selection recovery<br><span style="font-size:13px;font-weight:400;">Return to the language selected before Arabic</span></div>
 <div id="mouseStalker">★</div>
 
+<div id="rescueNoticeBar" class="rescue-notice-bar" style="display: none;"></div>
 <!-- ヘッダー表示ボタン -->
 <button id="headerShowBtn" onclick="toggleHeader(true)" data-i18n="btn_show_header">ヘッダー表示</button>
 
@@ -3979,62 +3975,51 @@ function applyStaticTextI18n(){
   });
 }
 
-// 1. アラビア語に切り替える前の言語を保存
-function prepareArabicLanguageSwitch(nextLang){
-  if (nextLang !== 'ar') return;
-  try {
-    const current = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
-    if (current !== 'ar') {
-      localStorage.setItem('airplane_game_lang_before_ar', current);
-    }
-  } catch(_) {}
-}
+// 案内バーの多言語テキスト
+const RESCUE_MESSAGES = {
+  ar: 'هذا إجراء إنقاذ لمن ظهرت لديهم شاشة بيضاء بعد اختيار اللغة العربية. يمكنك إزالة المعلمة بعد ذلك.',
+  ja: 'アラビア語を選択して真っ白になった方のための救済措置です。パラメータはその後は削除して構いません'
+};
 
-// 2. アラビア語のときは救済ボタンを「表示」し、それ以外の言語では「非表示」にする
-function finishArabicLanguageSwitch(lang){
-  const rescue = document.getElementById('arabicRescueButton');
-  if (!rescue) return;
+// 救済バーの表示制御（★アラビア語選択時のみ表示）
+function updateRescueNoticeBarVisibility() {
+  const bar = document.getElementById('rescueNoticeBar');
+  if (!bar) return;
 
-  if (lang === 'ar') {
-    rescue.style.display = 'block'; // アラビア語のときは画面に出す
-    rescue.onclick = restoreLanguageBeforeArabic;
+  const params = new URLSearchParams(window.location.search);
+  const lang = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
+
+  // rescueパラメータがあり、かつ「アラビア語(ar)のときだけ」表示
+  if (params.has('rescue') && lang === 'ar') {
+    bar.textContent = RESCUE_MESSAGES['ar'] || RESCUE_MESSAGES['ja'];
+    bar.style.display = 'block';
   } else {
-    rescue.style.display = 'none';  // 他の言語では隠す
+    bar.style.display = 'none';
   }
 }
 
-// 3. 救済ボタンを押した時の復元処理
-function restoreLanguageBeforeArabic(){
-  let previous = 'ja';
-  try {
-    previous = localStorage.getItem('airplane_game_lang_before_ar') || 'ja';
-  } catch(_) {}
-  
-  if (!['ja','en','hira','ko','zh-CN','zh-TW','eo','mam','th','sw','es','fr','de','pt','hi','id','vi','ru'].includes(previous) || previous === 'ar') {
-    previous = 'ja';
-  }
-  
-  try {
-    localStorage.setItem('airplane_game_lang', previous);
-    const configStr = localStorage.getItem('airplane_game_config');
-    if (configStr) {
-      const cfg = JSON.parse(configStr);
-      cfg.lang = previous;
-      localStorage.setItem('airplane_game_config', JSON.stringify(cfg));
-    }
-  } catch(_) {}
-
-  changeLanguage(previous);
-}
-
-
+// 統合された言語切り替え関数
 function changeLanguage(lang) {
   if (lang === 'zh') lang = 'zh-CN';
-  prepareArabicLanguageSwitch(lang);
   if (!['ja','en','hira','ko','zh-CN','zh-TW','ar','eo','mam','th','sw','es','fr','de','pt','hi','id','vi','ru'].includes(lang)) lang = 'en';
+
+  // アラビア語選択時で、まだURLに ?rescue が付いていないときだけURL更新（1回のみ）
+  const params = new URLSearchParams(window.location.search);
+  if (lang === 'ar' && !params.has('rescue')) {
+    try { localStorage.setItem('airplane_game_lang', 'ar'); } catch(_) {}
+    let count = 1;
+    try {
+      count = parseInt(localStorage.getItem('airplane_game_rescue_counter') || '0', 10) + 1;
+      localStorage.setItem('airplane_game_rescue_counter', count.toString());
+    } catch(_) {}
+    const url = new URL(window.location.href);
+    url.searchParams.set('rescue', count.toString());
+    window.location.href = url.toString();
+    return;
+  }
+
   currentLang = lang;
 
-  // ★リロードしても絶対に元に戻らないよう即時保存
   try {
     localStorage.setItem('airplane_game_lang', lang);
   } catch (_) {}
@@ -4057,9 +4042,8 @@ function changeLanguage(lang) {
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute('content', t('site_desc'));
 
-   document.querySelectorAll('[data-i18n]').forEach(el => {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
     const k = el.getAttribute('data-i18n');
-    // 元のテキストを保持しておき、未対応の場合は自動でその表記にフォールバック
     if (!el.hasAttribute('data-i18n-orig')) {
       el.setAttribute('data-i18n-orig', el.textContent.trim());
     }
@@ -4099,9 +4083,12 @@ function changeLanguage(lang) {
     if (typeof applyMayanNumeralDisplay === 'function') applyMayanNumeralDisplay();
   }
 
-  finishArabicLanguageSwitch(lang);
+  // 案内バーの表示更新（アラビア語のときだけ表示、他は非表示）
+  updateRescueNoticeBarVisibility();
+
   saveAllConfig();
 }
+
 function initIndexedDB() {
   return new Promise((resolve) => {
     if (!window.indexedDB || !document.getElementById('cfgUseIndexedDB').checked) {
