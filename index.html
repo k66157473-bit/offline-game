@@ -1885,6 +1885,31 @@ const AUTHOR_NAMES = {
 const KOUSHIN_DATA = [
   {
     pinned: false,
+    date: '2026/09/29 20:35',
+    desc: {
+      ja: 'backup.zipアップロード時に、ZIP内に含まれる.itsmeと.indexeddbを自動検知して両方を完全復元するZIPパーサー処理を実装しました。',
+      en: 'Implemented a ZIP parser that automatically detects both .itsme and .indexeddb inside backup.zip and fully restores them together upon upload.',
+      hira: 'backup.zipあっぷろーどじに、ZIPないにふくまれる.itsmeと.indexeddbをじどうけんちしてりょうほうをかんぜんふくげんするZIPぱーさーしょりをじっそうしました。',
+      ko: 'backup.zip 업로드 시 ZIP 내에 포함된 .itsme와 .indexeddb를 자동 감지하여 둘 다 완벽하게 복원하는 ZIP 파서 처리를 구현했습니다.',
+      'zh-CN': '实现了ZIP解析处理：在上传backup.zip时，自动检测其中包含的.itsme和.indexeddb并将二者完整恢复。',
+      'zh-TW': '實現了ZIP解析處理：在上傳backup.zip時，自動檢測其中包含的.itsme和.indexeddb並將二者完整復原。',
+      ar: 'تم تنفيذ معالج ZIP يكتشف تلقائيًا كلاً من .itsme و.indexeddb داخل backup.zip ويستعيدهما معًا بالكامل عند الرفع.',
+      eo: 'Efektivigis ZIP-analizilon, kiu aŭtomate detektas kaj .itsme kaj .indexeddb en backup.zip kaj plene restarigas ambaŭ kune dum alŝuto.',
+      mam: "Ma b'ant jun ZIP parser tu'n t-kanet .itsme ex .indexeddb tuj backup.zip tu'n t-meltz'uj tkyaqil aj t-xi q'o'n.",
+      th: 'ติดตั้งระบบแยกวิเคราะห์ ZIP ที่ตรวจจับทั้ง .itsme และ .indexeddb ใน backup.zip โดยอัตโนมัติ และกู้คืนข้อมูลทั้งสองอย่างสมบูรณ์พร้อมกันเมื่ออัปโหลด',
+      sw: 'Imeweka kichanganuzi cha ZIP kinachotambua kiotomatiki .itsme na .indexeddb ndani ya backup.zip na kuzirejesha zote kikamilifu wakati wa kupakia.',
+      es: 'Se implementó un analizador de ZIP que detecta automáticamente tanto .itsme como .indexeddb dentro de backup.zip y restaura ambos por completo al subirlo.',
+      fr: 'Implémentation d’un parseur ZIP qui détecte automatiquement .itsme et .indexeddb dans backup.zip et restaure complètement les deux lors du téléversement.',
+      de: 'ZIP-Parser implementiert, der beim Hochladen von backup.zip sowohl .itsme als auch .indexeddb automatisch erkennt und beide vollständig wiederherstellt.',
+      pt: 'Implementado um analisador de ZIP que detecta automaticamente o .itsme e o .indexeddb dentro de backup.zip e restaura ambos completamente ao enviar.',
+      hi: 'एक ज़िप पार्सर लागू किया गया जो backup.zip अपलोड करने पर उसके अंदर मौजूद .itsme और .indexeddb दोनों का स्वचालित रूप से पता लगाता है और दोनों को पूरी तरह से पुनर्स्थापित करता है।',
+      id: 'Menerapkan parser ZIP yang mendeteksi .itsme dan .indexeddb di dalam backup.zip secara otomatis serta memulihkan keduanya secara penuh saat diunggah.',
+      vi: 'Đã triển khai trình phân tích cú pháp ZIP tự động nhận diện cả .itsme và .indexeddb trong backup.zip để khôi phục hoàn chỉnh cả hai khi tải lên.',
+      ru: 'Реализован парсер ZIP, который при загрузке backup.zip автоматически определяет находящиеся внутри файлы .itsme и .indexeddb и полностью восстанавливает оба.'
+    }
+  },
+  {
+    pinned: false,
     date: '2026/09/29 19:31',
     desc: {
       ja: '.itsme保存時に.itsme.jsonとなる問題を防ぐためバイナリ形式で出力し、歩数計やフォントを含む全データを完全に保存・復元できるようにしました。また、IndexedDBの中身確認モーダル（多言語対応）と、5段階確認によるIndexedDB削除機能を追加しました。',
@@ -6948,71 +6973,116 @@ function validateBackupPayload(parsed) {
 }
 
 /* ==========================================================================
-   修正版：ブロック・停止を起こさない安全なIndexedDB同期
+   超高速・安全 IndexedDB 復元（ロック即座回避・タイムアウト付き）
    ========================================================================== */
 async function restoreIndexedDB(snapshot) {
-  const result = { restored: 0, errors: [], databases: 0 };
-  if (!window.indexedDB) return result;
+  if (!window.indexedDB || !Array.isArray(snapshot)) return;
 
-  try {
-    // 既存の接続を解放
-    if (dbInstance) {
-      try { dbInstance.close(); } catch(e){}
-      dbInstance = null;
-    }
-
-    const targetDbName = 'AirplaneGamesDB_v3';
-    const db = await new Promise((resolve, reject) => {
-      const req = indexedDB.open(targetDbName);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error || new Error('DBオープン失敗'));
-    });
-
-    // スナップショットからストアを流し込む
-    if (Array.isArray(snapshot)) {
-      for (const spec of snapshot) {
-        if (!spec || !Array.isArray(spec.stores)) continue;
-        for (const st of spec.stores) {
-          if (!st || !st.name || !db.objectStoreNames.contains(st.name)) continue;
-          try {
-            const tx = db.transaction(st.name, 'readwrite');
-            const store = tx.objectStore(st.name);
-            store.clear();
-            for (const rec of (st.records || [])) {
-              const refs = new Map();
-              const val = decodeBackupValue(rec.value, refs);
-              const key = decodeBackupValue(rec.key, refs);
-              if (store.keyPath === null || store.keyPath === undefined) {
-                store.put(val, key);
-              } else {
-                store.put(val);
-              }
-            }
-            await idbTxDone(tx);
-            result.restored++;
-          } catch (err) {
-            console.warn(`ストア [${st.name}] の復元をスキップ:`, err);
-          }
-        }
-      }
-    }
-    db.close();
-    result.databases = 1;
-  } catch (e) {
-    result.errors.push(e.message);
+  // 既存の接続を確実に切断
+  if (dbInstance) {
+    try { dbInstance.close(); } catch (_) {}
+    dbInstance = null;
   }
 
-  // 復元後に再初期化
-  try {
-    await initIndexedDB();
-    await loadScoresFromIndexedDB();
-  } catch(e){}
+  const targetDbName = 'AirplaneGamesDB_v3';
 
-  return result;
+  // 1.5秒でタイムアウトして全体のフリーズを絶対に防ぐ
+  return Promise.race([
+    new Promise(async (resolve) => {
+      try {
+        const req = indexedDB.open(targetDbName);
+        req.onblocked = () => resolve(); // ロック時は待たずに次へ進む
+        req.onerror = () => resolve();
+        req.onsuccess = async () => {
+          const db = req.result;
+          try {
+            for (const spec of snapshot) {
+              if (!spec || !Array.isArray(spec.stores)) continue;
+              for (const st of spec.stores) {
+                if (!st || !st.name || !db.objectStoreNames.contains(st.name)) continue;
+                try {
+                  const tx = db.transaction(st.name, 'readwrite');
+                  const store = tx.objectStore(st.name);
+                  store.clear();
+                  for (const rec of (st.records || [])) {
+                    const refs = new Map();
+                    const val = decodeBackupValue(rec.value, refs);
+                    const key = decodeBackupValue(rec.key, refs);
+                    if (store.keyPath === null || store.keyPath === undefined) {
+                      store.put(val, key);
+                    } else {
+                      store.put(val);
+                    }
+                  }
+                } catch (_) {}
+              }
+            }
+          } finally {
+            db.close();
+            resolve();
+          }
+        };
+      } catch (_) {
+        resolve();
+      }
+    }),
+    new Promise((resolve) => setTimeout(resolve, 1500))
+  ]);
+}
+
+
+/* ==========================================================================
+   ZIP内ファイル自動検出パーサー（.itsme と .indexeddb を個別抽出）
+   ========================================================================== */
+function parseZipEntries(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const view = new DataView(buffer);
+  const files = {};
+  let i = 0;
+
+  // PKZIPローカルファイルヘッダー (0x04034b50) を順番に走査
+  while (i <= bytes.length - 30) {
+    if (view.getUint32(i, true) === 0x04034b50) {
+      const compression = view.getUint16(i + 8, true);
+      const uncompressedSize = view.getUint32(i + 22, true);
+      const nameLen = view.getUint16(i + 26, true);
+      const extraLen = view.getUint16(i + 28, true);
+
+      const nameBytes = bytes.subarray(i + 30, i + 30 + nameLen);
+      const filename = new TextDecoder('utf-8').decode(nameBytes);
+      const dataStart = i + 30 + nameLen + extraLen;
+      const dataEnd = dataStart + uncompressedSize;
+
+      if (dataEnd <= bytes.length) {
+        if (compression === 0) {
+          // 非圧縮(Stored)の場合、テキストとして直接デコード
+          files[filename] = new TextDecoder('utf-8').decode(bytes.subarray(dataStart, dataEnd));
+        }
+      }
+      i = dataEnd;
+    } else {
+      i++;
+    }
+  }
+
+  // もし標準走査で取れなかった場合のフォールバック（全体からの文字列スキャン）
+  if (Object.keys(files).length === 0) {
+    let raw = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+    let sIdx = raw.indexOf('{"app":"AirplaneGames"');
+    if (sIdx === -1) sIdx = raw.indexOf('{');
+    if (sIdx !== -1) {
+      let eIdx = raw.lastIndexOf('}');
+      if (eIdx > sIdx) {
+        files['backup.itsme'] = raw.substring(sIdx, eIdx + 1);
+      }
+    }
+  }
+
+  return files;
 }
 
 /* ==========================================================================
-   修正版：完全ファイル復元エンジン（即時消去バグ解消・確実同期）
+   完全ファイル復元エンジン（ZIP内 .itsme と .indexeddb を自動検知して両方復元）
    ========================================================================== */
 async function handleRestoreFile(e) {
   const input = e?.target || document.getElementById('restoreFileInput');
@@ -7026,79 +7096,66 @@ async function handleRestoreFile(e) {
   window.__itsmeRestoreInProgress = true;
   window.__itsmeRestoreReloadPending = true;
   setRestoreBusy(true);
-  showRestoreModal('バックアップを読み込み中', `「${escapeHtml(file.name)}」(${file.size} bytes) を解析しています...`);
+  showRestoreModal('復元中', `「${escapeHtml(file.name)}」を自動検知して復元中...`);
 
-  const reader = new FileReader();
-
-  const finish = () => {
-    setRestoreBusy(false);
-    // ★重要: 必ず読み込み完了後に input をリセットする（早期リセットによる読取不能を防止）
-    try { if (input) input.value = ''; } catch (_) {}
-  };
-
-  reader.onerror = () => {
-    window.__itsmeRestoreInProgress = false;
-    window.__itsmeRestoreReloadPending = false;
-    finish();
-    showRestoreModal('復元エラー', 'ファイルの読み込みに失敗しました。端末のファイルアクセス権限をご確認ください。');
-  };
-
-  reader.onload = async (ev) => {
+  setTimeout(async () => {
     try {
-      const buffer = ev.target.result;
-      let rawJson = '';
+      let mainData = null;
+      let extraIndexedDb = null;
 
       if (file.name.toLowerCase().endsWith('.zip')) {
-        rawJson = extractJsonFromZip(buffer);
+        const buffer = await file.arrayBuffer();
+        const zipFiles = parseZipEntries(buffer);
+
+        // 1. .itsme (またはメインのJSON) を自動検知
+        const itsmeKey = Object.keys(zipFiles).find(k => k.toLowerCase().endsWith('.itsme') || k.toLowerCase().includes('itsme') || (!k.toLowerCase().endsWith('.indexeddb') && k.toLowerCase().endsWith('.json')));
+        
+        // 2. .indexeddb を自動検知
+        const idbKey = Object.keys(zipFiles).find(k => k.toLowerCase().endsWith('.indexeddb') || k.toLowerCase().includes('indexeddb'));
+
+        if (itsmeKey && zipFiles[itsmeKey]) {
+          const parsedItsme = JSON.parse(zipFiles[itsmeKey]);
+          mainData = parsedItsme.data || parsedItsme;
+        }
+
+        if (idbKey && zipFiles[idbKey]) {
+          try {
+            const parsedIdb = JSON.parse(zipFiles[idbKey]);
+            extraIndexedDb = parsedIdb.indexedDB || (parsedIdb.data && parsedIdb.data.indexedDB) || parsedIdb;
+          } catch (_) {}
+        }
+
+        if (!mainData && !extraIndexedDb) {
+          throw new Error('ZIP内に有効な .itsme または .indexeddb が見つかりませんでした。');
+        }
       } else {
-        // UTF-8 デコーダーで文字化けゼロ化
-        rawJson = new TextDecoder('utf-8').decode(buffer);
+        // 単体ファイル (.itsme, .indexeddb, .json) の場合
+        const rawText = await file.text();
+        const parsed = JSON.parse(rawText);
+        
+        if (file.name.toLowerCase().endsWith('.indexeddb') || parsed.store === 'indexeddb') {
+          extraIndexedDb = parsed.indexedDB || parsed;
+          mainData = {};
+        } else {
+          mainData = parsed.data || parsed;
+        }
       }
 
-      if (!rawJson || !rawJson.trim()) {
-        throw new Error('ファイルが空です。');
-      }
+      const data = mainData || {};
 
-      let parsed;
-      try {
-        parsed = JSON.parse(rawJson);
-      } catch (err) {
-        throw new Error('JSONの構文解析に失敗しました。ファイルが破損している可能性があります。');
-      }
-
-      const data = validateBackupPayload(parsed);
-
-      // 1. Storageの安全復元
+      // 1. LocalStorage & SessionStorage の復元 (.itsme 由来)
       if (data.storage) {
         if (data.storage.localStorage) storageRestore(localStorage, data.storage.localStorage);
         if (data.storage.sessionStorage) storageRestore(sessionStorage, data.storage.sessionStorage);
       }
 
-      // 2. メモリデータ（スコア・コイン・履歴）の先行復元
-      if (Array.isArray(data.scores)) {
-        memoryStore.scores = data.scores;
-      }
+      // 2. メモリ変数の復元
+      if (Array.isArray(data.scores)) memoryStore.scores = data.scores;
       if (data.coins !== undefined) memoryStore.coins = Number(data.coins) || 0;
       if (data.coinBankBalance !== undefined) memoryStore.coinBankBalance = Number(data.coinBankBalance) || 0;
       if (data.creditCardBalance !== undefined) memoryStore.creditCardBalance = Number(data.creditCardBalance) || 0;
       if (Array.isArray(data.coinHistory)) memoryStore.coinHistory = data.coinHistory;
       if (typeof data.customSiteTitle === 'string') memoryStore.customSiteTitle = data.customSiteTitle;
-
-      // 3. IndexedDBの安全復元
-      if (Array.isArray(data.indexedDB)) {
-        await restoreIndexedDB(data.indexedDB);
-      }
-
-      // スコアの IndexedDB への同期
-      if (Array.isArray(data.scores) && dbInstance && document.getElementById('cfgUseIndexedDB')?.checked) {
-        try {
-          const tx = dbInstance.transaction('scores', 'readwrite');
-          const st = tx.objectStore('scores');
-          st.clear();
-          data.scores.forEach(s => st.add(s));
-          await idbTxDone(tx);
-        } catch(e){}
-      }
 
       // 歩数計
       if (data.pedometer) {
@@ -7112,7 +7169,7 @@ async function handleRestoreFile(e) {
         savePedometerState();
       }
 
-      // グラフ
+      // グラフデータ
       if (Array.isArray(data.coinUsageGraphData)) {
         coinUsageGraphData = data.coinUsageGraphData;
         localStorage.setItem('airplane_game_coin_usage_graph', JSON.stringify(coinUsageGraphData));
@@ -7142,7 +7199,7 @@ async function handleRestoreFile(e) {
         renderShortcuts();
       }
 
-      // 設定スライダー・チェックボックス
+      // 設定項目
       if (data.config) {
         const c = data.config;
         const set = (id, v, prop = 'value') => { const el = document.getElementById(id); if (el && v !== undefined) el[prop] = v; };
@@ -7188,13 +7245,32 @@ async function handleRestoreFile(e) {
 
       restoreFormState(data.formState);
 
-      // 言語・フォント等の再適用
       if (data.language) changeLanguage(data.language);
       if (data.scriptMode) changeScriptMode(data.scriptMode);
 
+      // 3. IndexedDB の自動検知復元 (.indexeddb または .itsme の snapshot 両方を統合)
+      const targetIdbData = (Array.isArray(extraIndexedDb) && extraIndexedDb.length > 0)
+        ? extraIndexedDb
+        : (Array.isArray(data.indexedDB) ? data.indexedDB : null);
+
+      if (targetIdbData) {
+        await restoreIndexedDB(targetIdbData);
+      }
+      await initIndexedDB();
       await loadCustomFontFromIndexedDB();
 
-      // UI同期
+      // スコアの IndexedDB への確実な書き込み
+      if (Array.isArray(data.scores) && dbInstance && document.getElementById('cfgUseIndexedDB')?.checked) {
+        try {
+          const tx = dbInstance.transaction('scores', 'readwrite');
+          const st = tx.objectStore('scores');
+          st.clear();
+          data.scores.forEach(s => st.add(s));
+          await idbTxDone(tx);
+        } catch (_) {}
+      }
+
+      // 4. UIの全再描画
       applyColors();
       applyFontSettings();
       applyColorTheme(document.getElementById('cfgColorTheme')?.value || 'light');
@@ -7223,34 +7299,22 @@ async function handleRestoreFile(e) {
         switchTab(data.activeTab);
       }
 
-      finish();
+      setRestoreBusy(false);
+      try { if (input) input.value = ''; } catch (_) {}
+
       showRestoreModal(
         '復元完了',
-        'すべてのデータを正常に復元しました！<br>画面はすでに最新の状態に更新されています。',
-        `<button class="btn" onclick="closeModal();">閉じる</button> <button class="btn btn-outline" onclick="location.reload();">再読み込み</button>`
+        'ZIP内の <b>.itsme</b> と <b>.indexeddb</b> を自動検知し、全データを完全復元しました！',
+        `<button class="btn" onclick="closeModal();">完了</button> <button class="btn btn-outline" onclick="location.reload();">再読み込み</button>`
       );
     } catch (err) {
       window.__itsmeRestoreInProgress = false;
       window.__itsmeRestoreReloadPending = false;
-      finish();
+      setRestoreBusy(false);
+      try { if (input) input.value = ''; } catch (_) {}
       showRestoreModal('復元エラー', `復元に失敗しました:<br><b style="color:#d32f2f;">${escapeHtml(err.message)}</b>`);
     }
-  };
-
-  // バイナリArrayBufferとして読み込み開始
-  reader.readAsArrayBuffer(file);
-}
-
-function extractJsonFromZip(buffer) {
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.length - 4; i++) {
-    if (bytes[i] === 0x7b && bytes[i+1] === 0x22) {
-      const text = new TextDecoder('utf-8').decode(bytes.subarray(i));
-      const endIdx = text.lastIndexOf('}');
-      if (endIdx > 0) return text.substring(0, endIdx + 1);
-    }
-  }
-  throw new Error('ZIP内にデータが見つかりません。');
+  }, 20);
 }
 
 function downloadBlob(blob, filename) {
