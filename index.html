@@ -2647,72 +2647,91 @@ const availableActions = [
   { id:'stalker', name:{ja:'マウスストーカー切替',en:'Toggle Mouse Stalker',hira:'ますとーかーきりかえ',ko:'마우스 추적기 전환','zh-CN':'切换鼠标跟随','zh-TW':'切換滑鼠跟隨',ar:'تبديل متعقب الماوس',eo:'Ŝanĝi Musan Sekvilon'} },
   { id:'profile_questions', name:{ja:'100の質問を開く',en:'Open 100 Questions',hira:'100のしつもんをひらく',ko:'100개 질문 열기','zh-CN':'打开100个问题','zh-TW':'開啟100個問題',ar:'فتح 100 سؤال',eo:'Malfermi 100 Demandojn'} }
 ];
-
+/* ==========================================================================
+   完全安全版 saveAllConfig（未存在要素の null 参照エラーを100%防止）
+   ========================================================================== */
 function saveAllConfig() {
   if (window.__itsmeRestoreInProgress) return;
-  const config = {
-    activeTab: currentActiveTab,
-    selectedGame: currentGame,
-    lang: currentLang,
-    gameEnabled: document.getElementById('cfgGameEnabled').checked,
-    saveScore: document.getElementById('cfgSaveScore').checked,
-    useIndexedDB: document.getElementById('cfgUseIndexedDB').checked,
-    mouseStalkerType: document.getElementById('cfgMouseStalkerType').value,
-    stalkerCustomText: document.getElementById('cfgStalkerCustomText').value,
-    stalkerImageData: localStorage.getItem('airplane_game_stalker_img') || '',
-    gcSimulation: document.getElementById('cfgGcSimulation').checked,
-    bgColor: document.getElementById('cfgBgColor').value,
-    bgColorText: document.getElementById('cfgBgColorText').value,
-    textColor: document.getElementById('cfgTextColor').value,
-    textColorText: document.getElementById('cfgTextColorText').value,
-    fontFamily: document.getElementById('cfgFontFamily').value,
-    customFontName: localStorage.getItem('airplane_game_custom_font_name') || '',
-    fontSizeNum: document.getElementById('cfgFontSizeNum').value,
-    fontSizeUnit: document.getElementById('cfgFontSizeUnit').value,
-    showSearchGame: document.getElementById('cfgShowSearchGame').checked,
-    showSearchOther: document.getElementById('cfgShowSearchOther').checked,
-    showHeader: document.getElementById('cfgShowHeader').checked,
-    colorTheme: document.getElementById('cfgColorTheme').value,
-    stickMaxHeight: document.getElementById('stickMaxHeight').value,
-    stickMaxPillars: document.getElementById('stickMaxPillars').value,
-    jumpForce: document.getElementById('cfgJumpForce').value,
 
-    nightFlight: document.getElementById('cfgNightFlight').checked,
-    reducedMotion: document.getElementById('cfgReducedMotion').checked,
-    batterySaver: document.getElementById('cfgBatterySaver').checked,
-    masterVolume: document.getElementById('cfgMasterVolume').value,
-    muteAudio: document.getElementById('cfgMuteAudio').checked,
-    dpadPosition: document.getElementById('cfgDpadPosition').value,
-    dpadSize: document.getElementById('cfgDpadSize').value,
-    dpadOpacity: document.getElementById('cfgDpadOpacity').value,
-    vibrate: document.getElementById('cfgVibrate').checked,
-    gameSpeed: document.getElementById('cfgGameSpeed').value,
-    invincible: document.getElementById('cfgInvincible').checked,
-    konjacMaterial: document.getElementById('cfgKonjacMaterial').value,
-    konjacKnife: document.getElementById('cfgKonjacKnife').value,
-    flagRegion: document.getElementById('cfgFlagRegion').value,
-    flightHours: document.getElementById('cfgFlightHours').value,
-    flightMinutes: document.getElementById('cfgFlightMinutes').value,
-    timezoneDiff: document.getElementById('cfgTimezoneDiff').value,
-    coinBalanceAddAmount: getCoinBalanceAddAmount()
+  const getVal = (id, fallback = '') => {
+    const el = document.getElementById(id);
+    return el ? el.value : fallback;
+  };
+  const getChk = (id, fallback = false) => {
+    const el = document.getElementById(id);
+    return el ? !!el.checked : fallback;
   };
 
-  localStorage.setItem('airplane_game_config', JSON.stringify(config));
-  localStorage.setItem('airplane_game_shortcuts', JSON.stringify(shortcutData));
-  localStorage.setItem('airplane_game_my_profile', JSON.stringify(memoryStore.myProfile));
-  localStorage.setItem('airplane_game_100_questions_v5', JSON.stringify(customQuestions));
-  localStorage.setItem('airplane_game_coins', JSON.stringify({
-    coins: memoryStore.coins,
-    coinBankBalance: memoryStore.coinBankBalance,
-    creditCardBalance: memoryStore.creditCardBalance,
-    coinHistory: memoryStore.coinHistory,
-    customSiteTitle: memoryStore.customSiteTitle
-  }));
+  const config = {
+    activeTab: currentActiveTab || 'gameTab',
+    selectedGame: currentGame || 'stick',
+    lang: currentLang || 'ja',
+    gameEnabled: getChk('cfgGameEnabled', true),
+    saveScore: getChk('cfgSaveScore', true),
+    useIndexedDB: getChk('cfgUseIndexedDB', true),
+    mouseStalkerType: getVal('cfgMouseStalkerType', '★'),
+    stalkerCustomText: getVal('cfgStalkerCustomText', ''),
+    stalkerImageData: localStorage.getItem('airplane_game_stalker_img') || '',
+    gcSimulation: getChk('cfgGcSimulation', true),
+    bgColor: getVal('cfgBgColor', '#fce4ec'),
+    bgColorText: getVal('cfgBgColorText', '#fce4ec'),
+    textColor: getVal('cfgTextColor', '#333333'),
+    textColorText: getVal('cfgTextColorText', '#333333'),
+    fontFamily: getVal('cfgFontFamily', 'gothic'),
+    customFontName: localStorage.getItem('airplane_game_custom_font_name') || '',
+    customFontId: localStorage.getItem('airplane_game_custom_font_id') || '',
+    fontSizeNum: getVal('cfgFontSizeNum', '16'),
+    fontSizeUnit: getVal('cfgFontSizeUnit', 'px'),
+    showSearchGame: getChk('cfgShowSearchGame', true),
+    showSearchOther: getChk('cfgShowSearchOther', true),
+    showHeader: getChk('cfgShowHeader', true),
+    colorTheme: getVal('cfgColorTheme', 'light'),
+    stickMaxHeight: getVal('stickMaxHeight', '200'),
+    stickMaxPillars: getVal('stickMaxPillars', '5'),
+    jumpForce: getVal('cfgJumpForce', '12'),
 
-  const pinnedIds = KOUSHIN_DATA.filter(k => k.pinned).map(k => k.date);
-  localStorage.setItem('airplane_game_pinned_ids', JSON.stringify(pinnedIds));
+    nightFlight: getChk('cfgNightFlight', false),
+    reducedMotion: getChk('cfgReducedMotion', false),
+    batterySaver: getChk('cfgBatterySaver', false),
+    masterVolume: getVal('cfgMasterVolume', '0.7'),
+    muteAudio: getChk('cfgMuteAudio', false),
+    dpadPosition: getVal('cfgDpadPosition', 'center'),
+    dpadSize: getVal('cfgDpadSize', 'medium'),
+    dpadOpacity: getVal('cfgDpadOpacity', '1'),
+    vibrate: getChk('cfgVibrate', true),
+    gameSpeed: getVal('cfgGameSpeed', '1.0'),
+    invincible: getChk('cfgInvincible', false),
+    konjacMaterial: getVal('cfgKonjacMaterial', 'gray'),
+    konjacKnife: getVal('cfgKonjacKnife', 'standard'),
+    flagRegion: getVal('cfgFlagRegion', 'all'),
+    flightHours: getVal('cfgFlightHours', '6'),
+    flightMinutes: getVal('cfgFlightMinutes', '30'),
+    timezoneDiff: getVal('cfgTimezoneDiff', '-7'),
+    coinBalanceAddAmount: typeof getCoinBalanceAddAmount === 'function' ? getCoinBalanceAddAmount() : 800000
+  };
+
+  try {
+    localStorage.setItem('airplane_game_config', JSON.stringify(config));
+    localStorage.setItem('airplane_game_lang', currentLang);
+    localStorage.setItem('airplane_game_shortcuts', JSON.stringify(shortcutData));
+    localStorage.setItem('airplane_game_my_profile', JSON.stringify(memoryStore.myProfile));
+    localStorage.setItem('airplane_game_100_questions_v5', JSON.stringify(customQuestions));
+    localStorage.setItem('airplane_game_coins', JSON.stringify({
+      coins: memoryStore.coins,
+      coinBankBalance: memoryStore.coinBankBalance,
+      creditCardBalance: memoryStore.creditCardBalance,
+      coinHistory: memoryStore.coinHistory,
+      customSiteTitle: memoryStore.customSiteTitle
+    }));
+
+    if (Array.isArray(KOUSHIN_DATA)) {
+      const pinnedIds = KOUSHIN_DATA.filter(k => k.pinned).map(k => k.date);
+      localStorage.setItem('airplane_game_pinned_ids', JSON.stringify(pinnedIds));
+    }
+  } catch (err) {
+    console.warn('[saveAllConfig] 保存エラーをスキップ:', err);
+  }
 }
-
 function getCoinBalanceAddAmount() {
   const el = document.getElementById('coinBalanceAddAmount');
   const value = el ? Number(el.value) : NaN;
@@ -3451,15 +3470,30 @@ function initializeScriptMode(){
   if (el) el.value = currentScriptMode;
   changeScriptMode(currentScriptMode);
 }
-
+/* ==========================================================================
+   言語変更処理（LocalStorage即時保存・リロード復元保証）
+   ========================================================================== */
 function changeLanguage(lang) {
   if (lang === 'zh') lang = 'zh-CN';
   if (!['ja','en','hira','ko','zh-CN','zh-TW','ar','eo','mam','th','sw','es','fr','de','pt','hi','id','vi','ru'].includes(lang)) lang = 'en';
   currentLang = lang;
-  if(document.getElementById('questionsView')) { ensureQuestionTranslations(currentLang); renderQuestions(); }
-  document.getElementById('langSelector').value = lang;
+
+  // ★リロードしても絶対に元に戻らないよう即時保存
+  try {
+    localStorage.setItem('airplane_game_lang', lang);
+  } catch (_) {}
+
+  if (document.getElementById('questionsView')) {
+    if (typeof ensureQuestionTranslations === 'function') ensureQuestionTranslations(currentLang);
+    if (typeof renderQuestions === 'function') renderQuestions();
+  }
+
+  const selector = document.getElementById('langSelector');
+  if (selector && selector.value !== lang) selector.value = lang;
+
   document.documentElement.lang = lang;
   document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+
   const scriptSelector = document.getElementById('scriptModeSelector');
   if (scriptSelector) scriptSelector.value = currentScriptMode;
 
@@ -3476,33 +3510,34 @@ function changeLanguage(lang) {
     const key = el.getAttribute('data-i18n-aria');
     if (key && I18N_DICTIONARY[key]) el.setAttribute('aria-label', getLocalizedMapValue(I18N_DICTIONARY[key], lang));
   });
-  localizeGameOptionPresets();
+
+  if (typeof localizeGameOptionPresets === 'function') localizeGameOptionPresets();
+
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     const k = el.getAttribute('data-i18n-ph');
     el.placeholder = t(k);
   });
 
-  document.getElementById('authorName').textContent = AUTHOR_NAMES[lang] || AUTHOR_NAMES.en || AUTHOR_NAMES.ja;
-  updateGameInstructionText();
-  renderHistoryTable();
-  renderRegisteredCustomFonts();
-  renderScoreTable();
-  renderShortcuts();
-  updateQuestionsResetButton();
-  updateMyProfileLive();
-  renderPedometerLegend();
-  updateCoinUsageGraphMeta();
-  drawCoinUsageGraph();
+  const authorEl = document.getElementById('authorName');
+  if (authorEl) authorEl.textContent = AUTHOR_NAMES[lang] || AUTHOR_NAMES.en || AUTHOR_NAMES.ja;
+
+  if (typeof updateGameInstructionText === 'function') updateGameInstructionText();
+  if (typeof renderHistoryTable === 'function') renderHistoryTable();
+  if (typeof renderRegisteredCustomFonts === 'function') renderRegisteredCustomFonts();
+  if (typeof renderScoreTable === 'function') renderScoreTable();
+  if (typeof renderShortcuts === 'function') renderShortcuts();
+  if (typeof updateQuestionsResetButton === 'function') updateQuestionsResetButton();
+  if (typeof updateMyProfileLive === 'function') updateMyProfileLive();
+  if (typeof renderPedometerLegend === 'function') renderPedometerLegend();
+  if (typeof updateCoinUsageGraphMeta === 'function') updateCoinUsageGraphMeta();
+  if (typeof drawCoinUsageGraph === 'function') drawCoinUsageGraph();
 
   if (currentScriptMode === 'mayan-numerals' || currentScriptMode === 'mayan') {
-    applyMayanNumeralDisplay();
+    if (typeof applyMayanNumeralDisplay === 'function') applyMayanNumeralDisplay();
   }
-
-
 
   saveAllConfig();
 }
-
 function initIndexedDB() {
   return new Promise((resolve) => {
     if (!window.indexedDB || !document.getElementById('cfgUseIndexedDB').checked) {
