@@ -2567,26 +2567,62 @@ function toTraditionalChinese(text) {
   return String(text).replace(/[国学习数据游戏标签记录时间开启关闭设置档个人资料备份复还原语言简体繁对战双画分屏跳跃消除块与最新旧查询搜索日期名称限制得分高差出生月份性别兴趣格言消息显示页面内容导出入历史档案保存制项目棒度现场量上同执行可以]/g, ch => map[ch] || ch);
 }
 
-function getLocalizedMapValue(map, lang) {
-  if (!map) return '';
-  if (map[lang] !== undefined && map[lang] !== '') return map[lang];
-  if (lang === 'zh-CN' && (map['zh-CN'] || map.zh)) return map['zh-CN'] || map.zh;
-  if (lang === 'zh-TW') {
-    if (map['zh-TW']) return map['zh-TW'];
-    if (map['zh-CN'] || map.zh) return toTraditionalChinese(map['zh-CN'] || map.zh);
+/* ==========================================================================
+   言語別自動フォールバック優先順位チェーン（Fallback Hierarchy）
+   ========================================================================== */
+const LANGUAGE_FALLBACK_CHAINS = {
+  'zh-TW': ['zh-TW', 'zh-CN', 'en'],
+  'zh-CN': ['zh-CN', 'zh-TW', 'en'],
+  'hira':  ['hira', 'ja', 'en'],
+  'ja':    ['ja', 'en'],
+  'default': ['en', 'ja']
+};
+
+/* ==========================================================================
+   完全自動フォールバック対応：値取得エンジン
+   ========================================================================== */
+function getLocalizedMapValue(map, lang, defaultText = '') {
+  if (!map || typeof map !== 'object') return defaultText;
+
+  // 1. 指定言語に直接値があれば最優先で返す
+  if (map[lang] !== undefined && map[lang] !== null && String(map[lang]).trim() !== '') {
+    return map[lang];
   }
-  if (map.en !== undefined && map.en !== '') return map.en;
-  if (map.ja !== undefined && map.ja !== '') return map.ja;
-  return Object.values(map)[0] || '';
+
+  // 2. 中国語特殊処理（簡体字 ⇄ 繁体字の相互自動変換フォールバック）
+  if (lang === 'zh-TW') {
+    const fallbackZh = map['zh-CN'] || map.zh;
+    if (fallbackZh) return toTraditionalChinese(fallbackZh);
+  } else if (lang === 'zh-CN') {
+    const fallbackZh = map['zh-TW'] || map.zh;
+    if (fallbackZh) return fallbackZh;
+  }
+
+  // 3. 言語別の自動フォールバックチェーンを順番に探索
+  const chain = LANGUAGE_FALLBACK_CHAINS[lang] || [lang, ...LANGUAGE_FALLBACK_CHAINS['default']];
+  for (const fallbackLang of chain) {
+    if (map[fallbackLang] !== undefined && map[fallbackLang] !== null && String(map[fallbackLang]).trim() !== '') {
+      return map[fallbackLang];
+    }
+  }
+
+  // 4. マップ内のいずれかの言語の値、またはデフォルト値を返す（空・未定義を完全防止）
+  const anyVal = Object.values(map).find(v => v !== undefined && v !== null && String(v).trim() !== '');
+  return anyVal !== undefined ? anyVal : defaultText;
 }
 
-function t(key) {
-  if (key === 'site_title' && typeof memoryStore !== 'undefined' && memoryStore.customSiteTitle) return memoryStore.customSiteTitle;
-  if (I18N_DICTIONARY[key]) {
-    const value = getLocalizedMapValue(I18N_DICTIONARY[key], currentLang);
-    return currentLang === 'zh-TW' ? toTraditionalChinese(value) : value;
+/* ==========================================================================
+   完全自動フォールバック対応：翻訳関数
+   ========================================================================== */
+function t(key, defaultText = '') {
+  if (key === 'site_title' && typeof memoryStore !== 'undefined' && memoryStore.customSiteTitle) {
+    return memoryStore.customSiteTitle;
   }
-  return key;
+  if (I18N_DICTIONARY && I18N_DICTIONARY[key]) {
+    const val = getLocalizedMapValue(I18N_DICTIONARY[key], currentLang, defaultText || key);
+    return currentLang === 'zh-TW' ? toTraditionalChinese(val) : val;
+  }
+  return defaultText || key;
 }
 
 /* ==========================================================================
@@ -3501,9 +3537,14 @@ function changeLanguage(lang) {
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute('content', t('site_desc'));
 
-  document.querySelectorAll('[data-i18n]').forEach(el => {
+   document.querySelectorAll('[data-i18n]').forEach(el => {
     const k = el.getAttribute('data-i18n');
-    el.textContent = t(k);
+    // 元のテキストを保持しておき、未対応の場合は自動でその表記にフォールバック
+    if (!el.hasAttribute('data-i18n-orig')) {
+      el.setAttribute('data-i18n-orig', el.textContent.trim());
+    }
+    const origText = el.getAttribute('data-i18n-orig');
+    el.textContent = t(k, origText);
   });
 
   document.querySelectorAll('[data-i18n-aria]').forEach(el => {
