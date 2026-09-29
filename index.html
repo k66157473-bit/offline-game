@@ -1466,9 +1466,9 @@ html[data-script-mode="mayan"] .mayan-script-rendered {
       <button class="btn btn-outline" onclick="exportDataFile('zip')">backup.zip 保存</button>
     </div>
 
-    <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);">
+    <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 15px;">
       <label><strong data-i18n="lbl_restore">データ復元 (.itsme / .indexeddb / backup.zip):</strong></label><br>
-      <input type="file" id="restoreFileInput" accept=".itsme,.indexeddb,.zip" style="margin-top: 8px;" onclick="this.value=''" onchange="handleRestoreFile(event)">
+      <input type="file" id="restoreFileInput" accept=".itsme,.indexeddb,.zip,.json,*/*" style="margin-top: 8px;" onclick="this.value=''" onchange="handleRestoreFile(event)">
     </div>
 
 
@@ -6434,26 +6434,53 @@ function idbTxDone(tx){return new Promise((resolve,reject)=>{tx.oncomplete=()=>r
 function idbDeleteDatabase(name){return new Promise((resolve,reject)=>{const r=indexedDB.deleteDatabase(name);r.onsuccess=()=>resolve(true);r.onerror=()=>reject(r.error||new Error('IndexedDB delete failed'));r.onblocked=()=>reject(new Error(`IndexedDB '${name}' is blocked by an open connection.`));});}
 function idbOpenForSnapshot(name){return new Promise((resolve,reject)=>{const r=indexedDB.open(name);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('IndexedDB open failed'));});}
 async function snapshotIndexedDB(){
-  const result=[];
-  if(!window.indexedDB||typeof indexedDB.databases!=='function')return result;
-  let dbInfos=[];
-  try{dbInfos=(await indexedDB.databases()).filter(x=>x&&x.name);}catch(e){return result;}
-  for(const info of dbInfos){
-    let db=null;
-    try{
-      db=await idbOpenForSnapshot(info.name);
-      const stores=[];
-      for(const storeName of Array.from(db.objectStoreNames)){
-        const tx=db.transaction(storeName,'readonly');const store=tx.objectStore(storeName);
-        const keys=await idbRequest(store.getAllKeys());const vals=await idbRequest(store.getAll());
-        const records=[];
-        for(let i=0;i<vals.length;i++){const seen=new Map();try{records.push({key:await encodeBackupValue(keys[i],seen),value:await encodeBackupValue(vals[i],seen)});}catch(e){records.push({key:await encodeBackupValue(keys[i]),value:{__backupType:'Unsupported',value:String(e)}});}}
-        const indexes=[];
-        for(const indexName of Array.from(store.indexNames)){const idx=store.index(indexName);indexes.push({name:indexName,keyPath:idx.keyPath,multiEntry:idx.multiEntry,unique:idx.unique});}
-        stores.push({name:storeName,keyPath:store.keyPath===undefined?null:store.keyPath,autoIncrement:store.autoIncrement,indexes,records});
+  const result = [];
+  if (!window.indexedDB) return result;
+  
+  // 本アプリ専用のデータベース名のみを厳格に対象とする
+  const targetDbName = 'AirplaneGamesDB_v3';
+  let db = null;
+  try {
+    db = await idbOpenForSnapshot(targetDbName);
+    const stores = [];
+    for (const storeName of Array.from(db.objectStoreNames)) {
+      const tx = db.transaction(storeName, 'readonly');
+      const store = tx.objectStore(storeName);
+      const keys = await idbRequest(store.getAllKeys());
+      const vals = await idbRequest(store.getAll());
+      const records = [];
+      for (let i = 0; i < vals.length; i++) {
+        const seen = new Map();
+        try {
+          records.push({
+            key: await encodeBackupValue(keys[i], seen),
+            value: await encodeBackupValue(vals[i], seen)
+          });
+        } catch(e) {
+          records.push({
+            key: await encodeBackupValue(keys[i]),
+            value: { __backupType: 'Unsupported', value: String(e) }
+          });
+        }
       }
-      result.push({name:info.name,version:db.version,stores});
-    }catch(e){result.push({name:info.name,version:info.version||1,stores:[],error:String(e)});}finally{try{db?.close();}catch(e){}}
+      const indexes = [];
+      for (const indexName of Array.from(store.indexNames)) {
+        const idx = store.index(indexName);
+        indexes.push({ name: indexName, keyPath: idx.keyPath, multiEntry: idx.multiEntry, unique: idx.unique });
+      }
+      stores.push({
+        name: storeName,
+        keyPath: store.keyPath === undefined ? null : store.keyPath,
+        autoIncrement: store.autoIncrement,
+        indexes,
+        records
+      });
+    }
+    result.push({ name: targetDbName, version: db.version, stores });
+  } catch(e) {
+    console.warn('本サイトIndexedDBスナップショット取得スキップ:', e);
+  } finally {
+    try { db?.close(); } catch(e){}
   }
   return result;
 }
@@ -6906,12 +6933,91 @@ async function handlePartialRestore(event,type){
 }
 
 /* ==========================================================================
-   完全復元処理（画面・IndexedDB・LocalStorageの安全同期）
+   修正版：柔軟なバックアップ検証（形式違いや旧バージョンも救済）
    ========================================================================== */
-async function handleRestoreFile(e){
+function validateBackupPayload(parsed) {
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('ファイルの中身が空か、JSON形式ではありません。');
+  }
+  // appキーが無くても、中身にscores/config/storage等があれば救済
+  const data = parsed.data || parsed;
+  if (!data || typeof data !== 'object') {
+    throw new Error('復元可能なデータ構造が見つかりません。');
+  }
+  return data;
+}
+
+/* ==========================================================================
+   修正版：ブロック・停止を起こさない安全なIndexedDB同期
+   ========================================================================== */
+async function restoreIndexedDB(snapshot) {
+  const result = { restored: 0, errors: [], databases: 0 };
+  if (!window.indexedDB) return result;
+
+  try {
+    // 既存の接続を解放
+    if (dbInstance) {
+      try { dbInstance.close(); } catch(e){}
+      dbInstance = null;
+    }
+
+    const targetDbName = 'AirplaneGamesDB_v3';
+    const db = await new Promise((resolve, reject) => {
+      const req = indexedDB.open(targetDbName);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error('DBオープン失敗'));
+    });
+
+    // スナップショットからストアを流し込む
+    if (Array.isArray(snapshot)) {
+      for (const spec of snapshot) {
+        if (!spec || !Array.isArray(spec.stores)) continue;
+        for (const st of spec.stores) {
+          if (!st || !st.name || !db.objectStoreNames.contains(st.name)) continue;
+          try {
+            const tx = db.transaction(st.name, 'readwrite');
+            const store = tx.objectStore(st.name);
+            store.clear();
+            for (const rec of (st.records || [])) {
+              const refs = new Map();
+              const val = decodeBackupValue(rec.value, refs);
+              const key = decodeBackupValue(rec.key, refs);
+              if (store.keyPath === null || store.keyPath === undefined) {
+                store.put(val, key);
+              } else {
+                store.put(val);
+              }
+            }
+            await idbTxDone(tx);
+            result.restored++;
+          } catch (err) {
+            console.warn(`ストア [${st.name}] の復元をスキップ:`, err);
+          }
+        }
+      }
+    }
+    db.close();
+    result.databases = 1;
+  } catch (e) {
+    result.errors.push(e.message);
+  }
+
+  // 復元後に再初期化
+  try {
+    await initIndexedDB();
+    await loadScoresFromIndexedDB();
+  } catch(e){}
+
+  return result;
+}
+
+/* ==========================================================================
+   修正版：完全ファイル復元エンジン（即時消去バグ解消・確実同期）
+   ========================================================================== */
+async function handleRestoreFile(e) {
   const input = e?.target || document.getElementById('restoreFileInput');
   const file = input?.files?.[0];
-  restoreInputReset(input);
+
   if (!file) {
     showRestoreModal('復元', 'ファイルが選択されていません。');
     return;
@@ -6920,111 +7026,125 @@ async function handleRestoreFile(e){
   window.__itsmeRestoreInProgress = true;
   window.__itsmeRestoreReloadPending = true;
   setRestoreBusy(true);
-  showRestoreModal('バックアップを読み込み中', `「${escapeHtml(file.name)}」を読み込んで復元しています...`);
+  showRestoreModal('バックアップを読み込み中', `「${escapeHtml(file.name)}」(${file.size} bytes) を解析しています...`);
 
   const reader = new FileReader();
+
   const finish = () => {
     setRestoreBusy(false);
-    restoreInputReset(input);
+    // ★重要: 必ず読み込み完了後に input をリセットする（早期リセットによる読取不能を防止）
+    try { if (input) input.value = ''; } catch (_) {}
   };
 
   reader.onerror = () => {
     window.__itsmeRestoreInProgress = false;
     window.__itsmeRestoreReloadPending = false;
     finish();
-    showRestoreModal('復元エラー', 'ファイルの読み込みに失敗しました。');
+    showRestoreModal('復元エラー', 'ファイルの読み込みに失敗しました。端末のファイルアクセス権限をご確認ください。');
   };
 
   reader.onload = async (ev) => {
     try {
-      const rawJson = file.name.toLowerCase().endsWith('.zip')
-        ? extractJsonFromZip(ev.target.result)
-        : String(ev.target.result || '');
+      const buffer = ev.target.result;
+      let rawJson = '';
 
-      if (!rawJson.trim()) throw new Error('バックアップファイルが空です。');
+      if (file.name.toLowerCase().endsWith('.zip')) {
+        rawJson = extractJsonFromZip(buffer);
+      } else {
+        // UTF-8 デコーダーで文字化けゼロ化
+        rawJson = new TextDecoder('utf-8').decode(buffer);
+      }
+
+      if (!rawJson || !rawJson.trim()) {
+        throw new Error('ファイルが空です。');
+      }
 
       let parsed;
-      try { parsed = JSON.parse(rawJson); } catch (err) { throw new Error('JSONの解析に失敗しました。'); }
-
-      const restored = validateBackupPayload(parsed);
-      const report = { storage: 0, indexedDB: 0, errors: [] };
-
-      // 1. LocalStorage & SessionStorage の復元
-      if (restored.storage) {
-        const r1 = storageRestore(localStorage, restored.storage.localStorage);
-        report.storage = r1.restored;
-        report.errors.push(...r1.errors);
-        storageRestore(sessionStorage, restored.storage.sessionStorage);
+      try {
+        parsed = JSON.parse(rawJson);
+      } catch (err) {
+        throw new Error('JSONの構文解析に失敗しました。ファイルが破損している可能性があります。');
       }
 
-      // 2. IndexedDB の復元（スコアとフォント等）
-      if (Array.isArray(restored.indexedDB)) {
-        const r = await restoreIndexedDB(restored.indexedDB);
-        report.indexedDB = r.databases;
-        report.errors.push(...r.errors);
+      const data = validateBackupPayload(parsed);
+
+      // 1. Storageの安全復元
+      if (data.storage) {
+        if (data.storage.localStorage) storageRestore(localStorage, data.storage.localStorage);
+        if (data.storage.sessionStorage) storageRestore(sessionStorage, data.storage.sessionStorage);
       }
 
-      // 3. メモリ変数への反映
-      if (Array.isArray(restored.scores)) {
-        memoryStore.scores = restored.scores;
-        // IndexedDBにも確実に保存
-        if (dbInstance && document.getElementById('cfgUseIndexedDB')?.checked) {
-          try {
-            const tx = dbInstance.transaction('scores', 'readwrite');
-            const store = tx.objectStore('scores');
-            store.clear();
-            restored.scores.forEach(s => store.add(s));
-          } catch(e){}
-        }
+      // 2. メモリデータ（スコア・コイン・履歴）の先行復元
+      if (Array.isArray(data.scores)) {
+        memoryStore.scores = data.scores;
       }
-      if (restored.coins !== undefined) memoryStore.coins = Number(restored.coins) || 0;
-      if (restored.coinBankBalance !== undefined) memoryStore.coinBankBalance = Number(restored.coinBankBalance) || 0;
-      if (restored.creditCardBalance !== undefined) memoryStore.creditCardBalance = Number(restored.creditCardBalance) || 0;
-      if (Array.isArray(restored.coinHistory)) memoryStore.coinHistory = restored.coinHistory;
-      if (typeof restored.customSiteTitle === 'string') memoryStore.customSiteTitle = restored.customSiteTitle;
-      
-      // 歩数計の復元
-      if (restored.pedometer) {
-        pedometerHalfSteps = Number(restored.pedometer.halfSteps) || 0;
-        pedometerCoins = Number(restored.pedometer.coins) || 0;
-        if (restored.pedometer.postUrl) {
+      if (data.coins !== undefined) memoryStore.coins = Number(data.coins) || 0;
+      if (data.coinBankBalance !== undefined) memoryStore.coinBankBalance = Number(data.coinBankBalance) || 0;
+      if (data.creditCardBalance !== undefined) memoryStore.creditCardBalance = Number(data.creditCardBalance) || 0;
+      if (Array.isArray(data.coinHistory)) memoryStore.coinHistory = data.coinHistory;
+      if (typeof data.customSiteTitle === 'string') memoryStore.customSiteTitle = data.customSiteTitle;
+
+      // 3. IndexedDBの安全復元
+      if (Array.isArray(data.indexedDB)) {
+        await restoreIndexedDB(data.indexedDB);
+      }
+
+      // スコアの IndexedDB への同期
+      if (Array.isArray(data.scores) && dbInstance && document.getElementById('cfgUseIndexedDB')?.checked) {
+        try {
+          const tx = dbInstance.transaction('scores', 'readwrite');
+          const st = tx.objectStore('scores');
+          st.clear();
+          data.scores.forEach(s => st.add(s));
+          await idbTxDone(tx);
+        } catch(e){}
+      }
+
+      // 歩数計
+      if (data.pedometer) {
+        pedometerHalfSteps = Number(data.pedometer.halfSteps) || 0;
+        pedometerCoins = Number(data.pedometer.coins) || 0;
+        if (data.pedometer.postUrl) {
           const pUrl = document.getElementById('pedometerPostUrl');
-          if (pUrl) pUrl.value = restored.pedometer.postUrl;
-          localStorage.setItem('airplane_game_pedometer_post_url', restored.pedometer.postUrl);
+          if (pUrl) pUrl.value = data.pedometer.postUrl;
+          localStorage.setItem('airplane_game_pedometer_post_url', data.pedometer.postUrl);
         }
         savePedometerState();
       }
 
-      // 100の質問の復元
-      if (Array.isArray(restored.customQuestions) && restored.customQuestions.length === 100) {
-        customQuestions = restored.customQuestions;
-        customQuestionsBackup = restored.customQuestionsBackup || null;
-        customQuestionsExplicitlyCleared = !!restored.customQuestionsExplicitlyCleared;
+      // グラフ
+      if (Array.isArray(data.coinUsageGraphData)) {
+        coinUsageGraphData = data.coinUsageGraphData;
+        localStorage.setItem('airplane_game_coin_usage_graph', JSON.stringify(coinUsageGraphData));
+      }
+
+      // 100の質問
+      if (Array.isArray(data.customQuestions)) {
+        customQuestions = data.customQuestions;
+        customQuestionsBackup = data.customQuestionsBackup || null;
+        customQuestionsExplicitlyCleared = !!data.customQuestionsExplicitlyCleared;
         localStorage.setItem('airplane_game_100_questions_v5', JSON.stringify(customQuestions));
       }
 
-      // ショートカットの復元
-      if (Array.isArray(restored.shortcuts)) {
-        shortcutData = restored.shortcuts;
-        renderShortcuts();
-      }
-
-      // プロフィールの復元
-      if (restored.myProfile) {
-        memoryStore.myProfile = restored.myProfile;
-        const mp = restored.myProfile;
+      // プロフィール
+      if (data.myProfile) {
+        memoryStore.myProfile = data.myProfile;
+        const mp = data.myProfile;
         [['myProfName','name'],['myProfBirth','birth'],['myProfGender','gender'],['myProfLocation','location'],['myProfHobby','hobby'],['myProfQuote','quote'],['myProfMessage','message']].forEach(([id,k])=>{
           const el = document.getElementById(id);
           if (el) el.value = mp[k] || '';
         });
       }
 
-      // フォーム・UIコントロール値の復元
-      restoreFormState(restored.formState);
+      // ショートカット
+      if (Array.isArray(data.shortcuts)) {
+        shortcutData = data.shortcuts;
+        renderShortcuts();
+      }
 
-      // 設定チェックボックス類の反映
-      if (restored.config) {
-        const c = restored.config;
+      // 設定スライダー・チェックボックス
+      if (data.config) {
+        const c = data.config;
         const set = (id, v, prop = 'value') => { const el = document.getElementById(id); if (el && v !== undefined) el[prop] = v; };
         set('cfgGameEnabled', c.gameEnabled, 'checked');
         set('cfgSaveScore', c.saveScore, 'checked');
@@ -7066,11 +7186,15 @@ async function handleRestoreFile(e){
         set('coinBalanceAddAmount', c.coinBalanceAddAmount);
       }
 
-      // 言語と文字体系の適用
-      if (restored.language) changeLanguage(restored.language);
-      if (restored.scriptMode) changeScriptMode(restored.scriptMode);
+      restoreFormState(data.formState);
 
-      // 外観・CSSの再描画
+      // 言語・フォント等の再適用
+      if (data.language) changeLanguage(data.language);
+      if (data.scriptMode) changeScriptMode(data.scriptMode);
+
+      await loadCustomFontFromIndexedDB();
+
+      // UI同期
       applyColors();
       applyFontSettings();
       applyColorTheme(document.getElementById('cfgColorTheme')?.value || 'light');
@@ -7091,37 +7215,30 @@ async function handleRestoreFile(e){
       renderQuestions();
       updateQuestionsResetButton();
 
-      if (restored.selectedGame) {
-        const btn = document.querySelector(`.game-select-btn[data-game="${CSS.escape(restored.selectedGame)}"]`);
-        selectGame(restored.selectedGame, btn);
+      if (data.selectedGame) {
+        const btn = document.querySelector(`.game-select-btn[data-game="${CSS.escape(data.selectedGame)}"]`);
+        selectGame(data.selectedGame, btn);
       }
-      if (restored.activeTab) {
-        switchTab(restored.activeTab);
+      if (data.activeTab) {
+        switchTab(data.activeTab);
       }
 
-      // ★ 復元データを上書き破壊しないようフラグを維持したまま完了画面へ
       finish();
-      showRestoreModal('復元完了', 'すべてのデータを正常に復元しました。<br>反映を完全にするため再読み込みを推奨します。', `<button class="btn" onclick="closeModal(); location.reload();">再読み込みして完了</button>`);
+      showRestoreModal(
+        '復元完了',
+        'すべてのデータを正常に復元しました！<br>画面はすでに最新の状態に更新されています。',
+        `<button class="btn" onclick="closeModal();">閉じる</button> <button class="btn btn-outline" onclick="location.reload();">再読み込み</button>`
+      );
     } catch (err) {
       window.__itsmeRestoreInProgress = false;
       window.__itsmeRestoreReloadPending = false;
       finish();
-      showRestoreModal('復元エラー', `復元に失敗しました:<br>${escapeHtml(err.message)}`);
+      showRestoreModal('復元エラー', `復元に失敗しました:<br><b style="color:#d32f2f;">${escapeHtml(err.message)}</b>`);
     }
   };
 
-  try {
-    if (file.name.toLowerCase().endsWith('.zip')) {
-      reader.readAsArrayBuffer(file);
-    } else {
-      reader.readAsText(file);
-    }
-  } catch (err) {
-    window.__itsmeRestoreInProgress = false;
-    window.__itsmeRestoreReloadPending = false;
-    finish();
-    showRestoreModal('復元エラー', 'ファイルの読み込み開始に失敗しました。');
-  }
+  // バイナリArrayBufferとして読み込み開始
+  reader.readAsArrayBuffer(file);
 }
 
 function extractJsonFromZip(buffer) {
