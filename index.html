@@ -918,7 +918,22 @@ html[dir="ltr"] .rescue-notice-bar {
   direction: ltr;
   text-align: left;
 }
-
+/* パラメータ外しボタンのスタイル */
+.btn-remove-param {
+  margin-inline-start: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: bold;
+  background-color: #d32f2f;
+  color: #ffffff !important;
+  border: 1px solid #b71c1c;
+  border-radius: 4px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.btn-remove-param:hover {
+  background-color: #b71c1c;
+}
 /* ヘッダーがスマホ画面からはみ出さないように制御 */
 header {
   background: var(--header-bg);
@@ -943,12 +958,32 @@ nav.tabs {
   gap: 6px;
   max-width: 100%;
 }
+/* 帯だけを閉じる「✕」ボタン */
+.btn-close-notice {
+  margin-inline-start: 8px;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.15);
+  color: #d32f2f !important;
+  border: 1px solid rgba(211, 47, 47, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.btn-close-notice:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
 </style>
 </head>
 <body>
 <div id="mouseStalker">★</div>
 
-<div id="rescueNoticeBar" class="rescue-notice-bar" style="display: none;"></div>
+<div id="rescueNoticeBar" class="rescue-notice-bar" style="display: none;">
+  <span id="rescueNoticeText"></span>
+  <button type="button" class="btn-remove-param" onclick="removeRescueParam()" data-i18n="btn_remove_param">パラメータを削除</button>
+  <button type="button" class="btn-close-notice" onclick="hideRescueNoticeOnly()" title="閉じる" aria-label="閉じる">✕</button>
+</div>
 <!-- ヘッダー表示ボタン -->
 <button id="headerShowBtn" onclick="toggleHeader(true)" data-i18n="btn_show_header">ヘッダー表示</button>
 
@@ -1854,7 +1889,7 @@ const I18N_DICTIONARY = {
   game_blackboard: { ja: "黒板をお掃除しよう", en: "Clean Chalkboard", hira: "こくばん おそうじ", ko: "칠판 청소하기", 'zh-CN': "黑板清理大作战", 'zh-TW': "黑板清理大作戰", ar: "تنظيف السبورة", eo: "Purigi Tabulon", mam: "Clean Chalkboard", th: "ลบกระดานดำ", sw: "Safisha Ubao", es: "Limpiar pizarra", fr: "Nettoyer le tableau", de: "Tafel putzen", pt: "Limpar o quadro", hi: "ब्लैकबोर्ड साफ करें", id: "Bersihkan Papan Tulis", vi: "Lau bảng đen", ru: "Очистка доски"},
   game_flag: { ja: "国旗クイズ", en: "Flag Quiz", hira: "こっき くいず", ko: "국기 퀴즈", 'zh-CN': "国旗问答", 'zh-TW': "國旗問答", ar: "اختبار الأعلام", eo: "Flaga Kviz", mam: "Flag Quiz", th: "ทายธงชาติ", sw: "Maswali ya Bendera", es: "Cuestionario de banderas", fr: "Quiz des drapeaux", de: "Flaggen-Quiz", pt: "Quiz de bandeiras", hi: "झंडा प्रश्नोत्तरी", id: "Kuis Bendera", vi: "Đố vui cờ quốc gia", ru: "Викторина флагов"},
   game_vs: { ja: "⚔️ 2P分割対戦", en: "⚔️ 2P Split Battle", hira: "⚔️ 2にんで たいせん", ko: "⚔️ 2인 화면분할 대전", 'zh-CN': "⚔️ 双人分屏对战", 'zh-TW': "⚔️ 雙人分屏對戰", ar: "⚔️ معركة ثنائية مقسمة", eo: "⚔️ 2-Ludanta Batalo", mam: "⚔️ 2P Split Battle", th: "⚔️ แบทเทิลแยก 2 คน", sw: "⚔️ Vita vya Wachezaji 2", es: "⚔️ Batalla dividida para 2 jugadores", fr: "⚔️ Duel 2 joueurs sur écran partagé", de: "⚔️ 2-Spieler-Splitscreen-Duell", pt: "⚔️ Batalha dividida para 2 jogadores", hi: "⚔️ 2P विभाजित मुकाबला", id: "⚔️ Pertempuran Layar Terpisah 2P", vi: "⚔️ Đấu đôi chia màn hình 2P", ru: "⚔️ Битва на двоих на разделенном экране"},
-
+btn_remove_param: { ja: "パラメータを削除", en: "Remove parameter", hira: "ぱらめーたを さくじょ", ko: "매개변수 삭제", 'zh-CN': "删除参数", 'zh-TW': "刪除參數", ar: "إزالة المعلمة", eo: "Forigi parametron", mam: "Remove parameter", th: "ลบพารามิเตอร์", sw: "Futa kigezo", es: "Eliminar parámetro", fr: "Supprimer le paramètre", de: "Parameter entfernen", pt: "Remover parâmetro", hi: "पैरामीटर हटाएं", id: "Hapus parameter", vi: "Xóa tham số", ru: "Удалить параметр" },
   ph_search_game: { ja: "ゲームを検索...", en: "Search game...", hira: "げーむを けんさく...", ko: "게임 검색...", 'zh-CN': "搜索游戏...", 'zh-TW': "搜尋遊戲...", ar: "البحث عن لعبة...", eo: "Serĉi ludon...", mam: "Search game...", th: "ค้นหาเกม...", sw: "Tafuta mchezo...", es: "Buscar juego...", fr: "Rechercher un jeu...", de: "Spiel suchen...", pt: "Pesquisar jogo...", hi: "गेम खोजें...", id: "Cari game...", vi: "Tìm trò chơi...", ru: "Поиск игры..."},
   ph_search_score: { ja: "スコアを検索...", en: "Search scores...", hira: "すこあを けんさく...", ko: "점수 검색...", 'zh-CN': "搜索得分...", 'zh-TW': "搜尋得分...", ar: "البحث في النتائج...", eo: "Serĉi poentarojn...", mam: "Search scores...", th: "ค้นหาคะแนน...", sw: "Tafuta alama...", es: "Buscar puntuaciones...", fr: "Rechercher des scores...", de: "Punktzahlen suchen...", pt: "Pesquisar pontuações...", hi: "स्कोर खोजें...", id: "Cari skor...", vi: "Tìm điểm số...", ru: "Поиск счета..."},
   lbl_score_date: { ja: "日付", en: "Date", hira: "ひづけ", ko: "날짜", 'zh-CN': "日期", 'zh-TW': "日期", ar: "التاريخ", eo: "Dato", mam: "Date", th: "วันที่", sw: "Tarehe", es: "Fecha", fr: "Date du score", de: "Datum", pt: "Data", hi: "तारीख", id: "Tanggal", vi: "Ngày", ru: "Дата"},
@@ -2152,6 +2187,31 @@ const AUTHOR_NAMES = {
 
 
 const KOUSHIN_DATA = [
+  {
+    pinned: false,
+    date: '2026/09/30 06:50',
+    desc: {
+      ja: 'アラビア語選択時の救済措置としてURLパラメータ付与と案内バー（パラメータ削除ボタン付き）を実装し、スマホでの画面右寄り・横幅肥大化のレイアウト崩れおよびリロード時にコイン使用履歴が勝手に消える不具合を修正しました。',
+      en: 'Implemented a rescue measure with a URL parameter, notice bar, and parameter-removal button when selecting Arabic, and fixed smartphone layout issues (right-alignment and width inflation) and the bug where coin usage history was deleted upon reloading.',
+      hira: 'あらびあご せんたくじの きゅうさいそちとして URLぱらめーたついかと あんないばー（ぱらめーた さくじょぼたんつき）を じっそうし、すまほでの がめんみぎより・よこはば ひだいかの れいあうとくずれ および りろーどじに こいんしようりれきが かってに きえる ふぐあいを しゅうせいしました。',
+      ko: '아랍어 선택 시 구제 조치로 URL 매개변수 부여 및 안내 바(매개변수 삭제 버튼 포함)를 구현하였으며, 스마트폰에서 화면이 우측으로 치우치고 가로폭이 늘어나는 레이아웃 문제 및 새로고침 시 코인 사용 기록이 삭제되는 버그를 수정했습니다.',
+      'zh-CN': '实现了选择阿拉伯语时的救援措施，包括添加URL参数和通知栏（附带删除参数按钮），并修复了手机端屏幕右偏、宽度异常拉伸的布局问题以及刷新页面时金币使用记录被清空的错误。',
+      'zh-TW': '實現了選擇阿拉伯語時的救援措施，包括新增URL參數與提示列（附帶刪除參數按鈕），並修復了手機端畫面偏右、寬度異常放大的排版問題以及重新整理時金幣使用記錄被清空的錯誤。',
+      ar: 'تم تنفيذ إجراء إنقاذ عند اختيار اللغة العربية يتضمن إضافة معلمة URL وشريط إشعار (مع زر لإزالة المعلمة)، وإصلاح مشكلة محاذاة الشاشة لليمين وتضخم العرض على الهواتف، بالإضافة إلى إصلاح خطأ حذف سجل استخدام العملات عند إعادة التحميل.',
+      eo: 'Efektivigis savan mezuron ĉe elekto de la araba kun URL-parametro kaj sciiga breto (kun butono por forigi la parametron), kaj riparis la saĝtelefonan aranĝan problemon (dekstren-ŝoviĝo kaj larĝa pligrandiĝo) kaj la eraron, pro kiu la monera uzhistorio forviŝiĝis dum reŝargo.',
+      mam: "Ma b'ant jun rescue measure tuk'il URL parameter ex notice bar (tuk'il botón te najsb'il parameter) aj t-jyet Arabic, ex ma b'ant layout tuj celular tu'n mi'n t-xik'let t-tx'aqan ex ma b'ant historial te pwaq aj t-meltz'uj.",
+      th: 'เพิ่มมาตรการช่วยเหลือเมื่อเลือกภาษาอาหรับด้วยพารามิเตอร์ URL และแถบแจ้งเตือน (พร้อมปุ่มลบพารามิเตอร์) พร้อมแก้ไขปัญหาเลย์เอาต์บนสมาร์ทโฟนที่ชิดขวาและขยายกว้างผิดปกติ รวมถึงแก้ไขข้อผิดพลาดที่ประวัติการใช้เหรียญถูกลบเมื่อรีโหลดหน้าเว็บ',
+      sw: 'Imeweka hatua ya uokoaji wakati wa kuchagua Kiarabu kwa kuongeza kigezo cha URL na upau wa taarifa (wenye kitufe cha kufuta kigezo), na kurekebisha hitilafu ya mpangilio kwenye simu (kukaa upande wa kulia na upana kuongezeka) pamoja na kufutika kwa historia ya sarafu wakati wa kupakia upya.',
+      es: 'Se implementó una medida de rescate al seleccionar árabe mediante un parámetro URL y una barra de aviso (con botón para eliminar el parámetro), y se corrigieron los problemas de diseño en móviles (desplazamiento a la derecha y ensanchamiento) y el error por el que se borraba el historial de monedas al recargar.',
+      fr: 'Implémentation d’une mesure de secours lors du choix de l’arabe avec paramètre d’URL et barre de notification (avec bouton de suppression du paramètre), et correction des problèmes d’affichage sur mobile (décalage à droite et largeur excessive) ainsi que du bug de suppression de l’historique des pièces au rechargement.',
+      de: 'Rettungsmaßnahme bei Auswahl von Arabisch mit URL-Parameter und Hinweisleiste (inkl. Parameter-Lösch-Button) implementiert sowie Smartphone-Layoutfehler (Rechtsverschiebung und übermäßige Breite) und das Löschen des Münzverlaufs beim Neuladen behoben.',
+      pt: 'Implementada medida de resgate ao selecionar árabe com parâmetro de URL e barra de aviso (com botão para remover o parâmetro), corrigindo problemas de layout em celulares (alinhamento à direita e largura excessiva) e o erro em que o histórico de moedas era apagado ao recarregar.',
+      hi: 'अरबी चुनते समय URL पैरामीटर और सूचना पट्टी (पैरामीटर हटाने के बटन सहित) के साथ बचाव उपाय लागू किया गया, और स्मार्टफ़ोन पर लेआउट समस्या (दाईं ओर झुकना और चौड़ाई का बढ़ना) तथा रीलोड करने पर सिक्का उपयोग इतिहास मिटने की त्रुटि को ठीक किया गया।',
+      id: 'Menerapkan tindakan penyelamatan saat memilih bahasa Arab berupa parameter URL dan bilah pemberitahuan (dengan tombol hapus parameter), serta memperbaiki kerusakan tata letak di ponsel (pergeseran ke kanan dan pelebaran berlebih) dan bug hilangnya riwayat penggunaan koin saat dimuat ulang.',
+      vi: 'Đã triển khai biện pháp cứu trợ khi chọn tiếng Ả Rập bằng tham số URL và thanh thông báo (kèm nút xóa tham số), đồng thời sửa lỗi giao diện điện thoại bị lệch phải, tràn chiều ngang và lỗi tự động mất lịch sử sử dụng xu khi tải lại trang.',
+      ru: 'Реализована мера спасения при выборе арабского языка с параметром URL и панелью уведомления (с кнопкой удаления параметра), а также исправлены проблемы верстки на смартфонах (смещение вправо и раздувание ширины) и ошибка с удалением истории использования монет при перезагрузке.'
+    }
+  },
   {
     pinned: false,
     date: '2026/09/30 04:12',
@@ -8200,6 +8260,62 @@ if (typeof I18N_DICTIONARY !== 'undefined' && !I18N_DICTIONARY.rescue_notice_bar
     vi: 'Biện pháp cứu thương cho những người màn hình trở nên trắng sau khi chọn Tiếng Ả Rập. Bạn có thể xóa tham số sau.',
     ru: 'Мера спасения для тех, чей экран стал белым после выбора арабского языка. Вы можете удалить параметр позже.'
   };
+}
+// ★ URLパラメータは残したまま、案内バー（帯）だけを非表示にする処理
+function hideRescueNoticeOnly() {
+  const bar = document.getElementById('rescueNoticeBar');
+  if (bar) bar.style.display = 'none';
+  // 閉じたことをこのセッション内で記憶（他の操作をしても勝手に再表示されないようにする）
+  sessionStorage.setItem('airplane_game_notice_closed', '1');
+}
+
+// 救済バーの表示制御（閉じるボタンの判定に対応）
+function updateRescueNoticeBarVisibility() {
+  const bar = document.getElementById('rescueNoticeBar');
+  const textEl = document.getElementById('rescueNoticeText');
+  if (!bar || !textEl) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const lang = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
+  const isClosed = sessionStorage.getItem('airplane_game_notice_closed') === '1';
+
+  // rescueパラメータがあり、「アラビア語(ar)」で、「まだ✕で閉じていない」ときだけ表示
+  if (params.has('rescue') && lang === 'ar' && !isClosed) {
+    textEl.textContent = RESCUE_MESSAGES['ar'] || RESCUE_MESSAGES['ja'];
+    bar.style.display = 'block';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+// パラメータ外しボタンを押した時の処理（URLを綺麗にしてバーを非表示）
+function removeRescueParam() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('rescue');
+    window.history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
+  } catch(_) {
+    window.location.href = window.location.pathname;
+  }
+  const bar = document.getElementById('rescueNoticeBar');
+  if (bar) bar.style.display = 'none';
+}
+
+// 救済バーの表示制御（★アラビア語選択時のみ表示）
+function updateRescueNoticeBarVisibility() {
+  const bar = document.getElementById('rescueNoticeBar');
+  const textEl = document.getElementById('rescueNoticeText');
+  if (!bar || !textEl) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const lang = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
+
+  // rescueパラメータがあり、かつ「アラビア語(ar)のときだけ」表示
+  if (params.has('rescue') && lang === 'ar') {
+    textEl.textContent = RESCUE_MESSAGES['ar'] || RESCUE_MESSAGES['ja'];
+    bar.style.display = 'block';
+  } else {
+    bar.style.display = 'none';
+  }
 }
 
 // ★多重救済措置 その1: changeLanguage関数のオーバーライド（DOMContentLoaded内で早期に実行）
