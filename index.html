@@ -1066,7 +1066,17 @@ body.dark-mode .shortcut-item { background: rgba(255,255,255,0.05); }
         <select id="cfgFontFamily" onchange="applyFontSettings(); saveConfig();">
           <option value="gothic" data-i18n="val_gothic">ゴシック体</option>
           <option value="mincho" data-i18n="val_mincho">明朝体</option>
+          <option value="custom" data-i18n="val_custom_font">登録済みフォント</option>
         </select>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:6px;">
+          <label for="cfgCustomFontFile" data-i18n="font_upload">📁 フォントファイルを追加</label>
+          <input type="file" id="cfgCustomFontFile" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" onchange="handleCustomFontUpload(this)">
+          <span id="cfgCustomFontStatus" style="font-size:12px; opacity:.8;" data-i18n="font_upload_status">未選択</span>
+        </div>
+        <div style="margin-top:10px;">
+          <div style="font-weight:bold; margin-bottom:6px;">登録済みフォント一覧</div>
+          <div id="customFontList" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
       </div>
       <div class="config-item">
         <label data-i18n="cfg_size">9. 文字サイズ</label>
@@ -1835,6 +1845,17 @@ const I18N_DICTIONARY = {
   questions_clear_custom: { ja: "自作版を一気に空白にする", en: "Clear Custom Version", hira: "じさくばんを いっきに くうはくにする", ko: "사용자판 전체 비우기", zh: "一键清空自制版", ar: "مسح النسخة المخصصة بالكامل", eo: "Malplenigi la Propran Version" },
   questions_clear_confirm: { ja: "自作100質問の質問と回答をすべて空白にしますか？", en: "Clear all questions and answers in the custom 100-question version?", hira: "じさく100しつもんの しつもんと かいとうを すべて くうはくにしますか？", ko: "사용자 100문항의 질문과 답변을 모두 비울까요?", zh: "要清空自制100问的所有问题和答案吗？", ar: "هل تريد مسح جميع الأسئلة والإجابات في النسخة المخصصة؟", eo: "Ĉu malplenigi ĉiujn demandojn kaj respondojn de la propra 100-demanda versio?" },
   reset_select_title: { ja: "リセットする設定を選択", en: "Choose Settings to Reset", hira: "りせっとする せっていを えらぶ", ko: "초기화할 설정 선택", zh: "选择要重置的设置", ar: "اختر الإعدادات لإعادة ضبطها", eo: "Elektu Agordojn por Restarigi" },
+  val_custom_font: { ja: "登録済みフォント", en: "Registered Fonts", hira: "とうろくずみ ふぉんと", ko: "등록된 글꼴", zh: "已注册字体", ar: "الخطوط المسجلة", eo: "Registritaj tiparoj" },
+  font_upload: { ja: "フォントファイルを追加", en: "Add font file", hira: "ふぉんとふぁいるを ついか", ko: "글꼴 파일 추가", zh: "添加字体文件", ar: "إضافة ملف خط", eo: "Aldoni tipardosieron" },
+  font_upload_status: { ja: "未選択", en: "Not selected", hira: "みせんたく", ko: "선택되지 않음", zh: "未选择", ar: "لم يتم الاختيار", eo: "Ne elektita" },
+  font_upload_success: { ja: "適用済み", en: "Applied", hira: "てきようずみ", ko: "적용됨", zh: "已应用", ar: "تم التطبيق", eo: "Aplikita" },
+  font_upload_error: { ja: "フォントを読み込めませんでした", en: "Could not load the font", hira: "ふぉんとを よみこめませんでした", ko: "글꼴을 불러오지 못했습니다", zh: "无法加载字体", ar: "تعذر تحميل الخط", eo: "La tiparo ne povis esti ŝargita" },
+  font_preview: { ja: "👁 プレビュー", en: "👁 Preview", hira: "👁 ぷれびゅー", ko: "👁 미리보기", zh: "👁 预览", ar: "👁 معاينة", eo: "👁 Antaŭrigardo" },
+  font_apply: { ja: "適用", en: "Apply", hira: "てきよう", ko: "적용", zh: "应用", ar: "تطبيق", eo: "Apliki" },
+  font_delete: { ja: "🗑 削除", en: "🗑 Delete", hira: "🗑 さくじょ", ko: "🗑 삭제", zh: "🗑 删除", ar: "🗑 حذف", eo: "🗑 Forigi" },
+  font_list_empty: { ja: "登録済みフォントはありません。", en: "No registered fonts.", hira: "とうろくずみ ふぉんとは ありません。", ko: "등록된 글꼴이 없습니다.", zh: "没有已注册的字体。", ar: "لا توجد خطوط مسجلة.", eo: "Neniuj registritaj tiparoj." },
+  font_apply_success: { ja: "適用しました", en: "Applied", hira: "てきようしました", ko: "적용했습니다", zh: "已应用", ar: "تم التطبيق", eo: "Aplikita" },
+  font_delete_confirm: { ja: "この登録済みフォントを削除しますか？", en: "Delete this registered font?", hira: "この とうろくずみ ふぉんとを さくじょしますか？", ko: "이 등록된 글꼴을 삭제하시겠습니까?", zh: "要删除这个已注册字体吗？", ar: "هل تريد حذف هذا الخط المسجل؟", eo: "Ĉu forigi ĉi tiun registritan tiparon?" },
   reset_all: { ja: "一括リセット", en: "Reset All", hira: "いっかつ りせっと", ko: "전체 초기화", zh: "全部重置", ar: "إعادة ضبط الكل", eo: "Restarigi Ĉion" },
   reset_apply: { ja: "選択した設定をリセット", en: "Reset Selected", hira: "えらんだ せっていを りせっと", ko: "선택한 설정 초기화", zh: "重置所选设置", ar: "إعادة ضبط المحدد", eo: "Restarigi Elektitajn" },
   btn_close: { ja: "閉じる", en: "Close", hira: "とじる", ko: "닫기", zh: "关闭", ar: "إغلاق", eo: "Fermi" }
@@ -1846,6 +1867,15 @@ const AUTHOR_NAMES = {
 };
 
 const KOUSHIN_DATA = [
+  { pinned: false, date: '2026/09/29 14:28', desc: {
+  ja: 'フォント設定を「フォント選択 → 📁 フォントファイルを追加 → 登録済みフォント一覧 → 👁 プレビュー → 適用 → 🗑 削除」の構成に拡張しました。複数のフォントを登録して管理でき、ページをリロードせずにプレビュー・適用でき、IndexedDBに保存してオフラインでも利用できます。',
+  en: 'Expanded font settings into a workflow for adding font files, managing registered fonts, previewing, applying, and deleting them. Multiple fonts can be registered, previewed and applied without reloading, and are stored in IndexedDB for offline use.',
+  hira: 'ふぉんとせっていを「ふぉんとせんたく → 📁 ふぉんとふぁいるを ついか → とうろくずみ ふぉんと いちらん → 👁 ぷれびゅー → てきよう → 🗑 さくじょ」の こうせいに かくちょうしました。ふくすうの ふぉんとを とうろくして かんりでき、ぺーじを りろーどせずに ぷれびゅー・てきようでき、IndexedDBに ほぞんして おふらいんでも りようできます。',
+  ko: '글꼴 설정을 파일 추가, 등록된 글꼴 목록, 미리보기, 적용, 삭제 흐름으로 확장했습니다. 여러 글꼴을 등록해 관리할 수 있고 새로 고침 없이 미리보기와 적용이 가능하며 IndexedDB에 저장되어 오프라인에서도 사용할 수 있습니다.',
+  zh: '将字体设置扩展为添加字体文件、已注册字体列表、预览、应用和删除的流程。可以注册并管理多个字体，无需重新加载页面即可预览和应用，并保存到IndexedDB以支持离线使用。',
+  ar: 'تم توسيع إعدادات الخط لتشمل إضافة ملفات الخطوط وقائمة الخطوط المسجلة والمعاينة والتطبيق والحذف. يمكن تسجيل وإدارة عدة خطوط ومعاينتها وتطبيقها دون إعادة تحميل الصفحة، كما تُحفظ في IndexedDB للاستخدام دون اتصال بالإنترنت。',
+  eo: 'Etendis la tiparajn agordojn per aldono de tipardosieroj, listo de registritaj tiparoj, antaŭrigardo, apliko kaj forigo. Pluraj tiparoj povas esti registritaj kaj administrataj, antaŭrigardataj kaj aplikataj sen reŝargo, kaj konservataj en IndexedDB por eksterreta uzo.'
+} },
   { pinned: false, date: '2026/09/27 09:22', desc: {
   ja: 'myfinger消費量グラフの過去データ再生とゲーム中のリアルタイム描画を分離し、過去データがある場合に再生操作で「ゲームを開始するとリアルタイムで線が描かれます」と表示される問題を修正しました。',
   en: 'Separated historical playback from real-time drawing during games and fixed an issue where playback could show the real-time drawing message even when historical data existed.',
@@ -2009,6 +2039,7 @@ function saveAllConfig() {
     textColor: document.getElementById('cfgTextColor').value,
     textColorText: document.getElementById('cfgTextColorText').value,
     fontFamily: document.getElementById('cfgFontFamily').value,
+    customFontName: localStorage.getItem('airplane_game_custom_font_name') || '',
     fontSizeNum: document.getElementById('cfgFontSizeNum').value,
     fontSizeUnit: document.getElementById('cfgFontSizeUnit').value,
     showSearchGame: document.getElementById('cfgShowSearchGame').checked,
@@ -2819,6 +2850,7 @@ function changeLanguage(lang) {
   document.getElementById('authorName').textContent = AUTHOR_NAMES[lang] || AUTHOR_NAMES.ja;
   updateGameInstructionText();
   renderHistoryTable();
+  renderRegisteredCustomFonts();
   renderScoreTable();
   renderShortcuts();
   updateQuestionsResetButton();
@@ -2834,10 +2866,11 @@ function initIndexedDB() {
     if (!window.indexedDB || !document.getElementById('cfgUseIndexedDB').checked) {
       resolve(null); return;
     }
-    const req = indexedDB.open('AirplaneGamesDB_v3', 1);
+    const req = indexedDB.open('AirplaneGamesDB_v3', 2);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
+      if (!db.objectStoreNames.contains('customFonts')) db.createObjectStore('customFonts', { keyPath: 'id' });
     };
     req.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
     req.onerror = () => resolve(null);
@@ -4644,11 +4677,240 @@ function applyColorsText() {
     document.getElementById('cfgTextColor').value = text;
   }
 }
+function openCustomFontDB() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) { reject(new Error('IndexedDB is unavailable')); return; }
+    const req = indexedDB.open('AirplaneGamesDB_v3', 2);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
+      if (!db.objectStoreNames.contains('customFonts')) db.createObjectStore('customFonts', { keyPath: 'id' });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+  });
+}
+
+async function saveCustomFontToIndexedDB(name, buffer, mimeType) {
+  const db = await openCustomFontDB();
+  const id = `font_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction('customFonts', 'readwrite');
+    tx.objectStore('customFonts').put({ id, name, mimeType, buffer, createdAt: Date.now() });
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error || new Error('Font save failed'));
+    tx.onabort = () => reject(tx.error || new Error('Font save aborted'));
+  });
+  db.close();
+  return id;
+}
+
+async function getRegisteredCustomFonts() {
+  try {
+    const db = await openCustomFontDB();
+    const records = await new Promise((resolve, reject) => {
+      const tx = db.transaction('customFonts', 'readonly');
+      const req = tx.objectStore('customFonts').getAll();
+      req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
+      req.onerror = () => reject(req.error);
+    });
+    db.close();
+    return records.filter(r => r && r.buffer);
+  } catch (e) {
+    console.warn('登録済みフォント一覧の取得失敗:', e);
+    return [];
+  }
+}
+
+async function getRegisteredCustomFont(id) {
+  const db = await openCustomFontDB();
+  const record = await new Promise((resolve, reject) => {
+    const tx = db.transaction('customFonts', 'readonly');
+    const req = tx.objectStore('customFonts').get(id);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+  db.close();
+  return record;
+}
+
+async function deleteRegisteredCustomFont(id) {
+  const db = await openCustomFontDB();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction('customFonts', 'readwrite');
+    tx.objectStore('customFonts').delete(id);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error || new Error('Font delete failed'));
+    tx.onabort = () => reject(tx.error || new Error('Font delete aborted'));
+  });
+  db.close();
+}
+
+async function loadCustomFontFromIndexedDB() {
+  try {
+    const records = await getRegisteredCustomFonts();
+    if (!records.length) {
+      renderRegisteredCustomFonts();
+      return false;
+    }
+    renderRegisteredCustomFonts(records);
+    const savedId = localStorage.getItem('airplane_game_custom_font_id') || '';
+    const savedName = localStorage.getItem('airplane_game_custom_font_name') || '';
+    const selected = records.find(r => r.id === savedId) || records.find(r => String(r.name || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) === savedName) || records[records.length - 1];
+    if (selected && document.getElementById('cfgFontFamily')?.value === 'custom') {
+      await installCustomFont(selected.name || 'UploadedFont', selected.buffer, selected.mimeType || 'font/ttf', false, false);
+    }
+    return true;
+  } catch (e) {
+    console.warn('カスタムフォント復元失敗:', e);
+    renderRegisteredCustomFonts([]);
+    return false;
+  }
+}
+
+async function installCustomFont(name, buffer, mimeType, persist = true, selectCustom = true) {
+  const safeName = String(name || 'UploadedFont').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) || 'UploadedFont';
+  const blob = new Blob([buffer], { type: mimeType || 'font/ttf' });
+  const url = URL.createObjectURL(blob);
+  try {
+    const font = new FontFace(safeName, `url(${url})`);
+    await font.load();
+    document.fonts.add(font);
+    document.documentElement.style.setProperty('--font-family', `"${safeName}", sans-serif`);
+    const select = document.getElementById('cfgFontFamily');
+    if (selectCustom && select) select.value = 'custom';
+    if (selectCustom) {
+      localStorage.setItem('airplane_game_custom_font_name', safeName);
+      const status = document.getElementById('cfgCustomFontStatus');
+      if (status) status.textContent = (I18N_DICTIONARY.font_upload_success?.[currentLang] || I18N_DICTIONARY.font_upload_success.ja);
+    }
+    if (persist) saveConfig();
+    return true;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function renderRegisteredCustomFonts(records) {
+  const list = document.getElementById('customFontList');
+  if (!list) return;
+  if (!records) records = await getRegisteredCustomFonts();
+  list.innerHTML = '';
+  if (!records.length) {
+    list.innerHTML = `<div style="font-size:12px; opacity:.7;">${I18N_DICTIONARY.font_list_empty?.[currentLang] || I18N_DICTIONARY.font_list_empty.ja}</div>`;
+    return;
+  }
+  const currentId = localStorage.getItem('airplane_game_custom_font_id') || '';
+  records.sort((a,b) => Number(a.createdAt || 0) - Number(b.createdAt || 0));
+  records.forEach(record => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding:7px; border:1px solid var(--border-color); border-radius:8px;';
+    const name = document.createElement('span');
+    name.textContent = record.name || 'UploadedFont';
+    name.style.cssText = 'flex:1; min-width:160px; font-weight:bold; overflow-wrap:anywhere;';
+    const preview = document.createElement('button');
+    preview.className = 'btn btn-outline';
+    preview.type = 'button';
+    preview.textContent = I18N_DICTIONARY.font_preview?.[currentLang] || '👁 プレビュー';
+    preview.onclick = () => previewRegisteredCustomFont(record.id);
+    const apply = document.createElement('button');
+    apply.className = 'btn';
+    apply.type = 'button';
+    apply.textContent = I18N_DICTIONARY.font_apply?.[currentLang] || '適用';
+    apply.onclick = () => applyRegisteredCustomFont(record.id);
+    const del = document.createElement('button');
+    del.className = 'btn btn-secondary';
+    del.type = 'button';
+    del.textContent = I18N_DICTIONARY.font_delete?.[currentLang] || '🗑 削除';
+    del.onclick = () => deleteRegisteredCustomFontUI(record.id, record.name);
+    if (record.id === currentId) {
+      const applied = document.createElement('span');
+      applied.textContent = I18N_DICTIONARY.font_apply_success?.[currentLang] || '適用しました';
+      applied.style.cssText = 'font-size:11px; opacity:.75;';
+      row.append(name, applied, preview, apply, del);
+    } else {
+      row.append(name, preview, apply, del);
+    }
+    list.appendChild(row);
+  });
+}
+
+async function previewRegisteredCustomFont(id) {
+  try {
+    const record = await getRegisteredCustomFont(id);
+    if (!record) return;
+    await installCustomFont(record.name, record.buffer, record.mimeType || 'font/ttf', false, false);
+    const status = document.getElementById('cfgCustomFontStatus');
+    if (status) status.textContent = `${record.name} — ${I18N_DICTIONARY.font_preview?.[currentLang] || '👁 プレビュー'}`;
+  } catch (e) {
+    console.error('フォントプレビューエラー:', e);
+  }
+}
+
+async function applyRegisteredCustomFont(id) {
+  try {
+    const record = await getRegisteredCustomFont(id);
+    if (!record) return;
+    await installCustomFont(record.name, record.buffer, record.mimeType || 'font/ttf', false, true);
+    document.getElementById('cfgFontFamily').value = 'custom';
+    localStorage.setItem('airplane_game_custom_font_name', String(record.name || 'UploadedFont').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) || 'UploadedFont');
+    localStorage.setItem('airplane_game_custom_font_id', String(record.id));
+    applyFontSettings();
+    saveConfig();
+    renderRegisteredCustomFonts();
+  } catch (e) {
+    console.error('登録済みフォント適用エラー:', e);
+  }
+}
+
+async function deleteRegisteredCustomFontUI(id, name) {
+  const message = I18N_DICTIONARY.font_delete_confirm?.[currentLang] || I18N_DICTIONARY.font_delete_confirm.ja;
+  if (!window.confirm(message)) return;
+  try {
+    await deleteRegisteredCustomFont(id);
+    const currentId = localStorage.getItem('airplane_game_custom_font_id') || '';
+    if (currentId === String(id)) {
+      localStorage.removeItem('airplane_game_custom_font_name');
+      localStorage.removeItem('airplane_game_custom_font_id');
+      document.getElementById('cfgFontFamily').value = 'gothic';
+      applyFontSettings();
+      saveConfig();
+    }
+    await renderRegisteredCustomFonts();
+  } catch (e) {
+    console.error('登録済みフォント削除エラー:', e);
+  }
+}
+
+async function handleCustomFontUpload(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  const status = document.getElementById('cfgCustomFontStatus');
+  try {
+    const buffer = await file.arrayBuffer();
+    await installCustomFont(file.name.replace(/\.[^.]+$/, ''), buffer, file.type || 'font/ttf', false, true);
+    const savedId = await saveCustomFontToIndexedDB(file.name.replace(/\.[^.]+$/, ''), buffer, file.type || 'font/ttf');
+    localStorage.setItem('airplane_game_custom_font_id', savedId);
+    applyFontSettings();
+    await renderRegisteredCustomFonts();
+    if (status) status.textContent = `${file.name.replace(/\.[^.]+$/, '')} — ${(I18N_DICTIONARY.font_apply_success?.[currentLang] || '適用しました')}`;
+    saveConfig();
+  } catch (e) {
+    console.error('カスタムフォント読み込みエラー:', e);
+    if (status) status.textContent = (I18N_DICTIONARY.font_upload_error?.[currentLang] || I18N_DICTIONARY.font_upload_error.ja);
+    const select = document.getElementById('cfgFontFamily');
+    if (select) select.value = 'gothic';
+    applyFontSettings();
+  }
+  input.value = '';
+}
+
 function applyFontSettings() {
   const family = document.getElementById('cfgFontFamily').value;
   const sizeNum = document.getElementById('cfgFontSizeNum').value;
   const sizeUnit = document.getElementById('cfgFontSizeUnit').value;
-  const fontStr = (family === 'mincho') ? '"Yu Mincho", "Hiragino Mincho ProN", serif' : '"Hiragino Sans", "Meiryo", sans-serif';
+  const customName = localStorage.getItem('airplane_game_custom_font_name') || 'UploadedFont';
+  const fontStr = (family === 'mincho') ? '"Yu Mincho", "Hiragino Mincho ProN", serif' : (family === 'custom' ? `"${customName}", sans-serif` : '"Hiragino Sans", "Meiryo", sans-serif');
   document.documentElement.style.setProperty('--font-family', fontStr);
   document.documentElement.style.setProperty('--font-size', `${sizeNum}${sizeUnit}`);
 }
@@ -5783,7 +6045,7 @@ async function buildCompleteBackupPayload(){
   const fullBackupData={
     activeTab:currentActiveTab,selectedGame:currentGame,
     scores:memoryStore.scores,coins:memoryStore.coins,coinBankBalance:memoryStore.coinBankBalance,creditCardBalance:memoryStore.creditCardBalance,coinHistory:memoryStore.coinHistory,customSiteTitle:memoryStore.customSiteTitle,myProfile:memoryStore.myProfile,shortcuts:shortcutData,customQuestions:customQuestions,language:currentLang,
-    config:{gameEnabled:document.getElementById('cfgGameEnabled')?.checked,saveScore:document.getElementById('cfgSaveScore')?.checked,useIndexedDB:document.getElementById('cfgUseIndexedDB')?.checked,mouseStalkerType:document.getElementById('cfgMouseStalkerType')?.value,stalkerCustomText:document.getElementById('cfgStalkerCustomText')?.value,stalkerImageData:localStorage.getItem('airplane_game_stalker_img')||'',gcSimulation:document.getElementById('cfgGcSimulation')?.checked,bgColor:document.getElementById('cfgBgColor')?.value,bgColorText:document.getElementById('cfgBgColorText')?.value,textColor:document.getElementById('cfgTextColor')?.value,textColorText:document.getElementById('cfgTextColorText')?.value,fontFamily:document.getElementById('cfgFontFamily')?.value,fontSizeNum:document.getElementById('cfgFontSizeNum')?.value,fontSizeUnit:document.getElementById('cfgFontSizeUnit')?.value,showSearchGame:document.getElementById('cfgShowSearchGame')?.checked,showSearchOther:document.getElementById('cfgShowSearchOther')?.checked,showHeader:document.getElementById('cfgShowHeader')?.checked,colorTheme:document.getElementById('cfgColorTheme')?.value,stickMaxHeight:document.getElementById('stickMaxHeight')?.value,stickMaxPillars:document.getElementById('stickMaxPillars')?.value,nightFlight:document.getElementById('cfgNightFlight')?.checked,reducedMotion:document.getElementById('cfgReducedMotion')?.checked,batterySaver:document.getElementById('cfgBatterySaver')?.checked,masterVolume:document.getElementById('cfgMasterVolume')?.value,muteAudio:document.getElementById('cfgMuteAudio')?.checked,dpadPosition:document.getElementById('cfgDpadPosition')?.value,dpadSize:document.getElementById('cfgDpadSize')?.value,dpadOpacity:document.getElementById('cfgDpadOpacity')?.value,vibrate:document.getElementById('cfgVibrate')?.checked,gameSpeed:document.getElementById('cfgGameSpeed')?.value,invincible:document.getElementById('cfgInvincible')?.checked,konjacMaterial:document.getElementById('cfgKonjacMaterial')?.value,konjacKnife:document.getElementById('cfgKonjacKnife')?.value,flagRegion:document.getElementById('cfgFlagRegion')?.value,flightHours:document.getElementById('cfgFlightHours')?.value,flightMinutes:document.getElementById('cfgFlightMinutes')?.value,timezoneDiff:document.getElementById('cfgTimezoneDiff')?.value,coinBalanceAddAmount:getCoinBalanceAddAmount()},
+    config:{gameEnabled:document.getElementById('cfgGameEnabled')?.checked,saveScore:document.getElementById('cfgSaveScore')?.checked,useIndexedDB:document.getElementById('cfgUseIndexedDB')?.checked,mouseStalkerType:document.getElementById('cfgMouseStalkerType')?.value,stalkerCustomText:document.getElementById('cfgStalkerCustomText')?.value,stalkerImageData:localStorage.getItem('airplane_game_stalker_img')||'',gcSimulation:document.getElementById('cfgGcSimulation')?.checked,bgColor:document.getElementById('cfgBgColor')?.value,bgColorText:document.getElementById('cfgBgColorText')?.value,textColor:document.getElementById('cfgTextColor')?.value,textColorText:document.getElementById('cfgTextColorText')?.value,fontFamily:document.getElementById('cfgFontFamily')?.value,customFontName:localStorage.getItem('airplane_game_custom_font_name')||'',fontSizeNum:document.getElementById('cfgFontSizeNum')?.value,fontSizeUnit:document.getElementById('cfgFontSizeUnit')?.value,showSearchGame:document.getElementById('cfgShowSearchGame')?.checked,showSearchOther:document.getElementById('cfgShowSearchOther')?.checked,showHeader:document.getElementById('cfgShowHeader')?.checked,colorTheme:document.getElementById('cfgColorTheme')?.value,stickMaxHeight:document.getElementById('stickMaxHeight')?.value,stickMaxPillars:document.getElementById('stickMaxPillars')?.value,nightFlight:document.getElementById('cfgNightFlight')?.checked,reducedMotion:document.getElementById('cfgReducedMotion')?.checked,batterySaver:document.getElementById('cfgBatterySaver')?.checked,masterVolume:document.getElementById('cfgMasterVolume')?.value,muteAudio:document.getElementById('cfgMuteAudio')?.checked,dpadPosition:document.getElementById('cfgDpadPosition')?.value,dpadSize:document.getElementById('cfgDpadSize')?.value,dpadOpacity:document.getElementById('cfgDpadOpacity')?.value,vibrate:document.getElementById('cfgVibrate')?.checked,gameSpeed:document.getElementById('cfgGameSpeed')?.value,invincible:document.getElementById('cfgInvincible')?.checked,konjacMaterial:document.getElementById('cfgKonjacMaterial')?.value,konjacKnife:document.getElementById('cfgKonjacKnife')?.value,flagRegion:document.getElementById('cfgFlagRegion')?.value,flightHours:document.getElementById('cfgFlightHours')?.value,flightMinutes:document.getElementById('cfgFlightMinutes')?.value,timezoneDiff:document.getElementById('cfgTimezoneDiff')?.value,coinBalanceAddAmount:getCoinBalanceAddAmount()},
     storage:{localStorage:storageLocal,sessionStorage:storageSession},
     coinUsageGraphData:Array.isArray(coinUsageGraphData)?coinUsageGraphData:[],
     formState:snapshotFormState(),
@@ -5977,7 +6239,7 @@ async function handleRestoreFile(e){
       if(restored.config){
         const c=restored.config;
         const set=(id,v,prop='value')=>{const el=document.getElementById(id);if(el&&v!==undefined)el[prop]=v;};
-        set('cfgGameEnabled',c.gameEnabled,'checked');set('cfgSaveScore',c.saveScore,'checked');set('cfgUseIndexedDB',c.useIndexedDB,'checked');set('cfgMouseStalkerType',c.mouseStalkerType);set('cfgStalkerCustomText',c.stalkerCustomText);set('cfgGcSimulation',c.gcSimulation,'checked');set('cfgBgColor',c.bgColor);set('cfgBgColorText',c.bgColorText);set('cfgTextColor',c.textColor);set('cfgTextColorText',c.textColorText);set('cfgFontFamily',c.fontFamily);set('cfgFontSizeNum',c.fontSizeNum);set('cfgFontSizeUnit',c.fontSizeUnit);set('cfgShowSearchGame',c.showSearchGame,'checked');set('cfgShowSearchOther',c.showSearchOther,'checked');set('cfgShowHeader',c.showHeader,'checked');set('cfgColorTheme',c.colorTheme);set('stickMaxHeight',c.stickMaxHeight);set('stickMaxPillars',c.stickMaxPillars);set('cfgJumpForce',c.jumpForce);set('cfgNightFlight',c.nightFlight,'checked');set('cfgReducedMotion',c.reducedMotion,'checked');set('cfgBatterySaver',c.batterySaver,'checked');set('cfgMasterVolume',c.masterVolume);set('cfgMuteAudio',c.muteAudio,'checked');set('cfgDpadPosition',c.dpadPosition);set('cfgDpadSize',c.dpadSize);set('cfgDpadOpacity',c.dpadOpacity);set('cfgVibrate',c.vibrate,'checked');set('cfgGameSpeed',c.gameSpeed);set('cfgInvincible',c.invincible,'checked');set('cfgKonjacMaterial',c.konjacMaterial);set('cfgKonjacKnife',c.konjacKnife);set('cfgFlagRegion',c.flagRegion);set('cfgFlightHours',c.flightHours);set('cfgFlightMinutes',c.flightMinutes);set('cfgTimezoneDiff',c.timezoneDiff);set('coinBalanceAddAmount',c.coinBalanceAddAmount);
+        set('cfgGameEnabled',c.gameEnabled,'checked');set('cfgSaveScore',c.saveScore,'checked');set('cfgUseIndexedDB',c.useIndexedDB,'checked');set('cfgMouseStalkerType',c.mouseStalkerType);set('cfgStalkerCustomText',c.stalkerCustomText);set('cfgGcSimulation',c.gcSimulation,'checked');set('cfgBgColor',c.bgColor);set('cfgBgColorText',c.bgColorText);set('cfgTextColor',c.textColor);set('cfgTextColorText',c.textColorText);set('cfgFontFamily',c.fontFamily);if(c.customFontName)localStorage.setItem('airplane_game_custom_font_name',c.customFontName);set('cfgFontSizeNum',c.fontSizeNum);set('cfgFontSizeUnit',c.fontSizeUnit);set('cfgShowSearchGame',c.showSearchGame,'checked');set('cfgShowSearchOther',c.showSearchOther,'checked');set('cfgShowHeader',c.showHeader,'checked');set('cfgColorTheme',c.colorTheme);set('stickMaxHeight',c.stickMaxHeight);set('stickMaxPillars',c.stickMaxPillars);set('cfgJumpForce',c.jumpForce);set('cfgNightFlight',c.nightFlight,'checked');set('cfgReducedMotion',c.reducedMotion,'checked');set('cfgBatterySaver',c.batterySaver,'checked');set('cfgMasterVolume',c.masterVolume);set('cfgMuteAudio',c.muteAudio,'checked');set('cfgDpadPosition',c.dpadPosition);set('cfgDpadSize',c.dpadSize);set('cfgDpadOpacity',c.dpadOpacity);set('cfgVibrate',c.vibrate,'checked');set('cfgGameSpeed',c.gameSpeed);set('cfgInvincible',c.invincible,'checked');set('cfgKonjacMaterial',c.konjacMaterial);set('cfgKonjacKnife',c.konjacKnife);set('cfgFlagRegion',c.flagRegion);set('cfgFlightHours',c.flightHours);set('cfgFlightMinutes',c.flightMinutes);set('cfgTimezoneDiff',c.timezoneDiff);set('coinBalanceAddAmount',c.coinBalanceAddAmount);
         if(c.stalkerImageData)localStorage.setItem('airplane_game_stalker_img',c.stalkerImageData);
       }
       restoreFormState(restored.formState);
@@ -6077,6 +6339,7 @@ window.__airplaneSafeAddEventListener(window, 'load', async () => {
     if (config.textColor) document.getElementById('cfgTextColor').value = config.textColor;
     if (config.textColorText) document.getElementById('cfgTextColorText').value = config.textColorText;
     if (config.fontFamily) document.getElementById('cfgFontFamily').value = config.fontFamily;
+    if (config.customFontName) localStorage.setItem('airplane_game_custom_font_name', config.customFontName);
     if (config.fontSizeNum) document.getElementById('cfgFontSizeNum').value = config.fontSizeNum;
     if (config.fontSizeUnit) document.getElementById('cfgFontSizeUnit').value = config.fontSizeUnit;
     if (config.showSearchGame !== undefined) document.getElementById('cfgShowSearchGame').checked = config.showSearchGame;
@@ -6124,6 +6387,7 @@ window.__airplaneSafeAddEventListener(window, 'load', async () => {
 
   await initIndexedDB();
   await loadScoresFromIndexedDB();
+  await loadCustomFontFromIndexedDB();
   // .itsme復元直後は、バックアップのスコアをUI側へ反映する。
   // IndexedDBへの書き戻しは restoreIndexedDB() 側で完了しているため、ここでは
   // 再度 put() しない。これによりautoIncrementキーの重複・増殖を防ぐ。
