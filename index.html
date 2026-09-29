@@ -958,31 +958,94 @@ nav.tabs {
   gap: 6px;
   max-width: 100%;
 }
-/* 帯だけを閉じる「✕」ボタン */
-.btn-close-notice {
-  margin-inline-start: 8px;
-  padding: 2px 8px;
+/* 救済案内バー全体（Flexboxでテキストとボタンを分離） */
+.rescue-notice-bar {
+  width: 100% !important;
+  max-width: 100% !important;
+  background-color: #ffeb3b !important;
+  color: #d32f2f !important;
+  border-bottom: 2px solid #fbc02d;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10000;
+  display: none;
+  margin: 0 !important;
+  padding: 4px 8px;
+}
+
+/* メッセージ部分だけを横スクロール */
+.rescue-notice-scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* スクロールバーを隠してスッキリ */
+  padding: 4px 6px;
   font-size: 13px;
   font-weight: bold;
-  background: rgba(0, 0, 0, 0.15);
+  line-height: 1.4;
+}
+.rescue-notice-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ボタン群（スクロールせず画面端に常時固定表示・タップ領域確保） */
+.rescue-notice-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline-start: 6px;
+}
+
+/* パラメータ削除ボタン */
+.btn-remove-param {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: bold;
+  background-color: #d32f2f;
+  color: #ffffff !important;
+  border: 1px solid #b71c1c;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+/* 帯を閉じる「✕」ボタン（大きく押しやすく設定） */
+.btn-close-notice {
+  min-width: 28px;
+  height: 28px;
+  line-height: 26px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.12);
   color: #d32f2f !important;
   border: 1px solid rgba(211, 47, 47, 0.4);
   border-radius: 4px;
   cursor: pointer;
-  vertical-align: middle;
+  white-space: nowrap;
+  touch-action: manipulation;
 }
-.btn-close-notice:hover {
-  background: rgba(0, 0, 0, 0.25);
+.btn-close-notice:active {
+  background: rgba(0, 0, 0, 0.3);
 }
 </style>
 </head>
 <body>
 <div id="mouseStalker">★</div>
-
+<!-- 画面最上部に表示される救済案内バー（テキストスクロール＋常時固定ボタン） -->
 <div id="rescueNoticeBar" class="rescue-notice-bar" style="display: none;">
-  <span id="rescueNoticeText"></span>
-  <button type="button" class="btn-remove-param" onclick="removeRescueParam()" data-i18n="btn_remove_param">パラメータを削除</button>
-  <button type="button" class="btn-close-notice" onclick="hideRescueNoticeOnly()" title="閉じる" aria-label="閉じる">✕</button>
+  <div class="rescue-notice-scroll">
+    <span id="rescueNoticeText"></span>
+  </div>
+  <div class="rescue-notice-actions">
+    <button type="button" class="btn-remove-param" onclick="removeRescueParam()" data-i18n="btn_remove_param">パラメータを削除</button>
+    <button type="button" class="btn-close-notice" onclick="hideRescueNoticeOnly()" title="閉じる" aria-label="閉じる">✕</button>
+  </div>
 </div>
 <!-- ヘッダー表示ボタン -->
 <button id="headerShowBtn" onclick="toggleHeader(true)" data-i18n="btn_show_header">ヘッダー表示</button>
@@ -4116,22 +4179,26 @@ const RESCUE_MESSAGES = {
   ja: 'アラビア語を選択して真っ白になった方のための救済措置です。パラメータはその後は削除して構いません'
 };
 
-// 救済バーの表示制御（★アラビア語選択時のみ表示）
+
+// 救済バーの表示制御
 function updateRescueNoticeBarVisibility() {
   const bar = document.getElementById('rescueNoticeBar');
-  if (!bar) return;
+  const textEl = document.getElementById('rescueNoticeText');
+  if (!bar || !textEl) return;
 
   const params = new URLSearchParams(window.location.search);
   const lang = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
+  const isClosed = sessionStorage.getItem('airplane_game_notice_closed') === '1';
 
-  // rescueパラメータがあり、かつ「アラビア語(ar)のときだけ」表示
-  if (params.has('rescue') && lang === 'ar') {
-    bar.textContent = RESCUE_MESSAGES['ar'] || RESCUE_MESSAGES['ja'];
-    bar.style.display = 'block';
+  // rescueパラメータがあり、「アラビア語(ar)」で、「まだ✕で閉じていない」ときだけ表示
+  if (params.has('rescue') && lang === 'ar' && !isClosed) {
+    textEl.textContent = RESCUE_MESSAGES['ar'] || RESCUE_MESSAGES['ja'];
+    bar.style.display = 'flex'; // ★ flex表示にしてボタンを端に固定
   } else {
     bar.style.display = 'none';
   }
 }
+
 
 // 統合された言語切り替え関数
 function changeLanguage(lang) {
