@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -100,12 +101,20 @@ body.reduced-motion-mode .running-text {
   padding: 0;
 }
 
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
   font-family: var(--font-family);
   font-size: var(--font-size);
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
@@ -875,21 +884,64 @@ html[data-script-mode="mayan"] textarea {
 html[data-script-mode="mayan"] .mayan-script-rendered {
   text-shadow: 0 0 1px rgba(0,0,0,0.4);
 }
-/* 黄色背景・赤文字の案内バー（固定配置をやめ、ヘッダーを押し下げて最上部に配置） */
+/* 黄色背景・赤文字の案内バー（1行固定・横スクロール可能でスッキリ表示） */
 .rescue-notice-bar {
-  width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
   background-color: #ffeb3b !important;
   color: #d32f2f !important;
   border-bottom: 2px solid #fbc02d;
-  padding: 10px 16px;
-  font-size: 14px;
+  padding: 6px 12px;
+  font-size: 13px;
   font-weight: bold;
-  text-align: center;
   box-sizing: border-box;
-  position: relative; /* fixedからrelativeに変更して重なりを解消 */
+  position: relative;
   z-index: 1000;
-  line-height: 1.5;
+  line-height: 1.4;
   display: none;
+  margin: 0 !important;
+
+  /* ★ 1行固定 ＆ 横スクロール設定 */
+  white-space: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+html[dir="rtl"] .rescue-notice-bar {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="ltr"] .rescue-notice-bar {
+  direction: ltr;
+  text-align: left;
+}
+
+/* ヘッダーがスマホ画面からはみ出さないように制御 */
+header {
+  background: var(--header-bg);
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 15px rgba(255, 64, 129, 0.3);
+  position: relative;
+  z-index: 100;
+  gap: 8px;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+nav.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
 }
 </style>
 </head>
@@ -2900,6 +2952,8 @@ const CURRENT_DATA_VERSION = 4;
 let currentActiveTab = 'gameTab';
 let currentGame = 'stick';
 
+
+
 let memoryStore = {
   scores: [],
   coins: 10000,
@@ -2912,6 +2966,23 @@ let memoryStore = {
     location: "成田", hobby: "空を眺めること", quote: "翼は心にある", message: "フライト満喫中！"
   }
 };
+
+// ★ スクリプト開始時に最優先でコイン履歴を復元（上書き消滅を防止）
+(function initLoadCoinsImmediately() {
+  try {
+    const saved = localStorage.getItem('airplane_game_coins');
+    if (saved) {
+      const c = JSON.parse(saved);
+      if (Number.isFinite(Number(c.coins))) memoryStore.coins = Number(c.coins);
+      if (Number.isFinite(Number(c.coinBankBalance))) memoryStore.coinBankBalance = Number(c.coinBankBalance);
+      if (Number.isFinite(Number(c.creditCardBalance))) memoryStore.creditCardBalance = Number(c.creditCardBalance);
+      if (Array.isArray(c.coinHistory)) memoryStore.coinHistory = c.coinHistory;
+      if (typeof c.customSiteTitle === 'string') memoryStore.customSiteTitle = c.customSiteTitle;
+    }
+  } catch(e) {}
+  window.__coinStateLoaded = true;
+})();
+
 let dbInstance = null;
 
 let shortcutData = [
@@ -3020,13 +3091,17 @@ function saveAllConfig() {
     localStorage.setItem('airplane_game_shortcuts', JSON.stringify(shortcutData));
     localStorage.setItem('airplane_game_my_profile', JSON.stringify(memoryStore.myProfile));
     localStorage.setItem('airplane_game_100_questions_v5', JSON.stringify(customQuestions));
-    localStorage.setItem('airplane_game_coins', JSON.stringify({
-      coins: memoryStore.coins,
-      coinBankBalance: memoryStore.coinBankBalance,
-      creditCardBalance: memoryStore.creditCardBalance,
-      coinHistory: memoryStore.coinHistory,
-      customSiteTitle: memoryStore.customSiteTitle
-    }));
+    
+    // コインデータが未ロードの初期状態で上書き保存されるのを防止
+    if (window.__coinStateLoaded) {
+      localStorage.setItem('airplane_game_coins', JSON.stringify({
+        coins: memoryStore.coins,
+        coinBankBalance: memoryStore.coinBankBalance,
+        creditCardBalance: memoryStore.creditCardBalance,
+        coinHistory: memoryStore.coinHistory,
+        customSiteTitle: memoryStore.customSiteTitle
+      }));
+    }
 
     if (Array.isArray(KOUSHIN_DATA)) {
       const pinnedIds = KOUSHIN_DATA.filter(k => k.pinned).map(k => k.date);
