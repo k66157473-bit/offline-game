@@ -1033,17 +1033,34 @@ nav.tabs {
 .btn-close-notice:active {
   background: rgba(0, 0, 0, 0.3);
 }
+/* 「今後表示しない」ボタンのスタイル */
+.btn-never-show {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: bold;
+  background-color: #f57c00;
+  color: #ffffff !important;
+  border: 1px solid #e65100;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+.btn-never-show:active {
+  background-color: #ef6c00;
+}
 </style>
 </head>
 <body>
 <div id="mouseStalker">★</div>
-<!-- 画面最上部に表示される救済案内バー（テキストスクロール＋常時固定ボタン） -->
+<!-- 画面最上部に表示される救済案内バー -->
 <div id="rescueNoticeBar" class="rescue-notice-bar" style="display: none;">
   <div class="rescue-notice-scroll">
     <span id="rescueNoticeText"></span>
   </div>
   <div class="rescue-notice-actions">
     <button type="button" class="btn-remove-param" onclick="removeRescueParam()" data-i18n="btn_remove_param">パラメータを削除</button>
+    <button type="button" class="btn-never-show" onclick="neverShowRescueNotice()" data-i18n="btn_never_show">今後表示しない</button>
     <button type="button" class="btn-close-notice" onclick="hideRescueNoticeOnly()" title="閉じる" aria-label="閉じる">✕</button>
   </div>
 </div>
@@ -2237,6 +2254,7 @@ btn_remove_param: { ja: "パラメータを削除", en: "Remove parameter", hira
   restore_no_structure:{ja:'復元可能なデータ構造が見つかりません。',en:'No restorable data structure was found.',hira:'ふくげん かのうな でーた こうぞうが みつかりません。',ko:'복원 가능한 데이터 구조를 찾을 수 없습니다.','zh-CN':'未找到可恢复的数据结构。','zh-TW':'找不到可還原的資料結構。',ar:'لم يتم العثور على بنية بيانات قابلة للاستعادة.',eo:'Neniu restarigebla datumstrukturo troviĝis.',mam:'No restorable data structure was found.',th:'ไม่พบโครงสร้างข้อมูลที่กู้คืนได้',sw:'Hakuna muundo wa data unaoweza kurejeshwa uliopatikana.',es:'No se encontró una estructura de datos restaurable.',fr:'Aucune structure de données restaurable trouvée.',de:'Keine wiederherstellbare Datenstruktur gefunden.',pt:'Nenhuma estrutura de dados restaurável foi encontrada.',hi:'पुनर्स्थापित करने योग्य डेटा संरचना नहीं मिली।',id:'Tidak ditemukan struktur data yang dapat dipulihkan.',vi:'Không tìm thấy cấu trúc dữ liệu có thể khôi phục.',ru:'Восстанавливаемая структура данных не найдена.'},
   restore_zip_invalid:{ja:'ZIP内に有効な .itsme または .indexeddb が見つかりませんでした。',en:'No valid .itsme or .indexeddb file was found in the ZIP.',hira:'ZIPないに ゆうこうな .itsme または .indexeddbが みつかりませんでした。',ko:'ZIP에서 유효한 .itsme 또는 .indexeddb 파일을 찾을 수 없습니다.','zh-CN':'ZIP中未找到有效的.itsme或.indexeddb文件。','zh-TW':'ZIP中找不到有效的.itsme或.indexeddb檔案。',ar:'لم يتم العثور على ملف .itsme أو .indexeddb صالح داخل ZIP.',eo:'Neniu valida .itsme aŭ .indexeddb-dosiero troviĝis en la ZIP.',mam:'No valid .itsme or .indexeddb file was found in the ZIP.',th:'ไม่พบไฟล์ .itsme หรือ .indexeddb ที่ถูกต้องใน ZIP',sw:'Hakuna faili halali ya .itsme au .indexeddb iliyopatikana kwenye ZIP.',es:'No se encontró ningún archivo .itsme o .indexeddb válido en el ZIP.',fr:'Aucun fichier .itsme ou .indexeddb valide trouvé dans le ZIP.',de:'Keine gültige .itsme- oder .indexeddb-Datei im ZIP gefunden.',pt:'Nenhum arquivo .itsme ou .indexeddb válido foi encontrado no ZIP.',hi:'ZIP में कोई मान्य .itsme या .indexeddb फ़ाइल नहीं मिली।',id:'Tidak ditemukan file .itsme atau .indexeddb yang valid di ZIP.',vi:'Không tìm thấy tệp .itsme hoặc .indexeddb hợp lệ trong ZIP.',ru:'В ZIP не найден допустимый файл .itsme или .indexeddb.'},
   modal_idb_delete_error:{ja:'IndexedDBの削除中にエラーが発生しました: {error}',en:'An error occurred while deleting IndexedDB: {error}',hira:'IndexedDBの さくじょちゅうに えらーが はっせいしました: {error}',ko:'IndexedDB 삭제 중 오류가 발생했습니다: {error}','zh-CN':'删除IndexedDB时发生错误：{error}','zh-TW':'刪除IndexedDB時發生錯誤：{error}',ar:'حدث خطأ أثناء حذف IndexedDB: {error}',eo:'Eraro okazis dum forigo de IndexedDB: {error}',mam:'An error occurred while deleting IndexedDB: {error}',th:'เกิดข้อผิดพลาดขณะลบ IndexedDB: {error}',sw:'Hitilafu ilitokea wakati wa kufuta IndexedDB: {error}',es:'Se produjo un error al eliminar IndexedDB: {error}',fr:'Une erreur est survenue lors de la suppression d’IndexedDB : {error}',de:'Beim Löschen von IndexedDB ist ein Fehler aufgetreten: {error}',pt:'Ocorreu um erro ao excluir o IndexedDB: {error}',hi:'IndexedDB हटाते समय त्रुटि हुई: {error}',id:'Terjadi kesalahan saat menghapus IndexedDB: {error}',vi:'Đã xảy ra lỗi khi xóa IndexedDB: {error}',ru:'Произошла ошибка при удалении IndexedDB: {error}'},
+  btn_never_show: { ja: "今後表示しない", en: "Don't show again", hira: "もう ひょうじしない", ko: "다시 보지 않기", 'zh-CN': "不再显示", 'zh-TW': "不再顯示", ar: "عدم الإظهار مجددًا", eo: "Ne plu montri", mam: "Don't show again", th: "ไม่ต้องแสดงอีก", sw: "Usionyeshe tena", es: "No volver a mostrar", fr: "Ne plus afficher", de: "Nicht mehr anzeigen", pt: "Não mostrar novamente", hi: "दोबारा न दिखाएं", id: "Jangan tampilkan lagi", vi: "Không hiển thị lại", ru: "Больше не показывать" },
 };
 
 const AUTHOR_NAMES = {
@@ -4179,8 +4197,16 @@ const RESCUE_MESSAGES = {
   ja: 'アラビア語を選択して真っ白になった方のための救済措置です。パラメータはその後は削除して構いません'
 };
 
+// ★ 今後一生表示しない処理（LocalStorageに永久保存）
+function neverShowRescueNotice() {
+  try {
+    localStorage.setItem('airplane_game_notice_never_show', '1');
+  } catch(_) {}
+  const bar = document.getElementById('rescueNoticeBar');
+  if (bar) bar.style.display = 'none';
+}
 
-// 救済バーの表示制御
+// 救済バーの表示制御（永久非表示の判定に対応）
 function updateRescueNoticeBarVisibility() {
   const bar = document.getElementById('rescueNoticeBar');
   const textEl = document.getElementById('rescueNoticeText');
@@ -4188,16 +4214,18 @@ function updateRescueNoticeBarVisibility() {
 
   const params = new URLSearchParams(window.location.search);
   const lang = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
-  const isClosed = sessionStorage.getItem('airplane_game_notice_closed') === '1';
+  const isClosedSession = sessionStorage.getItem('airplane_game_notice_closed') === '1';
+  const isNeverShow = localStorage.getItem('airplane_game_notice_never_show') === '1';
 
-  // rescueパラメータがあり、「アラビア語(ar)」で、「まだ✕で閉じていない」ときだけ表示
-  if (params.has('rescue') && lang === 'ar' && !isClosed) {
+  // rescueパラメータがあり、「アラビア語(ar)」で、「一時的に閉じておらず」「一生表示しないも選んでいない」ときだけ表示
+  if (params.has('rescue') && lang === 'ar' && !isClosedSession && !isNeverShow) {
     textEl.textContent = RESCUE_MESSAGES['ar'] || RESCUE_MESSAGES['ja'];
-    bar.style.display = 'flex'; // ★ flex表示にしてボタンを端に固定
+    bar.style.display = 'flex';
   } else {
     bar.style.display = 'none';
   }
 }
+
 
 
 // 統合された言語切り替え関数
