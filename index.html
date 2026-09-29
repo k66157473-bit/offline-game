@@ -3891,27 +3891,32 @@ function applyStaticTextI18n(){
     const translated=translateExact(raw); if(translated!==raw) el.setAttribute('aria-label',translated);
   });
 }
+
+// 1. アラビア語に切り替える前の言語を保存
 function prepareArabicLanguageSwitch(nextLang){
-  if(nextLang!=='ar') return;
-  try{
-    const previous=localStorage.getItem('airplane_game_lang') || 'ja';
-    if(previous!=='ar') localStorage.setItem('airplane_game_lang_before_ar', previous);
-  }catch(_){}
+  if (nextLang !== 'ar') return;
+  try {
+    const current = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
+    if (current !== 'ar') {
+      localStorage.setItem('airplane_game_lang_before_ar', current);
+    }
+  } catch(_) {}
 }
 
+// 2. アラビア語のときは救済ボタンを「表示」し、それ以外の言語では「非表示」にする
 function finishArabicLanguageSwitch(lang){
   const rescue = document.getElementById('arabicRescueButton');
   if (!rescue) return;
-  
+
   if (lang === 'ar') {
-    // アラビア語選択時は救済ボタンを表示し、クリックイベントを設定
-    rescue.style.display = 'block';
+    rescue.style.display = 'block'; // アラビア語のときは画面に出す
     rescue.onclick = restoreLanguageBeforeArabic;
   } else {
-    // アラビア語以外では非表示にする
-    rescue.style.display = 'none';
+    rescue.style.display = 'none';  // 他の言語では隠す
   }
 }
+
+// 3. 救済ボタンを押した時の復元処理
 function restoreLanguageBeforeArabic(){
   let previous = 'ja';
   try {
@@ -3931,10 +3936,10 @@ function restoreLanguageBeforeArabic(){
       localStorage.setItem('airplane_game_config', JSON.stringify(cfg));
     }
   } catch(_) {}
-  
+
   changeLanguage(previous);
-  location.reload();
 }
+
 
 function changeLanguage(lang) {
   if (lang === 'zh') lang = 'zh-CN';
