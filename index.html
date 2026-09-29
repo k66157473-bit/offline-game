@@ -6609,22 +6609,6 @@ function restoreFormState(list){
   }
 }
 
-async function buildCompleteBackupPayload(){
-  const storageLocal=storageSnapshot(localStorage);
-  const storageSession=storageSnapshot(sessionStorage);
-  const fullBackupData={
-    activeTab:currentActiveTab,selectedGame:currentGame,
-    scores:memoryStore.scores,coins:memoryStore.coins,coinBankBalance:memoryStore.coinBankBalance,creditCardBalance:memoryStore.creditCardBalance,coinHistory:memoryStore.coinHistory,customSiteTitle:memoryStore.customSiteTitle,myProfile:memoryStore.myProfile,shortcuts:shortcutData,customQuestions:customQuestions,language:currentLang,
-    config:{gameEnabled:document.getElementById('cfgGameEnabled')?.checked,saveScore:document.getElementById('cfgSaveScore')?.checked,useIndexedDB:document.getElementById('cfgUseIndexedDB')?.checked,mouseStalkerType:document.getElementById('cfgMouseStalkerType')?.value,stalkerCustomText:document.getElementById('cfgStalkerCustomText')?.value,stalkerImageData:localStorage.getItem('airplane_game_stalker_img')||'',gcSimulation:document.getElementById('cfgGcSimulation')?.checked,bgColor:document.getElementById('cfgBgColor')?.value,bgColorText:document.getElementById('cfgBgColorText')?.value,textColor:document.getElementById('cfgTextColor')?.value,textColorText:document.getElementById('cfgTextColorText')?.value,fontFamily:document.getElementById('cfgFontFamily')?.value,customFontName:localStorage.getItem('airplane_game_custom_font_name')||'',fontSizeNum:document.getElementById('cfgFontSizeNum')?.value,fontSizeUnit:document.getElementById('cfgFontSizeUnit')?.value,showSearchGame:document.getElementById('cfgShowSearchGame')?.checked,showSearchOther:document.getElementById('cfgShowSearchOther')?.checked,showHeader:document.getElementById('cfgShowHeader')?.checked,colorTheme:document.getElementById('cfgColorTheme')?.value,stickMaxHeight:document.getElementById('stickMaxHeight')?.value,stickMaxPillars:document.getElementById('stickMaxPillars')?.value,nightFlight:document.getElementById('cfgNightFlight')?.checked,reducedMotion:document.getElementById('cfgReducedMotion')?.checked,batterySaver:document.getElementById('cfgBatterySaver')?.checked,masterVolume:document.getElementById('cfgMasterVolume')?.value,muteAudio:document.getElementById('cfgMuteAudio')?.checked,dpadPosition:document.getElementById('cfgDpadPosition')?.value,dpadSize:document.getElementById('cfgDpadSize')?.value,dpadOpacity:document.getElementById('cfgDpadOpacity')?.value,vibrate:document.getElementById('cfgVibrate')?.checked,gameSpeed:document.getElementById('cfgGameSpeed')?.value,invincible:document.getElementById('cfgInvincible')?.checked,konjacMaterial:document.getElementById('cfgKonjacMaterial')?.value,konjacKnife:document.getElementById('cfgKonjacKnife')?.value,flagRegion:document.getElementById('cfgFlagRegion')?.value,flightHours:document.getElementById('cfgFlightHours')?.value,flightMinutes:document.getElementById('cfgFlightMinutes')?.value,timezoneDiff:document.getElementById('cfgTimezoneDiff')?.value,coinBalanceAddAmount:getCoinBalanceAddAmount()},
-    storage:{localStorage:storageLocal,sessionStorage:storageSession},
-    coinUsageGraphData:Array.isArray(coinUsageGraphData)?coinUsageGraphData:[],
-    formState:snapshotFormState(),
-    uiState:{scrollX:window.scrollX,scrollY:window.scrollY},
-    indexedDB:await snapshotIndexedDB(),
-    updateHistory:KOUSHIN_DATA.map(k=>({id:k.id,date:k.date,desc:k.desc,pinned:!!k.pinned}))
-  };
-  return {app:'AirplaneGames',backupSchema:ITSMe_BACKUP_SCHEMA,version:CURRENT_DATA_VERSION,timestamp:new Date().toISOString(),data:fullBackupData};
-}
 
 /* ==========================================================================
    全データ完全網羅バックアップ生成 & .itsme 拡張子強制保持
@@ -6921,144 +6905,222 @@ async function handlePartialRestore(event,type){
   }catch(error){showRestoreModal('部分復元できませんでした',String(error?.message||error).replace(/[<>&"']/g,''));}
 }
 
+/* ==========================================================================
+   完全復元処理（画面・IndexedDB・LocalStorageの安全同期）
+   ========================================================================== */
 async function handleRestoreFile(e){
-  const input=e?.target||document.getElementById('restoreFileInput');
-  const file=input?.files?.[0];
+  const input = e?.target || document.getElementById('restoreFileInput');
+  const file = input?.files?.[0];
   restoreInputReset(input);
-  if(!file){
-    showRestoreModal('復元','ファイルが選択されていません。');
+  if (!file) {
+    showRestoreModal('復元', 'ファイルが選択されていません。');
     return;
   }
 
-  window.__itsmeRestoreInProgress=true;
+  window.__itsmeRestoreInProgress = true;
+  window.__itsmeRestoreReloadPending = true;
   setRestoreBusy(true);
-  showRestoreModal('バックアップを読み込み中',`「${String(file.name).replace(/[<>&"']/g,'')}」を読み込んでいます。<br><br>ファイル容量: ${Math.max(0,file.size||0).toLocaleString()} bytes<br>完了するまでこのページを閉じないでください。`);
+  showRestoreModal('バックアップを読み込み中', `「${escapeHtml(file.name)}」を読み込んで復元しています...`);
 
-  const reader=new FileReader();
-  const finish=()=>{
+  const reader = new FileReader();
+  const finish = () => {
     setRestoreBusy(false);
     restoreInputReset(input);
   };
-  reader.onerror=()=>{
-    window.__itsmeRestoreInProgress=false;
-    finish();
-    showRestoreModal('復元できませんでした','バックアップファイルの読み込みに失敗しました。<br><br>ファイルが壊れているか、端末・ブラウザがファイル読み込みを拒否した可能性があります。');
-  };
-  reader.onabort=()=>{
-    window.__itsmeRestoreInProgress=false;
-    finish();
-    showRestoreModal('復元を中止しました','バックアップファイルの読み込みが中止されました。');
-  };
-  reader.onload=async ev=>{
-    try{
-      const rawJson=file.name.toLowerCase().endsWith('.zip')?extractJsonFromZip(ev.target.result):String(ev.target.result||'');
-      if(!rawJson.trim())throw new Error('バックアップファイルが空です。');
-      let parsed;
-      try{parsed=JSON.parse(rawJson);}catch(err){throw new Error(`JSONを解析できませんでした: ${err.message}`);}
-      const restored=validateBackupPayload(parsed);
-      const report={storage:0,session:0,indexedDB:0,errors:[]};
 
-      if(restored.storage){
-        const r1=storageRestore(localStorage,restored.storage.localStorage);report.storage=r1.restored;report.errors.push(...r1.errors);
-        const r2=storageRestore(sessionStorage,restored.storage.sessionStorage);report.session=r2.restored;report.errors.push(...r2.errors);
+  reader.onerror = () => {
+    window.__itsmeRestoreInProgress = false;
+    window.__itsmeRestoreReloadPending = false;
+    finish();
+    showRestoreModal('復元エラー', 'ファイルの読み込みに失敗しました。');
+  };
+
+  reader.onload = async (ev) => {
+    try {
+      const rawJson = file.name.toLowerCase().endsWith('.zip')
+        ? extractJsonFromZip(ev.target.result)
+        : String(ev.target.result || '');
+
+      if (!rawJson.trim()) throw new Error('バックアップファイルが空です。');
+
+      let parsed;
+      try { parsed = JSON.parse(rawJson); } catch (err) { throw new Error('JSONの解析に失敗しました。'); }
+
+      const restored = validateBackupPayload(parsed);
+      const report = { storage: 0, indexedDB: 0, errors: [] };
+
+      // 1. LocalStorage & SessionStorage の復元
+      if (restored.storage) {
+        const r1 = storageRestore(localStorage, restored.storage.localStorage);
+        report.storage = r1.restored;
+        report.errors.push(...r1.errors);
+        storageRestore(sessionStorage, restored.storage.sessionStorage);
       }
-      if(Array.isArray(restored.indexedDB)){
-        const r=await restoreIndexedDB(restored.indexedDB);
-        report.indexedDB=r.databases;
+
+      // 2. IndexedDB の復元（スコアとフォント等）
+      if (Array.isArray(restored.indexedDB)) {
+        const r = await restoreIndexedDB(restored.indexedDB);
+        report.indexedDB = r.databases;
         report.errors.push(...r.errors);
       }
 
-      if(Array.isArray(restored.updateHistory)){
-        try{
-          const byId=new Map(restored.updateHistory.filter(x=>x&&x.id!==undefined).map(x=>[x.id,x]));
-          const byDate=new Map(restored.updateHistory.filter(x=>x&&x.date!==undefined).map(x=>[String(x.date),x]));
-          KOUSHIN_DATA.forEach((k,i)=>{
-            const src=byId.get(k.id)||byDate.get(String(k.date))||restored.updateHistory[i];
-            if(!src)return;
-            if(src.id!==undefined)k.id=src.id;
-            if(src.date!==undefined)k.date=src.date;
-            if(src.desc&&typeof src.desc==='object')k.desc=src.desc;
-            k.pinned=!!src.pinned;
-          });
-          try{localStorage.setItem('airplane_game_pinned_ids',JSON.stringify(KOUSHIN_DATA.filter(k=>k.pinned).map(k=>k.date)));}catch(err){report.errors.push('更新履歴ピン保存: '+err.message);}
-          renderHistoryTable();
-        }catch(err){report.errors.push('更新履歴: '+err.message);}
-      }
-
-      if(Array.isArray(restored.scores)){
-        memoryStore.scores=restored.scores;
-        try{sessionStorage.setItem('airplane_game_itsme_pending_scores',JSON.stringify(restored.scores));}catch(err){report.errors.push('スコア一時復元: '+err.message);}
-      }
-      if(restored.coins!==undefined)memoryStore.coins=Number(restored.coins)||0;
-      if(restored.coinBankBalance!==undefined)memoryStore.coinBankBalance=Number(restored.coinBankBalance)||0;
-      if(restored.creditCardBalance!==undefined)memoryStore.creditCardBalance=Number(restored.creditCardBalance)||0;
-      if(Array.isArray(restored.coinHistory))memoryStore.coinHistory=restored.coinHistory;
-      if(typeof restored.customSiteTitle==='string')memoryStore.customSiteTitle=restored.customSiteTitle;
-      if(Array.isArray(restored.coinUsageGraphData)){
-        try{
-          coinUsageGraphData=restored.coinUsageGraphData.filter(p=>p&&Number.isFinite(Number(p.time))&&Number.isFinite(Number(p.cost))).map(p=>({
-            time:Number(p.time),cost:Number(p.cost),gameKey:p.gameKey||'',sessionId:p.sessionId||`legacy-${p.time}`,sessionDate:p.sessionDate||formatCoinUsageDate(p.time)
-          })).sort((a,b)=>a.time-b.time).slice(-3600);
-          localStorage.setItem('airplane_game_coin_usage_graph',JSON.stringify(coinUsageGraphData));
-          coinUsageGraphPlaybackIndex=Math.max(0,coinUsageGraphData.length-1);
-        }catch(err){report.errors.push('グラフ復元: '+err.message);}
-      }
-      if(Array.isArray(restored.customQuestions)&&restored.customQuestions.length===100){
-        customQuestions=restored.customQuestions;
-        try{
-          localStorage.setItem('airplane_game_100_questions_v5',JSON.stringify(customQuestions));
-          const restoredCleared=restored.storage?.localStorage?.airplane_game_100_questions_cleared;
-          customQuestionsExplicitlyCleared=restoredCleared==='1';
-          localStorage.setItem('airplane_game_100_questions_cleared',customQuestionsExplicitlyCleared?'1':'0');
-        }catch(err){report.errors.push('100問自作版: '+err.message);}
-      }
-      if(Array.isArray(restored.shortcuts)){shortcutData=restored.shortcuts;renderShortcuts();}
-      if(restored.myProfile){
-        memoryStore.myProfile=restored.myProfile;
-        const mp=restored.myProfile;
-        [['myProfName','name'],['myProfBirth','birth'],['myProfGender','gender'],['myProfLocation','location'],['myProfHobby','hobby'],['myProfQuote','quote'],['myProfMessage','message']].forEach(([id,k])=>{const el=document.getElementById(id);if(el)el.value=mp[k]||'';});
-      }
-      if(restored.config){
-        const c=restored.config;
-        const set=(id,v,prop='value')=>{const el=document.getElementById(id);if(el&&v!==undefined)el[prop]=v;};
-        set('cfgGameEnabled',c.gameEnabled,'checked');set('cfgSaveScore',c.saveScore,'checked');set('cfgUseIndexedDB',c.useIndexedDB,'checked');set('cfgMouseStalkerType',c.mouseStalkerType);set('cfgStalkerCustomText',c.stalkerCustomText);set('cfgGcSimulation',c.gcSimulation,'checked');set('cfgBgColor',c.bgColor);set('cfgBgColorText',c.bgColorText);set('cfgTextColor',c.textColor);set('cfgTextColorText',c.textColorText);set('cfgFontFamily',c.fontFamily);if(c.customFontName)localStorage.setItem('airplane_game_custom_font_name',c.customFontName);set('cfgFontSizeNum',c.fontSizeNum);set('cfgFontSizeUnit',c.fontSizeUnit);set('cfgShowSearchGame',c.showSearchGame,'checked');set('cfgShowSearchOther',c.showSearchOther,'checked');set('cfgShowHeader',c.showHeader,'checked');set('cfgColorTheme',c.colorTheme);set('stickMaxHeight',c.stickMaxHeight);set('stickMaxPillars',c.stickMaxPillars);set('cfgJumpForce',c.jumpForce);set('cfgNightFlight',c.nightFlight,'checked');set('cfgReducedMotion',c.reducedMotion,'checked');set('cfgBatterySaver',c.batterySaver,'checked');set('cfgMasterVolume',c.masterVolume);set('cfgMuteAudio',c.muteAudio,'checked');set('cfgDpadPosition',c.dpadPosition);set('cfgDpadSize',c.dpadSize);set('cfgDpadOpacity',c.dpadOpacity);set('cfgVibrate',c.vibrate,'checked');set('cfgGameSpeed',c.gameSpeed);set('cfgInvincible',c.invincible,'checked');set('cfgKonjacMaterial',c.konjacMaterial);set('cfgKonjacKnife',c.konjacKnife);set('cfgFlagRegion',c.flagRegion);set('cfgFlightHours',c.flightHours);set('cfgFlightMinutes',c.flightMinutes);set('cfgTimezoneDiff',c.timezoneDiff);set('coinBalanceAddAmount',c.coinBalanceAddAmount);
-        if(c.stalkerImageData)localStorage.setItem('airplane_game_stalker_img',c.stalkerImageData);
-      }
-      restoreFormState(restored.formState);
-      if(restored.language)changeLanguage(restored.language);
-      toggleGameFeatureSetting();relocateGameSettings();applyColors();applyFontSettings();applyColorTheme(document.getElementById('cfgColorTheme')?.value);applyNightFlightMode();applyReducedMotion();updateMasterVolume();applyDpadSettings();initFlightTimer();updateWorldClock();toggleSearchBarVisibility();toggleHeader(document.getElementById('cfgShowHeader')?.checked);updateMouseStalker();updateMyProfileLive();
-      if(restored.selectedGame){const btn=document.querySelector(`.game-select-btn[data-game="${CSS.escape(restored.selectedGame)}"]`);selectGame(restored.selectedGame,btn);}
-      if(restored.activeTab){
-        const savedTab=restored.activeTab;
-        if(savedTab==='gameTab' && document.getElementById('cfgGameEnabled')){
-          document.getElementById('cfgGameEnabled').checked=true;
+      // 3. メモリ変数への反映
+      if (Array.isArray(restored.scores)) {
+        memoryStore.scores = restored.scores;
+        // IndexedDBにも確実に保存
+        if (dbInstance && document.getElementById('cfgUseIndexedDB')?.checked) {
+          try {
+            const tx = dbInstance.transaction('scores', 'readwrite');
+            const store = tx.objectStore('scores');
+            store.clear();
+            restored.scores.forEach(s => store.add(s));
+          } catch(e){}
         }
-        switchTab(savedTab);
       }
-      if(restored.uiState&&Number.isFinite(restored.uiState.scrollX)&&Number.isFinite(restored.uiState.scrollY))window.scrollTo(restored.uiState.scrollX,restored.uiState.scrollY);
-      renderScoreTable();renderHistoryTable();updateCoinDisplays();renderCoinHistoryTable();if(memoryStore.customSiteTitle)document.title=memoryStore.customSiteTitle;
+      if (restored.coins !== undefined) memoryStore.coins = Number(restored.coins) || 0;
+      if (restored.coinBankBalance !== undefined) memoryStore.coinBankBalance = Number(restored.coinBankBalance) || 0;
+      if (restored.creditCardBalance !== undefined) memoryStore.creditCardBalance = Number(restored.creditCardBalance) || 0;
+      if (Array.isArray(restored.coinHistory)) memoryStore.coinHistory = restored.coinHistory;
+      if (typeof restored.customSiteTitle === 'string') memoryStore.customSiteTitle = restored.customSiteTitle;
+      
+      // 歩数計の復元
+      if (restored.pedometer) {
+        pedometerHalfSteps = Number(restored.pedometer.halfSteps) || 0;
+        pedometerCoins = Number(restored.pedometer.coins) || 0;
+        if (restored.pedometer.postUrl) {
+          const pUrl = document.getElementById('pedometerPostUrl');
+          if (pUrl) pUrl.value = restored.pedometer.postUrl;
+          localStorage.setItem('airplane_game_pedometer_post_url', restored.pedometer.postUrl);
+        }
+        savePedometerState();
+      }
 
-      window.__itsmeRestoreInProgress=false;
-      try{saveAllConfig();}catch(err){report.errors.push('復元状態の永続化: '+err.message);}
-      window.__itsmeRestoreReloadPending=true;
-      const partial=report.errors.length>0;
-      const details=`Storage ${report.storage}件、sessionStorage ${report.session}件、IndexedDB ${report.indexedDB}DBを処理しました。<br><br>${partial?'一部の項目でエラーが発生しました。':'すべての復元処理が完了しました。'}<br><br>復元した状態を確実に読み込むため、再読み込みしてください。`;
-      const errors=partial?`<br><br><b>復元できなかった項目:</b><br>${report.errors.slice(0,20).map(x=>String(x).replace(/[<>&"']/g,'')).join('<br>')}`:'';
+      // 100の質問の復元
+      if (Array.isArray(restored.customQuestions) && restored.customQuestions.length === 100) {
+        customQuestions = restored.customQuestions;
+        customQuestionsBackup = restored.customQuestionsBackup || null;
+        customQuestionsExplicitlyCleared = !!restored.customQuestionsExplicitlyCleared;
+        localStorage.setItem('airplane_game_100_questions_v5', JSON.stringify(customQuestions));
+      }
+
+      // ショートカットの復元
+      if (Array.isArray(restored.shortcuts)) {
+        shortcutData = restored.shortcuts;
+        renderShortcuts();
+      }
+
+      // プロフィールの復元
+      if (restored.myProfile) {
+        memoryStore.myProfile = restored.myProfile;
+        const mp = restored.myProfile;
+        [['myProfName','name'],['myProfBirth','birth'],['myProfGender','gender'],['myProfLocation','location'],['myProfHobby','hobby'],['myProfQuote','quote'],['myProfMessage','message']].forEach(([id,k])=>{
+          const el = document.getElementById(id);
+          if (el) el.value = mp[k] || '';
+        });
+      }
+
+      // フォーム・UIコントロール値の復元
+      restoreFormState(restored.formState);
+
+      // 設定チェックボックス類の反映
+      if (restored.config) {
+        const c = restored.config;
+        const set = (id, v, prop = 'value') => { const el = document.getElementById(id); if (el && v !== undefined) el[prop] = v; };
+        set('cfgGameEnabled', c.gameEnabled, 'checked');
+        set('cfgSaveScore', c.saveScore, 'checked');
+        set('cfgUseIndexedDB', c.useIndexedDB, 'checked');
+        set('cfgMouseStalkerType', c.mouseStalkerType);
+        set('cfgStalkerCustomText', c.stalkerCustomText);
+        set('cfgGcSimulation', c.gcSimulation, 'checked');
+        set('cfgBgColor', c.bgColor);
+        set('cfgBgColorText', c.bgColorText);
+        set('cfgTextColor', c.textColor);
+        set('cfgTextColorText', c.textColorText);
+        set('cfgFontFamily', c.fontFamily);
+        set('cfgFontSizeNum', c.fontSizeNum);
+        set('cfgFontSizeUnit', c.fontSizeUnit);
+        set('cfgShowSearchGame', c.showSearchGame, 'checked');
+        set('cfgShowSearchOther', c.showSearchOther, 'checked');
+        set('cfgShowHeader', c.showHeader, 'checked');
+        set('cfgColorTheme', c.colorTheme);
+        set('stickMaxHeight', c.stickMaxHeight);
+        set('stickMaxPillars', c.stickMaxPillars);
+        set('cfgJumpForce', c.jumpForce);
+        set('cfgNightFlight', c.nightFlight, 'checked');
+        set('cfgReducedMotion', c.reducedMotion, 'checked');
+        set('cfgBatterySaver', c.batterySaver, 'checked');
+        set('cfgMasterVolume', c.masterVolume);
+        set('cfgMuteAudio', c.muteAudio, 'checked');
+        set('cfgDpadPosition', c.dpadPosition);
+        set('cfgDpadSize', c.dpadSize);
+        set('cfgDpadOpacity', c.dpadOpacity);
+        set('cfgVibrate', c.vibrate, 'checked');
+        set('cfgGameSpeed', c.gameSpeed);
+        set('cfgInvincible', c.invincible, 'checked');
+        set('cfgKonjacMaterial', c.konjacMaterial);
+        set('cfgKonjacKnife', c.konjacKnife);
+        set('cfgFlagRegion', c.flagRegion);
+        set('cfgFlightHours', c.flightHours);
+        set('cfgFlightMinutes', c.flightMinutes);
+        set('cfgTimezoneDiff', c.timezoneDiff);
+        set('coinBalanceAddAmount', c.coinBalanceAddAmount);
+      }
+
+      // 言語と文字体系の適用
+      if (restored.language) changeLanguage(restored.language);
+      if (restored.scriptMode) changeScriptMode(restored.scriptMode);
+
+      // 外観・CSSの再描画
+      applyColors();
+      applyFontSettings();
+      applyColorTheme(document.getElementById('cfgColorTheme')?.value || 'light');
+      applyNightFlightMode();
+      applyReducedMotion();
+      updateMasterVolume();
+      applyDpadSettings();
+      initFlightTimer();
+      updateWorldClock();
+      toggleSearchBarVisibility();
+      toggleHeader(document.getElementById('cfgShowHeader')?.checked);
+      updateMouseStalker();
+      updateMyProfileLive();
+      renderScoreTable();
+      renderHistoryTable();
+      updateCoinDisplays();
+      renderCoinHistoryTable();
+      renderQuestions();
+      updateQuestionsResetButton();
+
+      if (restored.selectedGame) {
+        const btn = document.querySelector(`.game-select-btn[data-game="${CSS.escape(restored.selectedGame)}"]`);
+        selectGame(restored.selectedGame, btn);
+      }
+      if (restored.activeTab) {
+        switchTab(restored.activeTab);
+      }
+
+      // ★ 復元データを上書き破壊しないようフラグを維持したまま完了画面へ
       finish();
-      showRestoreModal(partial?'復元（一部成功）':'復元完了',details+errors,`<button class="btn" onclick="closeModal();location.reload();">復元した状態を反映する</button>`);
-    }catch(err){
-      window.__itsmeRestoreInProgress=false;
-      window.__itsmeRestoreReloadPending=false;
+      showRestoreModal('復元完了', 'すべてのデータを正常に復元しました。<br>反映を完全にするため再読み込みを推奨します。', `<button class="btn" onclick="closeModal(); location.reload();">再読み込みして完了</button>`);
+    } catch (err) {
+      window.__itsmeRestoreInProgress = false;
+      window.__itsmeRestoreReloadPending = false;
       finish();
-      showRestoreModal('復元できませんでした',`${String(err?.message||err).replace(/[<>&"']/g,'')}<br><br>バックアップファイルは変更されていません。もう一度選択して試せます。`);
+      showRestoreModal('復元エラー', `復元に失敗しました:<br>${escapeHtml(err.message)}`);
     }
   };
-  try{
-    if(file.name.toLowerCase().endsWith('.zip'))reader.readAsArrayBuffer(file);else reader.readAsText(file);
-  }catch(err){
-    window.__itsmeRestoreInProgress=false;
+
+  try {
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file);
+    }
+  } catch (err) {
+    window.__itsmeRestoreInProgress = false;
+    window.__itsmeRestoreReloadPending = false;
     finish();
-    showRestoreModal('復元できませんでした',`ファイルの読み込み開始に失敗しました。<br><br>${String(err?.message||err).replace(/[<>&"']/g,'')}`);
+    showRestoreModal('復元エラー', 'ファイルの読み込み開始に失敗しました。');
   }
 }
 
