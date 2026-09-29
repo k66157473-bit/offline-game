@@ -1471,6 +1471,19 @@ html[data-script-mode="mayan"] .mayan-script-rendered {
       <input type="file" id="restoreFileInput" accept=".itsme,.indexeddb,.zip" style="margin-top: 8px;" onclick="this.value=''" onchange="handleRestoreFile(event)">
     </div>
 
+    <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+      <label><strong data-i18n="lbl_restore">データ復元 (.itsme / .indexeddb / backup.zip):</strong></label><br>
+      <input type="file" id="restoreFileInput" accept=".itsme,.indexeddb,.zip,.json" style="margin-top: 8px;" onclick="this.value=''" onchange="handleRestoreFile(event)">
+    </div>
+
+    <!-- IndexedDB操作ボタン & データ削除ボタン -->
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:15px;">
+      <button class="btn btn-outline" onclick="viewIndexedDbContent()" data-i18n="btn_view_idb">IndexedDBの中身を確認</button>
+      <button class="btn btn-secondary" onclick="startIndexedDbDeletionProcess()" data-i18n="btn_delete_idb">IndexedDBの中身を削除</button>
+      <button class="btn btn-danger" onclick="startDataDeletionProcess()" data-i18n="btn_delete_all_data">データを削除</button>
+      <button class="btn btn-outline" id="clearCacheBtn" data-i18n="btn_clear_cache">キャッシュをクリア</button>
+    </div>
+
     <button class="btn btn-danger" onclick="startDataDeletionProcess()" data-i18n="btn_delete_all_data">データを削除</button>
     <button class="btn btn-outline" id="clearCacheBtn" data-i18n="btn_clear_cache">キャッシュをクリア</button>
   </section>
@@ -1679,7 +1692,8 @@ const I18N_DICTIONARY = {
   coin_title_changed: { ja: "サイトタイトルを変更しました。", en: "The site title has been changed.", hira: "さいとたいとるを へんこうしました。", ko: "사이트 제목을 변경했습니다.", 'zh-CN': "网站标题已更改。", 'zh-TW': "網站標題已更改。", ar: "تم تغيير عنوان الموقع.", eo: "La reteja titolo estis ŝanĝita.", mam: "The site title has been changed.", th: "เปลี่ยนชื่อเว็บไซต์เรียบร้อยแล้ว", sw: "Jina la tovuti limebadilishwa.", es: "Se ha cambiado el título del sitio.", fr: "Le titre du site a été modifié.", de: "Der Seitentitel wurde geändert.", pt: "O título do site foi alterado.", hi: "साइट का शीर्षक बदल दिया गया है।", id: "Judul situs telah diubah.", vi: "Đã thay đổi tiêu đề trang web.", ru: "Заголовок сайта изменен."},
   coin_history_empty: { ja: "使用履歴はありません。", en: "No usage history.", hira: "しようりれきは ありません。", ko: "사용 기록이 없습니다.", 'zh-CN': "暂无使用记录。", 'zh-TW': "暫無使用記錄。", ar: "لا يوجد سجل استخدام.", eo: "Neniu uzhistorio.", mam: "No usage history.", th: "ไม่มีประวัติการใช้งาน", sw: "Hakuna historia ya matumizi.", es: "No hay historial de uso.", fr: "Aucun historique d'utilisation.", de: "Kein Nutzungsverlauf vorhanden.", pt: "Nenhum histórico de uso.", hi: "कोई उपयोग इतिहास नहीं है।", id: "Tidak ada riwayat penggunaan.", vi: "Không có lịch sử sử dụng.", ru: "История использования пуста."},
   coin_hour_grant: { ja: "毎時間の自動付与", en: "Hourly automatic grant", hira: "まいじかんの じどうふよ", ko: "매시간 자동 지급", 'zh-CN': "每小时自动发放", 'zh-TW': "每小時自動發放", ar: "منحة تلقائية كل ساعة", eo: "Aŭtomata hora donaco", mam: "Hourly automatic grant", th: "มอบให้โดยอัตโนมัติทุกชั่วโมง", sw: "Zawadi ya kila saa kiotomatiki", es: "Asignación automática cada hora", fr: "Attribution automatique horaire", de: "Stündliche automatische Gutschrift", pt: "Concessão automática a cada hora", hi: "प्रति घंटा स्वचालित अनुदान", id: "Pemberian otomatis setiap jam", vi: "Tự động cộng xu mỗi giờ", ru: "Ежечасное автоматическое начисление"},
-
+  btn_view_idb: { ja: "IndexedDBの中身を確認", en: "View IndexedDB Content", hira: "IndexedDBの なかみを みる", ko: "IndexedDB 내용 확인", 'zh-CN': "查看IndexedDB内容", 'zh-TW': "查看IndexedDB內容", ar: "عرض محتوى IndexedDB", eo: "Vidi Enhavon de IndexedDB", mam: "T-xmayb'il IndexedDB", th: "ดูเนื้อหา IndexedDB", sw: "Tazama Yaliyomo ya IndexedDB", es: "Ver contenido de IndexedDB", fr: "Voir le contenu d'IndexedDB", de: "IndexedDB-Inhalt anzeigen", pt: "Ver conteúdo do IndexedDB", hi: "IndexedDB सामग्री देखें", id: "Lihat Isi IndexedDB", vi: "Xem nội dung IndexedDB", ru: "Просмотреть содержимое IndexedDB"},
+  btn_delete_idb: { ja: "IndexedDBの中身を削除", en: "Delete IndexedDB Content", hira: "IndexedDBの なかみを けす", ko: "IndexedDB 내용 삭제", 'zh-CN': "删除IndexedDB内容", 'zh-TW': "刪除IndexedDB內容", ar: "حذف محتوى IndexedDB", eo: "Forigi Enhavon de IndexedDB", mam: "T-najset IndexedDB", th: "ลบเนื้อหา IndexedDB", sw: "Futa Yaliyomo ya IndexedDB", es: "Eliminar contenido de IndexedDB", fr: "Supprimer le contenu d'IndexedDB", de: "IndexedDB-Inhalt löschen", pt: "Excluir conteúdo do IndexedDB", hi: "IndexedDB सामग्री हटाएं", id: "Hapus Isi IndexedDB", vi: "Xóa nội dung IndexedDB", ru: "Удалить содержимое IndexedDB"},
   game_color_legend_title: { ja: "ゲーム種類・タイトル別カラー", en: "Game Type & Title Colors", hira: "げーむしゅるい・たいとるべつ からー", ko: "게임 종류 및 제목별 색상", 'zh-CN': "游戏类型与标题颜色", 'zh-TW': "遊戲類型與標題顏色", ar: "ألوان نوع اللعبة والعنوان", eo: "Koloroj laŭ ludtipo kaj titolo", mam: "Game Type & Title Colors", th: "สีตามประเภทและชื่อเกม", sw: "Rangi za Aina ya Mchezo", es: "Colores según tipo de juego y título", fr: "Couleurs par type de jeu et titre", de: "Farben nach Spieltyp und Titel", pt: "Cores por tipo de jogo e título", hi: "गेम प्रकार और शीर्षक रंग", id: "Warna berdasarkan Jenis & Judul Game", vi: "Màu sắc theo thể loại và tiêu đề game", ru: "Цвета по типу и названию игры"},
   coin_graph_title: { ja: "🪙 myfinger消費量リアルタイムグラフ", en: "🪙 Real-time myfinger Consumption Graph", hira: "🪙 myfingerしょうひりょう りあるたいむ ぐらふ", ko: "🪙 myfinger 실시간 소비 그래프", 'zh-CN': "🪙 myfinger实时消费图表", 'zh-TW': "🪙 myfinger即時消費圖表", ar: "🪙 مخطط استهلاك myfinger في الوقت الفعلي", eo: "🪙 Realtempa Grafiko de Konsumo de myfinger", mam: "🪙 Real-time myfinger Consumption Graph", th: "🪙 กราฟการใช้ myfinger แบบเรียลไทม์", sw: "🪙 Grafu ya Matumizi ya myfinger", es: "🪙 Gráfico de consumo de myfinger en tiempo real", fr: "🪙 Graphique de consommation myfinger en temps réel", de: "🪙 Echtzeit-Grafik des myfinger-Verbrauchs", pt: "🪙 Gráfico de consumo do myfinger em tempo real", hi: "🪙 myfinger खपत का रीयल-टाइम ग्राफ़", id: "🪙 Grafik Konsumsi myfinger Real-time", vi: "🪙 Biểu đồ tiêu thụ myfinger theo thời gian thực", ru: "🪙 График расхода myfinger в реальном времени"},
   coin_graph_play: { ja: "▶ 再生", en: "▶ Play", hira: "▶ さいせい", ko: "▶ 재생", 'zh-CN': "▶ 播放", 'zh-TW': "▶ 播放", ar: "▶ تشغيل", eo: "▶ Ludi", mam: "▶ Play", th: "▶ เล่น", sw: "▶ Cheza", es: "▶ Reproducir", fr: "▶ Lecture", de: "▶ Abspielen", pt: "▶ Reproduzir", hi: "▶ चलाएँ", id: "▶ Putar", vi: "▶ Phát", ru: "▶ Воспроизвести"},
@@ -1873,6 +1887,31 @@ const AUTHOR_NAMES = {
 
 
 const KOUSHIN_DATA = [
+  {
+    pinned: false,
+    date: '2026/09/29 19:31',
+    desc: {
+      ja: '.itsme保存時に.itsme.jsonとなる問題を防ぐためバイナリ形式で出力し、歩数計やフォントを含む全データを完全に保存・復元できるようにしました。また、IndexedDBの中身確認モーダル（多言語対応）と、5段階確認によるIndexedDB削除機能を追加しました。',
+      en: 'Exported .itsme backups as binary to prevent .itsme.json renaming, ensuring complete backup and restore of all data including pedometer and fonts. Also added a multilingual IndexedDB viewer modal and a 5-step confirmation deletion feature for IndexedDB.',
+      hira: '.itsmeほぞんじに.itsme.jsonとなるもんだいをふせぐためばいなりけいしきでしゅつりょくし、ほすうけいやふぉんとをふくむぜんでーたをかんぜんにほぞん・ふくげんできるようにしました。また、IndexedDBのなかみかくにんもーだる（たげんごたいおう）と、5かいかくにんによるIndexedDBさくじょきのうをついかしました。',
+      ko: '.itsme 저장 시 .itsme.json으로 확장자가 바뀌는 문제를 방지하기 위해 바이너리 형식으로 출력하고, 만보기 및 글꼴을 포함한 모든 데이터를 완벽히 저장·복원할 수 있도록 개선했습니다. 또한 다국어를 지원하는 IndexedDB 내용 확인 모달과 5단계 확인을 거치는 IndexedDB 삭제 기능을 추가했습니다.',
+      'zh-CN': '为防止保存.itsme时变成.itsme.json而采用二进制格式导出，确保包括计步器和字体在内的全部数据能完整备份与恢复。同时新增多语言IndexedDB内容查看模态框，以及经过5次确认的IndexedDB删除功能。',
+      'zh-TW': '為防止儲存.itsme時變成.itsme.json而採用二進位格式匯出，確保包含計步器和字體在內的全部數據能完整備份與還原。同時新增多語言IndexedDB內容查看模態框，以及經過5次確認的IndexedDB刪除功能。',
+      ar: 'تم تصدير النسخ الاحتياطية .itsme بصيغة ثنائية لمنع إعادة تسميتها إلى .itsme.json، مع ضمان حفظ واستعادة كافة البيانات بما في ذلك عداد الخطوات والخطوط. كما تمت إضافة نافذة منبثقة متعددة اللغات لعرض محتوى IndexedDB وميزة حذف IndexedDB بعد 5 تأكيدات.',
+      eo: 'Elportis .itsme-savkopiojn kiel duumajn dosierojn por eviti aldonon de .json, certigante plenan konservon kaj restarigon de ĉiuj datumoj inkluzive de paŝmezurilo kaj tiparoj. Ankaŭ aldonis plurlingvan modalon por rigardi IndexedDB-enhavon kaj 5-paŝan konfirmitan forigon de IndexedDB.',
+      mam: "Ma b'ant tu'n mi'n tz'ok .itsme.json ti'j archivo .itsme, k'ub'an tkyaqil data te xanb'il ex font. Ex ma tz'aqsit xmayb'il IndexedDB tuj nimku yol ex 5 maj xjel tu'n t-najset IndexedDB.",
+      th: 'ส่งออกไฟล์สำรอง .itsme เป็นไบนารีเพื่อป้องกันการเปลี่ยนชื่อเป็น .itsme.json มั่นใจได้ว่าข้อมูลทั้งหมดรวมถึงเครื่องนับก้าวและฟอนต์จะได้รับการบันทึกและกู้คืนอย่างสมบูรณ์ พร้อมเพิ่มหน้าต่างดูเนื้อหา IndexedDB แบบหลายภาษาและปุ่มลบ IndexedDB พร้อมการยืนยัน 5 ขั้นตอน',
+      sw: 'Imetoa nakala za .itsme kama faili ghafi ya mfumo wa binary kuzuia kubadilika jina kuwa .itsme.json, ikihakikisha data zote ikiwemo kipima hatua na fonti zinahifadhiwa na kurejeshwa kikamilifu. Pia imeongeza dirisha la lugha nyingi la kutazama IndexedDB na ufutaji wa IndexedDB wenye uthibitisho mara 5.',
+      es: 'Se exportó la copia .itsme en formato binario para evitar que se renombre a .itsme.json, garantizando el guardado y restauración total de datos, incluidos podómetro y fuentes. Además, se añadió un modal multilingüe para ver el contenido de IndexedDB y el borrado de IndexedDB con 5 confirmaciones.',
+      fr: 'Export des sauvegardes .itsme au format binaire pour empêcher l’extension .itsme.json, garantissant la sauvegarde et la restauration intégrales des données, y compris le podomètre et les polices. Ajout d’une fenêtre modale multilingue pour consulter IndexedDB et de la suppression d’IndexedDB avec 5 étapes de confirmation.',
+      de: '.itsme-Sicherungen als Binärformat exportiert, um die Umbenennung in .itsme.json zu verhindern und eine vollständige Sicherung/Wiederherstellung aller Daten inklusive Schrittzähler und Schriftarten zu gewährleisten. Zudem ein mehrsprachiges Vorschau-Modal für IndexedDB und eine 5-stufige Löschfunktion hinzugefügt.',
+      pt: 'Exportados backups .itsme em formato binário para evitar a extensão .itsme.json, garantindo backup e restauração completos de todos os dados, incluindo pedômetro e fontes. Também foram adicionados um modal multilíngue para visualizar o IndexedDB e exclusão com 5 etapas de confirmação.',
+      hi: '.itsme बैकअप को बाइनरी प्रारूप में निर्यात किया गया ताकि .itsme.json नामकरण को रोका जा सके, जिससे पेडोमीटर और फ़ॉन्ट सहित सभी डेटा का पूर्ण बैकअप और पुनर्स्थापन सुनिश्चित हो सके। साथ ही बहुभाषी IndexedDB सामग्री दर्शक मोडल और 5-चरणीय पुष्टि IndexedDB विलोपन सुविधा जोड़ी गई।',
+      id: 'Mengekspor cadangan .itsme sebagai biner untuk mencegah perubahan nama menjadi .itsme.json, memastikan pencadangan dan pemulihan penuh seluruh data termasuk pedometer dan font. Menambahkan pula modal penampil IndexedDB multibahasa dan fitur hapus IndexedDB dengan 5 tahap konfirmasi.',
+      vi: 'Xuất bản sao lưu .itsme dưới dạng nhị phân để ngăn bị đổi tên thành .itsme.json, đảm bảo lưu và khôi phục trọn vẹn toàn bộ dữ liệu gồm máy đếm bước và phông chữ. Bổ sung bảng xem nội dung IndexedDB đa ngôn ngữ và tính năng xóa IndexedDB với 5 bước xác nhận.',
+      ru: 'Экспорт резервных копий .itsme переведен в бинарный формат для предотвращения переименования в .itsme.json, обеспечивая сохранение и восстановление всех данных, включая шагомер и шрифты. Добавлено многоязычное окно просмотра содержимого IndexedDB и функция очистки IndexedDB с 5 подтверждениями.'
+    }
+  },
   {
     pinned: false,
     date: '2026/09/29 19:00',
@@ -6591,27 +6630,233 @@ async function buildCompleteBackupPayload(){
   return {app:'AirplaneGames',backupSchema:ITSMe_BACKUP_SCHEMA,version:CURRENT_DATA_VERSION,timestamp:new Date().toISOString(),data:fullBackupData};
 }
 
+/* ==========================================================================
+   全データ完全網羅バックアップ生成 & .itsme 拡張子強制保持
+   ========================================================================== */
+async function buildCompleteBackupPayload(){
+  const storageLocal = storageSnapshot(localStorage);
+  const storageSession = storageSnapshot(sessionStorage);
+  
+  // 歩数計の最新状態も取り込み
+  let pedometerState = null;
+  try { pedometerState = JSON.parse(localStorage.getItem('airplane_game_pedometer_state') || '{}'); } catch(e){}
+
+  const fullBackupData = {
+    appVersion: CURRENT_DATA_VERSION,
+    activeTab: currentActiveTab,
+    selectedGame: currentGame,
+    language: currentLang,
+    scriptMode: currentScriptMode,
+    scores: memoryStore.scores,
+    coins: memoryStore.coins,
+    coinBankBalance: memoryStore.coinBankBalance,
+    creditCardBalance: memoryStore.creditCardBalance,
+    coinHistory: memoryStore.coinHistory,
+    customSiteTitle: memoryStore.customSiteTitle,
+    myProfile: memoryStore.myProfile,
+    shortcuts: shortcutData,
+    customQuestions: customQuestions,
+    customQuestionsBackup: customQuestionsBackup,
+    customQuestionsExplicitlyCleared: customQuestionsExplicitlyCleared,
+    pedometer: {
+      halfSteps: pedometerHalfSteps,
+      coins: pedometerCoins,
+      postUrl: document.getElementById('pedometerPostUrl')?.value || '',
+      state: pedometerState
+    },
+    coinUsageGraphData: Array.isArray(coinUsageGraphData) ? coinUsageGraphData : [],
+    config: {
+      gameEnabled: document.getElementById('cfgGameEnabled')?.checked,
+      saveScore: document.getElementById('cfgSaveScore')?.checked,
+      useIndexedDB: document.getElementById('cfgUseIndexedDB')?.checked,
+      mouseStalkerType: document.getElementById('cfgMouseStalkerType')?.value,
+      stalkerCustomText: document.getElementById('cfgStalkerCustomText')?.value,
+      stalkerImageData: localStorage.getItem('airplane_game_stalker_img') || '',
+      gcSimulation: document.getElementById('cfgGcSimulation')?.checked,
+      bgColor: document.getElementById('cfgBgColor')?.value,
+      bgColorText: document.getElementById('cfgBgColorText')?.value,
+      textColor: document.getElementById('cfgTextColor')?.value,
+      textColorText: document.getElementById('cfgTextColorText')?.value,
+      fontFamily: document.getElementById('cfgFontFamily')?.value,
+      customFontName: localStorage.getItem('airplane_game_custom_font_name') || '',
+      customFontId: localStorage.getItem('airplane_game_custom_font_id') || '',
+      fontSizeNum: document.getElementById('cfgFontSizeNum')?.value,
+      fontSizeUnit: document.getElementById('cfgFontSizeUnit')?.value,
+      showSearchGame: document.getElementById('cfgShowSearchGame')?.checked,
+      showSearchOther: document.getElementById('cfgShowSearchOther')?.checked,
+      showHeader: document.getElementById('cfgShowHeader')?.checked,
+      colorTheme: document.getElementById('cfgColorTheme')?.value,
+      stickMaxHeight: document.getElementById('stickMaxHeight')?.value,
+      stickMaxPillars: document.getElementById('stickMaxPillars')?.value,
+      jumpForce: document.getElementById('cfgJumpForce')?.value,
+      nightFlight: document.getElementById('cfgNightFlight')?.checked,
+      reducedMotion: document.getElementById('cfgReducedMotion')?.checked,
+      batterySaver: document.getElementById('cfgBatterySaver')?.checked,
+      masterVolume: document.getElementById('cfgMasterVolume')?.value,
+      muteAudio: document.getElementById('cfgMuteAudio')?.checked,
+      dpadPosition: document.getElementById('cfgDpadPosition')?.value,
+      dpadSize: document.getElementById('cfgDpadSize')?.value,
+      dpadOpacity: document.getElementById('cfgDpadOpacity')?.value,
+      vibrate: document.getElementById('cfgVibrate')?.checked,
+      gameSpeed: document.getElementById('cfgGameSpeed')?.value,
+      invincible: document.getElementById('cfgInvincible')?.checked,
+      konjacMaterial: document.getElementById('cfgKonjacMaterial')?.value,
+      konjacKnife: document.getElementById('cfgKonjacKnife')?.value,
+      flagRegion: document.getElementById('cfgFlagRegion')?.value,
+      flightHours: document.getElementById('cfgFlightHours')?.value,
+      flightMinutes: document.getElementById('cfgFlightMinutes')?.value,
+      timezoneDiff: document.getElementById('cfgTimezoneDiff')?.value,
+      coinBalanceAddAmount: getCoinBalanceAddAmount()
+    },
+    storage: {
+      localStorage: storageLocal,
+      sessionStorage: storageSession
+    },
+    formState: snapshotFormState(),
+    uiState: { scrollX: window.scrollX, scrollY: window.scrollY },
+    indexedDB: await snapshotIndexedDB(), // フォントやDBスコアなど全DB・全Storeを完全に網羅
+    updateHistory: KOUSHIN_DATA.map(k => ({ date: k.date, desc: k.desc, pinned: !!k.pinned }))
+  };
+
+  return {
+    app: 'AirplaneGames',
+    backupSchema: ITSMe_BACKUP_SCHEMA,
+    version: CURRENT_DATA_VERSION,
+    timestamp: new Date().toISOString(),
+    data: fullBackupData
+  };
+}
+
+// ★ ブラウザによる「.itsme.json」への自動リネームを防止するバイナリダウンロード
 async function exportDataFile(type){
-  const payload=await buildCompleteBackupPayload();
-  const jsonStr=JSON.stringify(payload,null,2);
-  if(type==='itsme')downloadBlob(new Blob([jsonStr],{type:'application/json'}),'backup.itsme');
-  else if(type==='indexeddb')downloadBlob(new Blob([JSON.stringify({app:'AirplaneGames',store:'indexeddb',version:CURRENT_DATA_VERSION,indexedDB:payload.data.indexedDB},null,2)],{type:'application/json'}),'backup.indexeddb');
-  else if(type==='zip')downloadBlob(createSimpleZip([{name:'backup.itsme',content:jsonStr},{name:'backup.indexeddb',content:JSON.stringify({app:'AirplaneGames',version:CURRENT_DATA_VERSION,indexedDB:payload.data.indexedDB},null,2)}]),'backup.zip');
+  const payload = await buildCompleteBackupPayload();
+  const jsonStr = JSON.stringify(payload, null, 2);
+  
+  if (type === 'itsme') {
+    // application/octet-stream にすることでブラウザが勝手に .json を付与するのを防ぐ
+    downloadBlob(new Blob([jsonStr], { type: 'application/octet-stream' }), 'backup.itsme');
+  } else if (type === 'indexeddb') {
+    downloadBlob(new Blob([JSON.stringify({ app: 'AirplaneGames', store: 'indexeddb', version: CURRENT_DATA_VERSION, indexedDB: payload.data.indexedDB }, null, 2)], { type: 'application/octet-stream' }), 'backup.indexeddb');
+  } else if (type === 'zip') {
+    downloadBlob(createSimpleZip([
+      { name: 'backup.itsme', content: jsonStr },
+      { name: 'backup.indexeddb', content: JSON.stringify({ app: 'AirplaneGames', version: CURRENT_DATA_VERSION, indexedDB: payload.data.indexedDB }, null, 2) }
+    ]), 'backup.zip');
+  }
 }
 
-function validateBackupPayload(parsed){
-  if(!parsed||parsed.app!=='AirplaneGames')throw new Error('不審なファイル形式または互換性のないデータです。');
-  if(parsed.version&&parsed.version>CURRENT_DATA_VERSION)throw new Error(`バージョン(v${parsed.version})はまだリリースされていない番号です。`);
-  if(parsed.backupSchema!==undefined&&Number(parsed.backupSchema)>ITSMe_BACKUP_SCHEMA)throw new Error(`バックアップ形式(v${parsed.backupSchema})はこのサイトではまだ復元できません。`);
-  const data=parsed.data||parsed;
-  if(typeof data!=='object')throw new Error('バックアップのデータ本体がありません。');
-  if(data.storage&&typeof data.storage!=='object')throw new Error('Storageデータが壊れています。');
-  if(data.indexedDB&&!Array.isArray(data.indexedDB))throw new Error('IndexedDBデータが壊れています。');
-  return data;
+/* ==========================================================================
+   IndexedDBの中身確認（多言語対応モーダル）
+   ========================================================================== */
+async function viewIndexedDbContent() {
+  const modal = document.getElementById('genericModal');
+  const title = t('btn_view_idb');
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
+  document.getElementById('modalActionArea').innerHTML = '';
+
+  try {
+    const snapshot = await snapshotIndexedDB();
+    if (!snapshot || snapshot.length === 0) {
+      document.getElementById('modalBody').innerHTML = `<p style="color:#888;">IndexedDB is empty (0 databases).</p>`;
+      modal.style.display = 'flex';
+      return;
+    }
+
+    let html = `<div style="text-align:left; max-height:60vh; overflow-y:auto; font-size:12px; line-height:1.5;">`;
+    for (const db of snapshot) {
+      html += `<div style="margin-bottom:12px; padding:10px; border:1px solid var(--border-color); border-radius:8px; background:rgba(0,0,0,0.03);">`;
+      html += `<strong style="color:var(--accent-pink); font-size:14px;">🗄️ Database: ${escapeHtml(db.name)} (v${db.version})</strong><br>`;
+      
+      if (!db.stores || db.stores.length === 0) {
+        html += `<span style="color:#888;">(No object stores)</span>`;
+      } else {
+        for (const st of db.stores) {
+          const recCount = Array.isArray(st.records) ? st.records.length : 0;
+          html += `<div style="margin-top:6px; padding:6px; background:rgba(255,255,255,0.6); border-radius:6px; border:1px dashed #ccc;">`;
+          html += `<strong>📁 Store:</strong> ${escapeHtml(st.name)} (Records: <b>${recCount}</b>)<br>`;
+          if (recCount > 0) {
+            html += `<details style="margin-top:4px;"><summary style="cursor:pointer; color:var(--accent-pink);">Show Records Preview</summary>`;
+            html += `<pre style="font-size:11px; max-height:150px; overflow:auto; background:#222; color:#0f0; padding:6px; border-radius:4px; margin-top:4px;">`;
+            const previewData = st.records.slice(0, 20).map(r => ({ key: r.key, value: r.value }));
+            html += escapeHtml(JSON.stringify(previewData, null, 2));
+            if (recCount > 20) html += `\n...and ${recCount - 20} more records`;
+            html += `</pre></details>`;
+          }
+          html += `</div>`;
+        }
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+    document.getElementById('modalBody').innerHTML = html;
+  } catch(e) {
+    document.getElementById('modalBody').innerHTML = `<p style="color:#f00;">Failed to read IndexedDB: ${escapeHtml(e.message)}</p>`;
+  }
+  modal.style.display = 'flex';
 }
 
-function restoreInputReset(input){
-  try{if(input)input.value='';}catch(_){ }
+/* ==========================================================================
+   IndexedDB削除処理 (5回連続 YES? or NO 確認モーダル)
+   ========================================================================== */
+let idbDeletionStep = 0;
+
+function startIndexedDbDeletionProcess() {
+  idbDeletionStep = 1;
+  showIndexedDbDeletionModal();
+}
+
+function showIndexedDbDeletionModal() {
+  const modal = document.getElementById('genericModal');
+  document.getElementById('modalTitle').textContent = `⚠️ IndexedDB削除の確認 (${idbDeletionStep}/5)`;
+  document.getElementById('modalBody').innerHTML = `
+    本当にIndexedDBの中身（保存されたスコアや登録フォントなど）をすべて削除しますか？<br>
+    この操作は取り消せません。<br>
+    <strong>YES? or NO</strong>
+  `;
+  document.getElementById('modalDefaultCloseBtn').style.display = 'none';
+
+  document.getElementById('modalActionArea').innerHTML = `
+    <div style="display:flex; justify-content:center; gap:15px; margin-top:15px;">
+      <button class="btn btn-danger" onclick="handleIndexedDbDeletionAnswer(true)">YES</button>
+      <button class="btn btn-secondary" onclick="handleIndexedDbDeletionAnswer(false)">NO</button>
+    </div>
+  `;
+  modal.style.display = 'flex';
+}
+
+async function handleIndexedDbDeletionAnswer(isYes) {
+  if (!isYes) {
+    closeModal();
+    document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
+    idbDeletionStep = 0;
+    return;
+  }
+
+  if (idbDeletionStep < 5) {
+    idbDeletionStep++;
+    showIndexedDbDeletionModal();
+  } else {
+    closeModal();
+    document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
+    idbDeletionStep = 0;
+
+    try {
+      if (dbInstance) {
+        dbInstance.close();
+        dbInstance = null;
+      }
+      if (window.indexedDB) {
+        await idbDeleteDatabase('AirplaneGamesDB_v3');
+      }
+      memoryStore.scores = [];
+      renderScoreTable();
+      await renderRegisteredCustomFonts([]);
+      showModal('IndexedDB削除完了', 'IndexedDBのデータベースを完全に初期化・削除しました。');
+    } catch(err) {
+      showModal('削除エラー', `IndexedDBの削除中にエラーが発生しました: ${escapeHtml(err.message)}`);
+    }
+  }
 }
 
 function showRestoreModal(title,html,buttons){
