@@ -3891,33 +3891,48 @@ function applyStaticTextI18n(){
     const translated=translateExact(raw); if(translated!==raw) el.setAttribute('aria-label',translated);
   });
 }
-
 function prepareArabicLanguageSwitch(nextLang){
   if(nextLang!=='ar') return;
   try{
     const previous=localStorage.getItem('airplane_game_lang') || 'ja';
     if(previous!=='ar') localStorage.setItem('airplane_game_lang_before_ar', previous);
-    localStorage.setItem('airplane_game_arabic_rescue','1');
   }catch(_){}
 }
 
 function finishArabicLanguageSwitch(lang){
-  if(lang!=='ar') return;
-  try{
-    localStorage.removeItem('airplane_game_arabic_rescue');
-  }catch(_){}
-  const rescue=document.getElementById('arabicRescueButton');
-  if(rescue) rescue.style.display='none';
+  const rescue = document.getElementById('arabicRescueButton');
+  if (!rescue) return;
+  
+  if (lang === 'ar') {
+    // アラビア語選択時は救済ボタンを表示し、クリックイベントを設定
+    rescue.style.display = 'block';
+    rescue.onclick = restoreLanguageBeforeArabic;
+  } else {
+    // アラビア語以外では非表示にする
+    rescue.style.display = 'none';
+  }
 }
-
 function restoreLanguageBeforeArabic(){
-  let previous='ja';
-  try{previous=localStorage.getItem('airplane_game_lang_before_ar') || 'ja';}catch(_){}
-  if(!['ja','en','hira','ko','zh-CN','zh-TW','eo','mam','th','sw','es','fr','de','pt','hi','id','vi','ru'].includes(previous)) previous='ja';
-  try{
-    localStorage.setItem('airplane_game_lang',previous);
-    localStorage.removeItem('airplane_game_arabic_rescue');
-  }catch(_){}
+  let previous = 'ja';
+  try {
+    previous = localStorage.getItem('airplane_game_lang_before_ar') || 'ja';
+  } catch(_) {}
+  
+  if (!['ja','en','hira','ko','zh-CN','zh-TW','eo','mam','th','sw','es','fr','de','pt','hi','id','vi','ru'].includes(previous) || previous === 'ar') {
+    previous = 'ja';
+  }
+  
+  try {
+    localStorage.setItem('airplane_game_lang', previous);
+    const configStr = localStorage.getItem('airplane_game_config');
+    if (configStr) {
+      const cfg = JSON.parse(configStr);
+      cfg.lang = previous;
+      localStorage.setItem('airplane_game_config', JSON.stringify(cfg));
+    }
+  } catch(_) {}
+  
+  changeLanguage(previous);
   location.reload();
 }
 
@@ -7796,16 +7811,17 @@ window.__airplaneSafeAddEventListener(window, 'load', async () => {
       memoryStore.customSiteTitle = typeof c.customSiteTitle === 'string' ? c.customSiteTitle : '';
     } catch(e) {}
   }
-  const savedLang = (config && config.lang) ? config.lang : (localStorage.getItem('airplane_game_lang') || 'ja');
-  try{
-    if(savedLang==='ar' && localStorage.getItem('airplane_game_arabic_rescue')==='1'){
-      const rescue=document.getElementById('arabicRescueButton');
-      if(rescue){
-        rescue.style.display='block';
-        rescue.onclick=restoreLanguageBeforeArabic;
-      }
+ const savedLang = (config && config.lang) ? config.lang : (localStorage.getItem('airplane_game_lang') || 'ja');
+  
+  // アラビア語で保存されていた場合は救済ボタンをセットアップ
+  if (savedLang === 'ar') {
+    const rescue = document.getElementById('arabicRescueButton');
+    if (rescue) {
+      rescue.style.display = 'block';
+      rescue.onclick = restoreLanguageBeforeArabic;
     }
-  }catch(_){}
+  }
+  
   changeLanguage(savedLang);
   if (memoryStore.customSiteTitle) document.title = memoryStore.customSiteTitle;
   initPedometer();
