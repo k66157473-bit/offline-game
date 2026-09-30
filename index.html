@@ -881,6 +881,19 @@ html[data-script-mode="mayan"] textarea {
   font-family: 'Noto Sans Mayan Numerals', 'Segoe UI Historic', 'Maya Font', fantasy, sans-serif !important;
   letter-spacing: 1px;
 }
+/* カクトビック・トト数字の文字化け防止：対応フォントそのものをHTMLへ埋め込み（完全オフライン） */
+@font-face {
+  font-family: 'KaktovikNumeralsEmbedded';
+  src: url(data:font/ttf;base64,AAEAAAAPAIAAAwBwRkZUTX4M+nUAABfkAAAAHE9TLzKXCHv+AAABeAAAAGBjbWFwACGtzwAAAjgAAAF6Y3Z0IAaXB4sAAAWcAAAAHmZwZ20GWZw3AAADtAAAAXNnYXNwABcACAAAF9QAAAAQZ2x5ZqzaOJYAAAXwAAANlGhlYWQG++zTAAAA/AAAADZoaGVhCz8CTQAAATQAAAAkaG10eFk2A8EAAAHYAAAAYGxvY2EiUh8QAAAFvAAAADJtYXhwAiUAkwAAAVgAAAAgbmFtZVlwTFIAABOEAAADFXBvc3R+3p9/AAAWnAAAAThwcmVw1Me4hgAABSgAAAByAAEAAAAAGZqlYqElXw889QALCAAAAAAAxBlk4QAAAADfbCYEABn+AgQ/BVUAAAAIAAIAAAAAAAAAAQAABv79vAAABHgAAAAABD8AAQAAAAAAAAAAAAAAAAAAABgAAQAAABgAZAACAAAAAAABAAAAAAAKAAACAAAuAAAAAAADA/sBkAAFAAADWANYAAAEsANYA1gAAASwAGQB9AAAAgAFAwYAAAIABKAAAH9QACBKAAAAAAAAAABTSUwgAEAAIP//Bv79vAAABv4CRCAAABMAAAAAA6IE7AAAACAAAQLsAEQAAAAAAqoAAAHDAAACuQA1AykALwRVADAEDwA/BF8ANQQYACkEJgAZBCwAHwQCACcEEgAlBHgAUgRHACkEWQAqBDsAMARHAC8EEgAlBE0AJgRXAB8EJwAxBEMAKQAAAAUAAAADAAAALAAAAAQAAABMAAEAAAAAAHQAAwABAAAALAADAAoAAABMAAQAIAAAAAQABAABAAAAIP//AAAAIP///+MAAQAAAAAADAAAAAAAKAAAAAAAAAACAAAAIAAAACAAAAADAAHSwAAB0tMAAAAEAAABBgAAAQAAAAAAAAABAgAAAAIAAAAAAAAAAAAAAAAAAAABAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAuAAALEu4AAlQWLEBAY5ZuAH/hbgARB25AAkAA19eLbgAASwgIEVpRLABYC24AAIsuAABKiEtuAADLCBGsAMlRlJYI1kgiiCKSWSKIEYgaGFksAQlRiBoYWRSWCNlilkvILAAU1hpILAAVFghsEBZG2kgsABUWCGwQGVZWTotuAAELCBGsAQlRlJYI4pZIEYgamFksAQlRiBqYWRSWCOKWS/9LbgABSxLILADJlBYUViwgEQbsEBEWRshISBFsMBQWLDARBshWVktuAAGLCAgRWlEsAFgICBFfWkYRLABYC24AAcsuAAGKi24AAgsSyCwAyZTWLBAG7AAWYqKILADJlNYIyGwgIqKG4ojWSCwAyZTWCMhuADAioobiiNZILADJlNYIyG4AQCKihuKI1kgsAMmU1gjIbgBQIqKG4ojWSC4AAMmU1iwAyVFuAGAUFgjIbgBgCMhG7ADJUUjISMhWRshWUQtuAAJLEtTWEVEGyEhWS0AuAAAKwC6AAEAAgACKwG6AAMAAgACKwG/AAMATAA8AC8AIgAUAAAACCu/AAQARwA8AC8AIgAUAAAACCsAvwABAIAAZgBQADkAIgAAAAgrvwACAHgAZgBQADkAIgAAAAgrALoABQAEAAcruAAAIEV9aRhEAAAAKgArAFAAbgCCAAAAHv4gABQDogAeBOwAOQBEBREAAAAAACwALAAsACwAgACoAOABLgGMAbIB8AI0Ao4DAgM2A4YD1AQ6BLgE+gVaBbgGMgbKAAAAAgBEAAACZAVVAAMABwAusQEALzyyBwQN7TKxBgXcPLIDAg3tMgCxAwAvPLIFBA3tMrIHBg78PLIBAg3tMjMRIRElIREhRAIg/iQBmP5oBVX6q0QEzQAAAAIANQDaAmsDbAAlADcAAAEeARcPAh8DDwQvBT8CLwE/AR4BFx4BHwE2Nw8EHwM/BS8CAlkCDAQSSHA0JAwEDBwgMERMJCgkJBAQHFB4LBgcEEgQFEoSFDxUuCQoGAwMFCwcHBQMHAwICCAkA2wECgJOQEo2PDIyREIoGgwCDhYiQFRUOD5UOEQcDjAODjoOCiQ41hQiKjA4LiYGBggQHigwNCogAAAAAAEAL/7oAxoDaAAVAAABLwILAS8DOwEfARsBHwMnIwJzKyUlhYU2OisqNTVAO6SlMDUrLT06/vwQOjgBQgFAdHRAQCws/nD+cFRWLjACAAAAAQAw/ucEAANjAB8AAAUnCwEvAz8BHwMbAR8BGwE/Ax0BDwELASsBAdgIkIwsKBgYDAxAPBgUlJAMDJygEBQ8OFRUiIQ0NP0cAaABoF5gHBoICBQWFhT+WP5YDA4BdgF0FBYMDgYIqqz+vP68AAAAAAEAP/64A/8DnAAtAAABJwsBLwM/AR8DGwEfAT8BGwE/AR8BGwEfAy8FCwEvAQsBKwEBQRI4OigqFhYGBiYmHh5WVggIBgZubjY2BgZIRiAiICAWGEBAEhA+PA4OiIYcHP7QFgFGAUjOzEJABgYODiIi/lb+VAgIBggBVgFYDg4IBv6i/qJgXjg2CAoQEjQ2ARQBEgQE/pz+nAAAAAEANf7CBCUDlgA/AAAFJwsBLwMfAxsBHwE/ARsBPwE7AR8FOwE/BzsBDwMLAR0BKwEvAQsBPQErAQsBKwEBKRRAQCAgEBAkJCwsQEQECAgEPEAMDCgsDBAoLBAQDAwWEigkFBQkKBwgKCQYGExGMiwQEDA0DAxIRios8kwBeAF4hoQgIgwKLCr+gv6ACAYGBgEwATAkJCQk4OBMTHx8lJQgHhIQODhMTP6U/pIGCDw8AQYBBg4O/rD+sAAAAQApAR8DwQN/ABcAABM/BC0BPwMPCzUMFBQmJgEYARhQUB4eDAweHqSkiIhAQDY2AV9AMjQYGmJiKCgaGjg4Ojw+QCwsICAyMgAAAAEAGf52BA0EWgAtAAABLwQLAS8DPwkdAQ8JHwcdAScjAnNSIiIYGm5sOjgiJCYmgIC4uGhoNDQeIFxemppgXhQWOjhCREhILi4MDP6WHhISMDIBMgEyhogkJAgIGhw+PDAyIiImJkREKCo2NhISDgyenqiojIwyMAgGAgABAB/+dgQHBFoAKwAAAScLAS8DPwkPCRsBOwEbAT8BOwEPAQsBDwEBywx8fjI0ICAWFGZmioqgoE5QCgggHr7AnJ4GBoyKCgigniwsHiBKSpKSMDD+kh4BcAFwgIA0NAYGEhQoKEA+MjBERCooTkwmJgYG/lz+XgF4AXoWGJSU/qD+oAYEAAAAAQAn/m4D6wRiAD0AAAEnCwEvAz8HDwsbAR8BPwEbAT8BHwEbAR8DKwEvBQ8FKwEBGRBIRiAeDApoZsrKdHQ+PAoMFBY0NKKggoQYGFBQBggGBnByODoGCDg4KiogIA4MSEgcHDY0EA5MTjg6JCb+rD4BfgF+cHAgIgwKODY2NjY0Pj40NCAgODgiIhIS/pD+kggIBggBYAFgBAYWFP7Y/tiIiCwsFhRmaOjoCAbKyJSUAAAAAQAl/mgD6QRoAE8AAAEvAgsBLwM/CR8BDwsbAR0BPwEbAT8BHwEbAR8BPwc7AQ8DCwErAS8FDwELAQ8BASsoDAw4OBoaEBIGCKKipqZsbB4eBggMDh4eenq0tC4sBgg4OAwMQEAyMggKMjIICAwOCgoqKiwsKigmJhgaQkQsLhAOKigKCAwKQkIODv50CAoKAYgBiIB+JiQIBiIgOjo4OiQmCAhMTCgoMjQyMhASDAr+sP6yDg4MDAEyATIGBBwe/wD/ABwcCAhERLCwLCw4OlJS/rT+sjw82NgmJgoM/tb+1gICAAAAAAEAUgDzBAIEIwAjAAATPwY9AS0BLwM7AR8DDQEdAQ8HKwFcChQWrK58fP7W/tgWFAoKCAooKKKkAQQBBEpK3t5+fiwqBgYBLzwqKjg4JCQKCmZmIiJERCAeQEBSUk5MDAo4NjAwKCgAAQAp/igEEQUMADMAAAEvAgsBLwM9AR8BPwMvAS0BLwMfAw0BHwEdAQ8FGwEfAx0BIycCaRgkJJqcQkQSEhYYbG7k5AwM/tz+3BISCAguMIaIAQgBCBgY6uqGhhocnJwkIjAwLCz+MgogIAGKAYqSkgoMEBAICA4QMjIMCmZkFhZSUiAiODhSUg4MREQ2NCgqFBT+gP6AREQ2NgoKAgAAAAEAKv4eBCIFFgAzAAAFAy8BPwUvBx8DDQEfAQ8DKwEdARsBHwEbAT8DHQEPAQsBKwEBOpw8OHh43OAYGLi0bGwkIAgIHCBwcAFIAUgEBPT0oKAEBIiMDAykpBAQNDhQTIyQNDQKAdZ2eBQUNjYODkBAIiQcHFhWHBwyMmxqSEg2NDY2FBT+cP5wDA4BggGACgoMDAgKmJr+rP6sAAEAMP4YBAgFHABDAAABJwsBLwMfAT8DPQEtAS8BPQEfAw0BHQEPBRsBHwEbAT8BHQEbAR8DKwEvBw8BCwErAQEwCFBQICAMDBQQfIDMzP7k/uQkJBwcbGwBSAFI3NysrAgMTEgMEHR4PDw4OCgoIBwcHDQwGBg4OAgICASEhCws/jwkAbABsHh4JiYKChASMDAKDGBgIiRMShgaMDJqbEhKLjA2Ng4Q/oz+jCAgAWgBaAQGCgr+4P7gjIo0NBASUlT29ggIBgb+pP6kAAEAL/4oBA8FDABXAAABJwsBLwM/BS0BLwM/AR8DDQEfAQ8HGwEfAT8BGwE9ATsBHwU/BzsBDwMLAQ8BKwEvAQsBKwEPAysBASUKPkAiIhQWWlz4+A4M/tz+2hoaDAoICC4sWFgBSAFIBgRcXrCwhoQICjQyCAgICD5ANjgQECwqDA4KCiooFhYkJCYoGhoiID5ACgwuLg4ONDYKCiQkICIkJv44EAF8AXyoqCoqDAoyMAwMZGQeHkJACgggHiYmbGxISBISJiQkJBYW/rT+tBYWCAgBKgEsBghMTODgDgw0Nri4LCoaGBwcTEr+3P7aTEwkJAEUARSsrIyMAAEAJQDiA/EENgAtAAATPwYvBT8BLQE/Ax8BDwMNAR8FHQEPBSsBLwoODlRUrKwKCPTyBgQeHAEQARCIiBQUBgYICCIi/vL+9AQEYGKcnPL0enw6PAYIARY0GhweIDQ0CgpQUioqEA48OigoEhAGBioqKig2NBAQHhwwMDw8NDQoJigoAAEAJv4CBDYFMgBBAAABLwILAS8DPQE/BS0BPQE/AS0BPwMdAQ8DDQErAR8FHQEPBR8BGwEfAx0BLwECYDweHpiYKiogHjw88PAWFv7+/v4sLAEAAQB4eCQkFhYSEP7s/uwICA4Q6OgcHFxcqKhwcAICkJAkJC4uDAz+EgogHgGAAYBeYCwqCAgKCEJCDgxWVC4sEhA4NiIgGBYYGjQ2Cgw2OA4OREQQDjY2EhQkJiYkGBj+kP6ORkg6OgoKAgIAAAEAH/4SBD8FIgA7AAABJwsBLwMtAT8BLQE9AT8HHQEPAw0BHQENAR0BDwUbATMXGwE/ATsBDwELASsBAdcIiIQ8OBgYATQBNAwM/wD/ABgU4NyoqDQ0HCAcIP78/vwBBAEE8PBsaAgIgIQQEKCgKCgkIExMlJQsLP4iEAGMAYyMihQUPj4MDFRUJiQSEjAwKioeHhQUQkIICjQ0CgpOUD4+NDQiIg4M/nT+dAIBdAF0FhaUlP6c/pwAAAAAAQAx/hIEFQUiAFMAAAEnCwEvAz8FLwU/AS0BPwEfAQ8FHwUdAQ8FGwEfAT8BGwE/AR0BGwEfAw8BLwcPAQsBDwErAQElDkpMHh4KCnx+lpgIBgYG8PAGBB4gAU4BTl5gBgYgICQm8vQCAmBinJy8vKCgDApOTAoICAhsbjw8ODgoKh4gBARMTBgYODoIBgYGfHwOECAg/jYkAagBqHBwGhoKCiAiCAYGBlBQKCoSEEpKJiYGBkhIDAwyMhAQHB4wLj4+JCQuMAoM/oz+iggKFhYBUAFQBgQKCv7g/uCKjDY2BAQWGFJU+PYICAYI/rj+uBwcAAEAKf4OBCkFJgBjAAABJwsBLwM/Az0BLwM/AS0BPwMfAQ8DDQEPAR8CBR8BDwUbAR8BPwEbAT8BOwEfARsBHwE/BzsBHQEPAwsBDwEvAQsBLwEPAQsBDwErAQEpEEhMICAMELS0dHT09AgEHCABEAEQiIgUFAgIEBQcGP8A/wAYGAwI/AEABAS8vKCgEAwwNAgECAg8OAgIMCwICDQwCAgICDAwGBgsMBgcICAcHEhIJCQQFDg0CAgICDg8CAggHP4uHgGWAZaIhhIUGBocGgoMUFAqKhAQOjwoKBASCgo2OBgYMjIICAoKTExAPiYkLjAMDv60/rIGCBYWARgBGAwMHBz/AP8AHB4ICNrYODgYGAwOHB5SUv6g/qAEBiQiARgBGggIGBb+8P7wHBwAAAAAABAAxgABAAAAAAAAAD8AgAABAAAAAAABABAA4gABAAAAAAACAAcBAwABAAAAAAADACoBYQABAAAAAAAEABEBsAABAAAAAAAFAAwB3AABAAAAAAAGABACCwABAAAAAAASABACPgADAAEECQAAAH4AAAADAAEECQABACAAwAADAAEECQACAA4A8wADAAEECQADAFQBCwADAAEECQAEACIBjAADAAEECQAFABgBwgADAAEECQAGACAB6QADAAEECQASACACHABLAGEAawB0AG8AdgBpAGsAIABkAGkAZwBpAHQAcwAgAHMAYwBhAG4AbgBlAGQAIABmAHIAbwBtACAAQgBhAHIAdABsAGUAeQAgADEAOQA5ADcALAAgAGEAZABkAGUAZAAgAGIAeQAgAEsAaQByAGsAIABNAGkAbABsAGUAcgAAS2FrdG92aWsgZGlnaXRzIHNjYW5uZWQgZnJvbSBCYXJ0bGV5IDE5OTcsIGFkZGVkIGJ5IEtpcmsgTWlsbGVyAABLAGEAawB0AG8AdgBpAGsATgB1AG0AZQByAGEAbABzAABLYWt0b3Zpa051bWVyYWxzAABSAGUAZwB1AGwAYQByAABSZWd1bGFyAABGAG8AbgB0AEYAbwByAGcAZQAgADoAIABLAGEAawB0AG8AdgBpAGsAIABOAHUAbQBlAHIAYQBsAHMAIAA6ACAAMQAyAC0AMQAwAC0AMgAwADIAMgAARm9udEZvcmdlIDogS2FrdG92aWsgTnVtZXJhbHMgOiAxMi0xMC0yMDIyAABLAGEAawB0AG8AdgBpAGsAIABOAHUAbQBlAHIAYQBsAHMAAEtha3RvdmlrIE51bWVyYWxzAABWAGUAcgBzAGkAbwBuACAAMAAuADEAIAAAVmVyc2lvbiAwLjEgAABLAGEAawB0AG8AdgBpAGsATgB1AG0AZQByAGEAbABzAABLYWt0b3Zpa051bWVyYWxzAABHAGUAbgB0AGkAdQBtACAASwBhAGsAdABvAHYAaQBrAABHZW50aXVtIEtha3RvdmlrAAAAAAACAAAAAAAA/wYAZAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAAABAAIAAwECAQMBBAEFAQYBBwEIAQkBCgELAQwBDQEOAQ8BEAERARIBEwEUARUKS2FrdG92aWsuMApLYWt0b3Zpay4xCktha3RvdmlrLjIKS2FrdG92aWsuMwpLYWt0b3Zpay40Cktha3RvdmlrLjUKS2FrdG92aWsuNgpLYWt0b3Zpay43Cktha3RvdmlrLjgKS2FrdG92aWsuOQtLYWt0b3Zpay4xMAtLYWt0b3Zpay4xMQtLYWt0b3Zpay4xMgtLYWt0b3Zpay4xMwtLYWt0b3Zpay4xNAtLYWt0b3Zpay4xNQtLYWt0b3Zpay4xNgtLYWt0b3Zpay4xNwtLYWt0b3Zpay4xOAtLYWt0b3Zpay4xOQAAAAMACAACABAAAf//AAIAAAABAAAAANqHb48AAAAAxBlk4QAAAADfbCYE) format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'NotoSerifTotoEmbedded';
+  src: url(data:font/ttf;base64,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) format('truetype');
+  font-display: block;
+}
+html[data-script-mode="kaktovik"] body, html[data-script-mode="kaktovik"] input, html[data-script-mode="kaktovik"] select, html[data-script-mode="kaktovik"] button, html[data-script-mode="kaktovik"] textarea { font-family: 'KaktovikNumeralsEmbedded', 'Segoe UI Symbol', 'Segoe UI Historic', sans-serif !important; }
+html[data-script-mode="toto"] body, html[data-script-mode="toto"] input, html[data-script-mode="toto"] select, html[data-script-mode="toto"] button, html[data-script-mode="toto"] textarea { font-family: 'NotoSerifTotoEmbedded', 'Segoe UI Symbol', 'Segoe UI Historic', sans-serif !important; }
 html[data-script-mode="mayan"] .mayan-script-rendered {
   text-shadow: 0 0 1px rgba(0,0,0,0.4);
 }
@@ -1049,6 +1062,130 @@ nav.tabs {
 .btn-never-show:active {
   background-color: #ef6c00;
 }
+/* ─── 汎用オンスクリーン数字キーボード ─── */
+#customNumericKeyboard {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(30, 30, 30, 0.96);
+  border-top: 3px solid var(--accent-pink, #ff4081);
+  padding: 10px 8px 24px;
+  box-shadow: 0 -6px 25px rgba(0,0,0,0.45);
+  z-index: 2147483647;
+  display: none;
+  box-sizing: border-box;
+  touch-action: manipulation;
+  backdrop-filter: blur(8px);
+}
+
+.custom-kbd-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 0 6px 8px;
+}
+
+.custom-kbd-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.custom-kbd-btn {
+  background: #ffffff;
+  color: #111111 !important;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 12px 0;
+  cursor: pointer;
+  box-shadow: 0 4px #999;
+  transition: all 0.06s ease;
+  user-select: none;
+  text-align: center;
+}
+.custom-kbd-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px #999;
+}
+.custom-kbd-btn.btn-action {
+  background: #eceff1;
+  font-size: 14px;
+}
+.custom-kbd-btn.btn-done {
+  background: var(--accent-pink, #ff4081);
+  color: #fff !important;
+  border-color: #c2185b;
+  box-shadow: 0 4px #880e4f;
+}
+
+/* ─── モールス信号専用：超立体3Dボタン ─── */
+.morse-3d-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 460px;
+  margin: 0 auto;
+}
+.morse-preview-display {
+  background: #111;
+  color: #00ffcc;
+  border: 1px solid #00ffcc;
+  padding: 8px 12px;
+  font-family: monospace;
+  font-size: 18px;
+  border-radius: 8px;
+  text-align: center;
+  min-height: 26px;
+  letter-spacing: 3px;
+}
+.morse-btn-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.morse-3d-btn {
+  flex: 1;
+  background: linear-gradient(145deg, #ff4081, #d81b60);
+  color: #ffffff !important;
+  font-size: 24px;
+  font-weight: 900;
+  padding: 16px 0;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 8px 0 #880e4f, 0 12px 18px rgba(0,0,0,0.5);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  user-select: none;
+}
+.morse-3d-btn:active {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 #880e4f, 0 4px 8px rgba(0,0,0,0.4);
+}
+.morse-3d-btn.btn-space {
+  background: linear-gradient(145deg, #546e7a, #37474f);
+  box-shadow: 0 8px 0 #212121, 0 12px 18px rgba(0,0,0,0.5);
+  font-size: 16px;
+}
+.morse-3d-btn.btn-space:active {
+  box-shadow: 0 2px 0 #212121;
+}
+
+/* 文字化け防止SVGグリフ用 */
+.custom-numeral-render {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  vertical-align: middle;
+}
 </style>
 </head>
 <body>
@@ -1107,6 +1244,22 @@ nav.tabs {
       <option value="standard" data-i18n="script_standard">標準文字</option>
       <option value="mayan-numerals" data-i18n="script_mayan_numerals">マヤ数字</option>
       <option value="mayan" data-i18n="script_mayan">マヤ文字（専用表示）</option>
+      <option value="roman" data-i18n="script_roman">1. ローマ数字</option>
+      <option value="kanji" data-i18n="script_kanji">2. 漢数字</option>
+      <option value="devanagari" data-i18n="script_devanagari">3. デーヴァナーガリー</option>
+      <option value="eastern-arabic" data-i18n="script_eastern_arabic">4. 東アラビア数字</option>
+      <option value="thai" data-i18n="script_thai">5. タイ数字</option>
+      <option value="myanmar" data-i18n="script_myanmar">6. ミャンマー文字</option>
+      <option value="khmer" data-i18n="script_khmer">7. クメール数字</option>
+      <option value="geez" data-i18n="script_geez">8. ゲエズ数字</option>
+      <option value="suzhou" data-i18n="script_suzhou">9. 蘇州号碼</option>
+      <option value="ol-chiki" data-i18n="script_ol_chiki">10. オルチキ数字</option>
+      <option value="kannada" data-i18n="script_kannada">11. カンナダ数字</option>
+      <option value="meetei" data-i18n="script_meetei">12. メイテイ数字</option>
+      <option value="kaktovik" data-i18n="script_kaktovik">13. カクトビック数字</option>
+      <option value="toto" data-i18n="script_toto">14. トト数字</option>
+      <option value="braille" data-i18n="script_braille">15. 点字数字</option>
+      <option value="morse" data-i18n="script_morse">16. モールス信号</option>
     </select>
   </nav>
 </header>
@@ -2203,7 +2356,22 @@ btn_remove_param: { ja: "パラメータを削除", en: "Remove parameter", hira
   btn_done: {ja:'完了', en:'Done', hira:'かんりょう', ko:'완료', 'zh-CN':'完成', 'zh-TW':'完成', ar:'تم', eo:'Farita', mam:'Done', th:'เสร็จสิ้น', sw:'Imekamilika', es:'Hecho', fr:'Terminé', de:'Fertig', pt:'Concluído', hi:'पूर्ण', id:'Selesai', vi:'Xong', ru:'Готово'},
   btn_reload: {ja:'再読み込み', en:'Reload', hira:'さいよみこみ', ko:'새로고침', 'zh-CN':'重新加载', 'zh-TW':'重新載入', ar:'إعادة التحميل', eo:'Reŝargi', mam:'Reload', th:'โหลดใหม่', sw:'Pakia upya', es:'Recargar', fr:'Recharger', de:'Neu laden', pt:'Recarregar', hi:'पुनः लोड करें', id:'Muat ulang', vi:'Tải lại', ru:'Перезагрузить'},
   particle_and: {ja:'と', en:'and', hira:'と', ko:'와', 'zh-CN':'和', 'zh-TW':'和', ar:'و', eo:'kaj', mam:'and', th:'และ', sw:'na', es:'y', fr:'et', de:'und', pt:'e', hi:'और', id:'dan', vi:'và', ru:'и'},
-
+script_roman: { ja: "1. ローマ数字", en: "1. Roman numerals", hira: "1. ろーますうじ", ko: "1. 로마 숫자", 'zh-CN': "1. 罗马数字", 'zh-TW': "1. 羅馬數字", ar: "1. الأرقام الرومانية", eo: "1. Romiaj ciferoj", mam: "1. Roman numerals", th: "1. ตัวเลขโรมัน", sw: "1. Nambari za Kirumi", es: "1. Números romanos", fr: "1. Chiffres romains", de: "1. Römische Zahlen", pt: "1. Algarismos romanos", hi: "1. रोमन अंक", id: "1. Angka Romawi", vi: "1. Chữ số La Mã", ru: "1. Римские цифры" },
+  script_kanji: { ja: "2. 漢数字", en: "2. Chinese / Kanji numerals", hira: "2. かんすうじ", ko: "2. 한자 숫자", 'zh-CN': "2. 汉字数字", 'zh-TW': "2. 漢字數字", ar: "2. الأرقام الصينية", eo: "2. Kanĝiaj ciferoj", mam: "2. Kanji numerals", th: "2. ตัวเลขคันจิ", sw: "2. Nambari za Kichina", es: "2. Números kanji", fr: "2. Chiffres sinogrammes", de: "2. Chinesische Ziffern", pt: "2. Numerais chineses", hi: "2. चीनी अंक", id: "2. Angka Kanji", vi: "2. Chữ số Hán", ru: "2. Китайские цифры" },
+  script_devanagari: { ja: "3. デーヴァナーガリー", en: "3. Devanagari numerals", hira: "3. でーゔぁなーがりー", ko: "3. 데바나가리 숫자", 'zh-CN': "3. 天城文数字", 'zh-TW': "3. 天城文數字", ar: "3. أرقام ديوناكري", eo: "3. Devanagaraj ciferoj", mam: "3. Devanagari numerals", th: "3. ตัวเลขเทวนาครี", sw: "3. Nambari za Kidevanagari", es: "3. Números devanagari", fr: "3. Chiffres devanagari", de: "3. Devanagari-Ziffern", pt: "3. Numerais devanagari", hi: "3. देवनागरी अंक", id: "3. Angka Dewanagari", vi: "3. Chữ số Devanagari", ru: "3. Цифры деванагари" },
+  script_eastern_arabic: { ja: "4. 東アラビア数字", en: "4. Eastern Arabic numerals", hira: "4. ひがしあらびあ すうじ", ko: "4. 동아랍 숫자", 'zh-CN': "4. 东阿拉伯数字", 'zh-TW': "4. 東阿拉伯數字", ar: "4. الأرقام العربية الشرقية", eo: "4. Orientarabaj ciferoj", mam: "4. Eastern Arabic numerals", th: "4. ตัวเลขอารบิกตะวันออก", sw: "4. Nambari za Kiarabu cha Mashariki", es: "4. Números arábigos orientales", fr: "4. Chiffres arabes orientaux", de: "4. Ostarabische Ziffern", pt: "4. Algarismos arábicos orientais", hi: "4. पूर्वी अरबी अंक", id: "4. Angka Arab Timur", vi: "4. Chữ số Ả Rập Đông", ru: "4. Восточноарабские цифры" },
+  script_thai: { ja: "5. タイ数字", en: "5. Thai numerals", hira: "5. たい すうじ", ko: "5. 태국 숫자", 'zh-CN': "5. 泰文数字", 'zh-TW': "5. 泰文數字", ar: "5. الأرقام التايلاندية", eo: "5. Tajaj ciferoj", mam: "5. Thai numerals", th: "5. ตัวเลขไทย", sw: "5. Nambari za Kithai", es: "5. Números tailandeses", fr: "5. Chiffres thaïs", de: "5. Thailändische Ziffern", pt: "5. Numerais tailandeses", hi: "5. थाई अंक", id: "5. Angka Thai", vi: "5. Chữ số Thái", ru: "5. Тайские цифры" },
+  script_myanmar: { ja: "6. ミャンマー文字", en: "6. Myanmar numerals", hira: "6. みゃんまー もじ", ko: "6. 미얀마 숫자", 'zh-CN': "6. 缅甸文数字", 'zh-TW': "6. 緬甸文數字", ar: "6. أرقام ميانمار", eo: "6. Birmaj ciferoj", mam: "6. Myanmar numerals", th: "6. ตัวเลขเมียนมา", sw: "6. Nambari za Kimyanmar", es: "6. Números birmanos", fr: "6. Chiffres birmans", de: "6. Myanmar-Ziffern", pt: "6. Numerais birmaneses", hi: "6. म्यांमार अंक", id: "6. Angka Myanmar", vi: "6. Chữ số Myanmar", ru: "6. Бирманские цифры" },
+  script_khmer: { ja: "7. クメール数字", en: "7. Khmer numerals", hira: "7. くめーる すうじ", ko: "7. 크메르 숫자", 'zh-CN': "7. 高棉文数字", 'zh-TW': "7. 高棉文數字", ar: "7. الأرقام الخميرية", eo: "7. Kmeraj ciferoj", mam: "7. Khmer numerals", th: "7. ตัวเลขเขมร", sw: "7. Nambari za Kikhmer", es: "7. Números jemeres", fr: "7. Chiffres khmers", de: "7. Khmer-Ziffern", pt: "7. Numerais khmer", hi: "7. खमेर अंक", id: "7. Angka Khmer", vi: "7. Chữ số Khmer", ru: "7. Кхмерские цифры" },
+  script_geez: { ja: "8. ゲエズ数字", en: "8. Ge'ez numerals", hira: "8. げえず すうじ", ko: "8. 게에즈 숫자", 'zh-CN': "8. 吉兹文数字", 'zh-TW': "8. 吉茲文數字", ar: "8. الأرقام الجعزية", eo: "8. Geezaj ciferoj", mam: "8. Ge'ez numerals", th: "8. ตัวเลขกีเอซ", sw: "8. Nambari za Kige'ez", es: "8. Números ge'ez", fr: "8. Chiffres guèzes", de: "8. Geez-Ziffern", pt: "8. Numerais ge'ez", hi: "8. गीज़ अंक", id: "8. Angka Ge'ez", vi: "8. Chữ số Ge'ez", ru: "8. Эфиопские цифры (гээз)" },
+  script_suzhou: { ja: "9. 蘇州号碼", en: "9. Suzhou numerals", hira: "9. そしゅう ごうま", ko: "9. 쑤저우 마마", 'zh-CN': "9. 苏州码子", 'zh-TW': "9. 蘇州碼子", ar: "9. أرقام سوتشو", eo: "9. Suĝoŭaj ciferoj", mam: "9. Suzhou numerals", th: "9. ตัวเลขซูโจว", sw: "9. Nambari za Kisuzhou", es: "9. Números de Suzhou", fr: "9. Chiffres de Suzhou", de: "9. Suzhou-Ziffern", pt: "9. Numerais de Suzhou", hi: "9. सूज़ौ अंक", id: "9. Angka Suzhou", vi: "9. Chữ số Tô Châu", ru: "9. Цифры сучжоу" },
+  script_ol_chiki: { ja: "10. オルチキ数字", en: "10. Ol Chiki numerals", hira: "10. おるちき すうじ", ko: "10. 올치키 숫자", 'zh-CN': "10. 奥尔奇基文数字", 'zh-TW': "10. 奧爾奇基文數字", ar: "10. أرقام أول تشيكي", eo: "10. Ol-ĉikiaj ciferoj", mam: "10. Ol Chiki numerals", th: "10. ตัวเลขออลชิกิ", sw: "10. Nambari za Kiol Chiki", es: "10. Números ol chiki", fr: "10. Chiffres ol chiki", de: "10. Ol-Chiki-Ziffern", pt: "10. Numerais ol chiki", hi: "10. ओल चिकी अंक", id: "10. Angka Ol Chiki", vi: "10. Chữ số Ol Chiki", ru: "10. Цифры ол-чики" },
+  script_kannada: { ja: "11. カンナダ数字", en: "11. Kannada numerals", hira: "11. かんなだ すうじ", ko: "11. 칸나다 숫자", 'zh-CN': "11. 卡纳达文数字", 'zh-TW': "11. 卡納達文數字", ar: "11. أرقام الكانادا", eo: "11. Kanaraj ciferoj", mam: "11. Kannada numerals", th: "11. ตัวเลขกันนาดา", sw: "11. Nambari za Kikannada", es: "11. Números canareses", fr: "11. Chiffres kannadas", de: "11. Kannada-Ziffern", pt: "11. Numerais canareses", hi: "11. कन्नड़ अंक", id: "11. Angka Kannada", vi: "11. Chữ số Kannada", ru: "11. Цифры каннада" },
+  script_meetei: { ja: "12. メイテイ数字", en: "12. Meetei Mayek numerals", hira: "12. めいてい すうじ", ko: "12. 메이테이 숫자", 'zh-CN': "12. 梅泰文数字", 'zh-TW': "12. 梅泰文數字", ar: "12. أرقام ميتيه مايك", eo: "12. Mejtejaj ciferoj", mam: "12. Meetei numerals", th: "12. ตัวเลขเมเต", sw: "12. Nambari za Kimeetei", es: "12. Números meetei", fr: "12. Chiffres meetei mayek", de: "12. Meetei-Mayek-Ziffern", pt: "12. Numerais meetei mayek", hi: "12. मेइतेई अंक", id: "12. Angka Meetei", vi: "12. Chữ số Meetei", ru: "12. Цифры мейтей" },
+  script_kaktovik: { ja: "13. カクトビック数字", en: "13. Kaktovik numerals", hira: "13. かくとびっく すうじ", ko: "13. 칵토빅 숫자", 'zh-CN': "13. 卡克托维克数字", 'zh-TW': "13. 卡克托維克數字", ar: "13. أرقام كاكتوفيك", eo: "13. Kaktovikaj ciferoj", mam: "13. Kaktovik numerals", th: "13. ตัวเลขคักโตวิก", sw: "13. Nambari za Kikaktovik", es: "13. Números kaktovik", fr: "13. Chiffres kaktovik", de: "13. Kaktovik-Zahlen", pt: "13. Numerais kaktovik", hi: "13. काक्टोविक अंक", id: "13. Angka Kaktovik", vi: "13. Chữ số Kaktovik", ru: "13. Цифры кактовик" },
+  script_toto: { ja: "14. トト数字", en: "14. Toto numerals", hira: "14. とと すうじ", ko: "14. 토토 숫자", 'zh-CN': "14. 托托文数字", 'zh-TW': "14. 托托文數字", ar: "14. أرقام توتو", eo: "14. Totaj ciferoj", mam: "14. Toto numerals", th: "14. ตัวเลขโตโต้", sw: "14. Nambari za Kitoto", es: "14. Números toto", fr: "14. Chiffres toto", de: "14. Toto-Ziffern", pt: "14. Numerais toto", hi: "14. टोटो अंक", id: "14. Angka Toto", vi: "14. Chữ số Toto", ru: "14. Цифры тото" },
+  script_braille: { ja: "15. 点字数字", en: "15. Braille numbers", hira: "15. てんじ すうじ", ko: "15. 점자 숫자", 'zh-CN': "15. 盲文数字", 'zh-TW': "15. 盲文數字", ar: "15. أرقام برايل", eo: "15. Brajlaj ciferoj", mam: "15. Braille numbers", th: "15. ตัวเลขอักษรเบรลล์", sw: "15. Nambari za Breli", es: "15. Números braille", fr: "15. Chiffres braille", de: "15. Braille-Zahlen", pt: "15. Números em braille", hi: "15. ब्रेल अंक", id: "15. Angka Braille", vi: "15. Chữ số Braille", ru: "15. Цифры Брайля" },
+  script_morse: { ja: "16. モールス信号", en: "16. Morse code", hira: "16. もーるす しんごう", ko: "16. 모스 부호", 'zh-CN': "16. 摩尔斯电码", 'zh-TW': "16. 摩斯密碼", ar: "16. شفرة مورس", eo: "16. Morsa kodo", mam: "16. Morse code", th: "16. รหัสมอร์ส", sw: "16. Msimbo wa Morse", es: "16. Código morse", fr: "16. Code morse", de: "16. Morsecodierung", pt: "16. Código morse", hi: "16. मोर्स कोड", id: "16. Kode Morse", vi: "16. Mã Morse", ru: "16. Азбука Морзе" },
   coin_balance_reset_confirm: {ja:'myfingerの残高を初期値10,000に戻しますか？', en:'Reset myfinger balance to the initial 10,000?', hira:'myfingerの ざんだかを しょきち 10,000に もどしますか？', ko:'myfinger 잔액을 초기값 10,000으로 재설정할까요?', 'zh-CN':'要将myfinger余额重置为初始10,000吗？', 'zh-TW':'要將myfinger餘額重設為初始10,000嗎？', ar:'هل تريد إعادة رصيد myfinger إلى القيمة الابتدائية 10,000؟', eo:'Ĉu restarigi la saldon de myfinger al la komenca 10,000?', mam:'Reset myfinger balance to the initial 10,000?', th:'รีเซ็ตยอด myfinger เป็นค่าเริ่มต้น 10,000 หรือไม่?', sw:'Weka upya salio ya myfinger kuwa 10,000 ya mwanzo?', es:'¿Restablecer el saldo de myfinger a los 10.000 iniciales?', fr:'Réinitialiser le solde myfinger à 10 000 ?', de:'myfinger-Guthaben auf die anfänglichen 10.000 zurücksetzen?', pt:'Redefinir o saldo de myfinger para os 10.000 iniciais?', hi:'क्या myfinger शेष राशि को प्रारंभिक 10,000 पर रीसेट करें?', id:'Atur ulang saldo myfinger ke 10.000 awal?', vi:'Đặt lại số dư myfinger về 10.000 ban đầu?', ru:'Сбросить баланс myfinger до начальных 10 000?'},
 
   cfg_world_clock: {ja:'🌍 現地時差時計',en:'🌍 Local time difference clock',hira:'🌍 げんち じさ どけい',ko:'🌍 현지 시차 시계','zh-CN':'🌍 当地时差时钟','zh-TW':'🌍 當地時差時鐘',ar:'🌍 ساعة فرق التوقيت المحلي',eo:'🌍 Horloĝo por loka tempodiferenco',mam:'🌍 Local time difference clock',th:'🌍 นาฬิกาความต่างเวลาท้องถิ่น',sw:'🌍 Saa ya tofauti ya wakati wa eneo',es:'🌍 Reloj de diferencia horaria local',fr:'🌍 Horloge du décalage horaire local',de:'🌍 Uhr für lokale Zeitverschiebung',pt:'🌍 Relógio de diferença de horário local',hi:'🌍 स्थानीय समय-अंतर घड़ी',id:'🌍 Jam perbedaan waktu lokal',vi:'🌍 Đồng hồ chênh lệch giờ địa phương',ru:'🌍 Часы местной разницы времени'},
@@ -2268,6 +2436,31 @@ const AUTHOR_NAMES = {
 
 
 const KOUSHIN_DATA = [
+{
+    pinned: false,
+    date: '2026/09/30 14:02',
+    desc: {
+      ja: '16種類の数字体系（ローマ、漢数字、デーヴァナーガリー、東アラビア、タイ、ミャンマー、クメール、ゲエズ、蘇州号碼、オルチキ、カンナダ、メイテイ、カクトビック、トト、点字、モールス信号）の表示・自動入力変換に対応し、スマホでも快適に入力できるオンスクリーンキーボードおよび立体3Dモールス入力ボタンを実装しました。',
+      en: 'Added support for 16 numeral systems (Roman, Kanji, Devanagari, Eastern Arabic, Thai, Myanmar, Khmer, Ge’ez, Suzhou, Ol Chiki, Kannada, Meetei, Kaktovik, Toto, Braille, and Morse code) with automatic input conversion, an on-screen keyboard for mobile devices, and 3D Morse code input buttons.',
+      hira: '16しゅるいの すうじ（ろーま、かんすうじ、でーゔぁなーがりー、ひがしあらびあ、たい、みゃんまー、くめーる、げえず、そしゅうごうま、おるちき、かんなだ、めいてい、かくとびっく、とと、てんじ、もーるすしんごう）の じどうへんかんと、すまほで つかえる きーぼーど・りったい3Dもーるすぼたんを じっそうしました。',
+      ko: '16가지 숫자 체계(로마, 한자 숫자, 데바나가리, 동아랍, 태국, 미얀마, 크메르, 게에즈, 쑤저우 마마, 올치키, 칸나다, 메이테이, 칵토빅, 토토, 점자, 모스 부호) 변환 및 모바일용 온스크린 키보드, 입체 3D 모스 입력 버튼을 구현했습니다.',
+      'zh-CN': '支持16种数字体系（罗马数字、汉字数字、天城文、东阿拉伯、泰文、缅甸文、高棉文、吉兹文、苏州码子、奥尔奇基文、卡纳达文、梅泰文、卡克托维克、托托文、盲文、摩尔斯电码）的自动转换，并实现了移动端屏幕键盘与立体3D摩尔斯输入按钮。',
+      'zh-TW': '支援16種數字體系（羅馬數字、漢字數字、天城文、東阿拉伯、泰文、緬甸文、高棉文、吉茲文、蘇州碼子、奧爾奇基文、卡納達文、梅泰文、卡克托維克、托托文、盲文、摩斯密碼）的自動轉換，並實現了行動端螢幕鍵盤與立體3D摩斯輸入按鈕。',
+      ar: 'تمت إضافة دعم لـ 16 نظاماً رقمياً (الرومانية، الأرقام الصينية، الديفاناغارية، العربية الشرقية، التايلاندية، الميانمارية، الخميرية، الجعزية، سوتشو، أول تشيكي، الكانادا، ميتيه، كاكتوفيك، توتو، برايل، شفرة مورس) مع لوحة مفاتيح مدمجة على الشاشة وأزرار مورس ثلاثية الأبعاد المجسمة.',
+      eo: 'Aldonis subtenon por 16 nombrosistemoj (romia, kanĝia, devanagara, orientaraba, taja, birmuma, kmera, geeza, suĝoŭa, ol-ĉikia, kanara, mejteja, kaktovika, tota, brajla, kaj morsa kodo) kun aŭtomata eniga konverto, ekrana klavaro kaj reliefaj 3D-morsaj butonoj.',
+      mam: "Ma tz'aqsit 16 txolil ajlab'al (romano, kanji, devanagari, árabe oriental, tailandés, myanmar, khmer, geez, suzhou, ol chiki, kannada, meetei, kaktovik, toto, braille ex morse) tuk'il teclado tuj pantalla ex botones 3D te morse.",
+      th: 'รองรับระบบตัวเลข 16 รูปแบบ (โรมัน, คันจิ, เทวนาครี, อาหรับตะวันออก, ไทย, เมียนมา, เขมร, กีเอซ, ซูโจว, ออลชิกิ, กันนาดา, เมเต, คักโตวิก, โตโต้, อักษรเบรลล์, รหัสมอร์ส) พร้อมระบบแปลงค่าอัตโนมัติ คีย์บอร์ดบนหน้าจอ และปุ่มรหัสมอร์สแบบ 3 มิติ',
+      sw: 'Imeongeza usaidizi wa mifumo 16 ya nambari (Kirumi, Kanji, Kidevanagari, Kiarabu cha Mashariki, Kithai, Kimyanmar, Kikhmer, Kige\'ez, Kisuzhou, Kiol Chiki, Kikannada, Kimeetei, Kikaktovik, Kitoto, Breli, na Msimbo wa Morse) yenye kibodi ya skrini na vitufe vya pande 3 vya Morse.',
+      es: 'Se añadió compatibilidad con 16 sistemas numéricos (romano, kanji, devanagari, árabe oriental, tailandés, birmano, jemer, ge\'ez, suzhou, ol chiki, canarés, meetei, kaktovik, toto, braille y código morse) con teclado en pantalla y botones 3D para código morse.',
+      fr: 'Ajout de la prise en charge de 16 systèmes de numération (romain, kanji, devanagari, arabe oriental, thaï, birman, khmer, guèze, suzhou, ol chiki, kannada, meetei, kaktovik, toto, braille et morse) avec clavier virtuel à l’écran et boutons morse 3D en relief.',
+      de: 'Unterstützung für 16 Zahlensysteme (Römisch, Kanji, Devanagari, Ostarabisch, Thai, Myanmar, Khmer, Geez, Suzhou, Ol Chiki, Kannada, Meetei, Kaktovik, Toto, Braille und Morsecodierung) mit Bildschirmtastatur und 3D-Morse-Eingabetasten hinzugefügt.',
+      pt: 'Adicionado suporte a 16 sistemas numéricos (romano, kanji, devanagari, árabe oriental, tailandês, birmanês, khmer, ge\'ez, suzhou, ol chiki, canarês, meetei, kaktovik, toto, braille e código morse) com teclado virtual e botões 3D para código morse.',
+      hi: '16 संख्या प्रणालियों (रोमन, कांजी, देवनागरी, पूर्वी अरबी, थाई, म्यांमार, खमेर, गीज़, सूज़ौ, ओल चिकी, कन्नड़, मेइतेई, काक्टोविक, टोटो, ब्रेल और मोर्स कोड) के लिए समर्थन, ऑन-स्क्रीन कीबोर्ड और 3D मोर्स बटन जोड़े गए।',
+      id: 'Menambahkan dukungan untuk 16 sistem angka (Romawi, Kanji, Dewanagari, Arab Timur, Thai, Myanmar, Khmer, Ge\'ez, Suzhou, Ol Chiki, Kannada, Meetei, Kaktovik, Toto, Braille, dan kode Morse) dengan keyboard di layar dan tombol Morse 3D timbul.',
+      vi: 'Đã thêm hỗ trợ 16 hệ thống chữ số (La Mã, Chữ Hán, Devanagari, Ả Rập Đông, Thái, Myanmar, Khmer, Ge\'ez, Tô Châu, Ol Chiki, Kannada, Meetei, Kaktovik, Toto, Braille và mã Morse) với bàn phím ảo và nút bấm mã Morse 3D nổi.',
+      ru: 'Добавлена поддержка 16 систем счисления (римские, иероглифические, деванагари, восточноарабские, тайские, бирманские, кхмерские, гээз, сучжоу, ол-чики, каннада, мейтей, кактовик, тото, шрифтом Брайля и азбукой Морзе) с экранной клавиатурой и объемными 3D-кнопками Морзе.'
+    }
+  },
   {
     pinned: false,
     date: '2026/09/30 06:50',
@@ -3940,18 +4133,26 @@ let mayanMutationObserver = null;
 let mayanMutationTimer = null;
 let mayanApplying = false;
 
-function restoreStandardScriptText() {
+function restoreNumeralRenderTokensToStandard() {
+  document.querySelectorAll('.numeral-script-token[data-standard-number], .mayan-numeral-render[data-mayan-value]').forEach((el) => {
+    const value = el.getAttribute('data-standard-number') ?? el.getAttribute('data-mayan-value') ?? '';
+    el.replaceWith(document.createTextNode(value));
+  });
+  // 旧版で残った属性は値を復元せず、現在のDOMをそのまま正本として扱う。
   document.querySelectorAll('[data-standard-script-text]').forEach((el) => {
-    el.textContent = el.getAttribute('data-standard-script-text') || '';
     el.removeAttribute('data-standard-script-text');
   });
 }
 
+function restoreStandardScriptText() {
+  restoreNumeralRenderTokensToStandard();
+}
 function createMayanNumeralElement(value) {
   const n = Number(value);
   const span = document.createElement('span');
   span.className = 'mayan-numeral-render';
   span.setAttribute('data-mayan-value', String(n));
+  span.setAttribute('data-standard-number', String(n));
   span.setAttribute('aria-label', `Mayan numeral ${n}`);
   span.style.display = 'inline-flex';
   span.style.flexDirection = 'column';
@@ -4045,12 +4246,12 @@ function applyMayanNumeralDisplay() {
   mayanApplying = true;
   if (mayanMutationObserver) mayanMutationObserver.disconnect();
   try {
-    restoreStandardScriptText();
+    restoreNumeralRenderTokensToStandard();
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         const parent = node.parentElement;
         if (!parent || /^(SCRIPT|STYLE|TEXTAREA|SELECT|OPTION)$/i.test(parent.tagName)) return NodeFilter.FILTER_REJECT;
-        if (parent.closest('#scriptModeSelector, #langSelector, .mayan-numeral-render')) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('#scriptModeSelector, #langSelector, .custom-kbd-btn, .mayan-numeral-render, .numeral-script-token')) return NodeFilter.FILTER_REJECT;
         if (!/[0-9]/.test(node.nodeValue || '')) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       }
@@ -4059,11 +4260,6 @@ function applyMayanNumeralDisplay() {
     let node;
     while ((node = walker.nextNode())) nodes.push(node);
     nodes.forEach((textNode) => {
-      const parent = textNode.parentElement;
-      if (!parent) return;
-      if (!parent.hasAttribute('data-standard-script-text')) {
-        parent.setAttribute('data-standard-script-text', parent.textContent || '');
-      }
       const source = textNode.nodeValue || '';
       if (!/\d+/.test(source)) return;
       const fragment = document.createDocumentFragment();
@@ -4075,7 +4271,7 @@ function applyMayanNumeralDisplay() {
         return digits;
       });
       if (last < source.length) fragment.appendChild(document.createTextNode(source.slice(last)));
-      textNode.parentNode.replaceChild(fragment, textNode);
+      if (textNode.parentNode) textNode.parentNode.replaceChild(fragment, textNode);
     });
   } finally {
     mayanApplying = false;
@@ -4105,34 +4301,551 @@ function disableMayanMutationObserver() {
   }
 }
 
+function applyGeneralNumeralDisplay() {
+  if (currentScriptMode === 'standard' || currentScriptMode === 'mayan-numerals' || currentScriptMode === 'mayan') return;
+  if (mayanApplying || !document.body) return;
+
+  // 変換済みトークンは必ず標準値へ戻してから再変換する。
+  // これにより、前の数字体系の表示値が次の変換の原文になることを防ぐ。
+  restoreNumeralRenderTokensToStandard();
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parent = node.parentElement;
+      if (!parent || /^(SCRIPT|STYLE|TEXTAREA|SELECT|OPTION|INPUT)$/i.test(parent.tagName)) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('#scriptModeSelector, #langSelector, .custom-kbd-btn, .mayan-numeral-render, .numeral-script-token')) return NodeFilter.FILTER_REJECT;
+      if (!/[0-9]/.test(node.nodeValue || '')) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes=[];
+  let node;
+  while((node=walker.nextNode())) nodes.push(node);
+  nodes.forEach((textNode)=>{
+    const source=textNode.nodeValue||'';
+    if(!/[0-9]/.test(source)) return;
+    const fragment=document.createDocumentFragment();
+    let last=0;
+    source.replace(/\d+(?:\.\d+)?/g,(digits,offset)=>{
+      if(offset>last) fragment.appendChild(document.createTextNode(source.slice(last,offset)));
+      const standard=readNumberAsStandard(digits,'standard');
+      const rendered=convertValueToScript(standard,currentScriptMode);
+      const token=document.createElement('span');
+      token.className='numeral-script-token';
+      token.setAttribute('data-standard-number',standard);
+      token.setAttribute('aria-label',standard);
+      token.textContent=rendered;
+      fragment.appendChild(token);
+      last=offset+digits.length;
+      return digits;
+    });
+    if(last<source.length) fragment.appendChild(document.createTextNode(source.slice(last)));
+    if (textNode.parentNode) textNode.parentNode.replaceChild(fragment,textNode);
+  });
+}
+
 function refreshScriptDisplayAfterRender() {
-  if (currentScriptMode !== 'mayan-numerals' && currentScriptMode !== 'mayan') return;
+  if (currentScriptMode === 'standard') return;
   requestAnimationFrame(() => {
     if (currentScriptMode === 'mayan-numerals' || currentScriptMode === 'mayan') {
       applyMayanNumeralDisplay();
+    } else {
+      applyGeneralNumeralDisplay();
     }
   });
 }
 
+/* ==========================================================================
+   全16種 数字体系変換エンジン & オフライン文字化け防止
+   ========================================================================== */
+const NUMERAL_SYSTEMS = {
+  roman: ['N','I','II','III','IV','V','VI','VII','VIII','IX'],
+  kanji: ['〇','一','二','三','四','五','六','七','八','九'],
+  devanagari: ['०','१','२','३','४','५','६','७','८','९'],
+  'eastern-arabic': ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'],
+  thai: ['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙'],
+  myanmar: ['၀','၁','၂','၃','၄','၅','၆','၇','၈','၉'],
+  khmer: ['០','១','២','៣','៤','៥','៦','៧','៨','៩'],
+  geez: ['0','፩','፪','፫','፬','፭','፮','፯','፰','፱'],
+  suzhou: ['〇','〡','〢','〣','〤','〥','〦','〧','〨','〩'],
+  'ol-chiki': ['᱐','᱑','᱒','᱓','᱔','᱕','᱖','᱗','᱘','᱙'],
+  kannada: ['೦','೧','೨','೩','೪','೫','೬','೭','೮','೯'],
+  meetei: ['꯰','꯱','꯲','꯳','꯴','꯵','꯶','꯷','꯸','꯹'],
+  kaktovik: Array.from({length:20}, (_,i) => String.fromCodePoint(0x1D2C0 + i)), // カクトビック数字 0〜19
+  toto: ['𞊐','𞊑','𞊒','𞊓','𞊔','𞊕','𞊖','𞊗','𞊘','𞊙'],    // トト数字
+  braille: ['⠼⠚','⠼⠁','⠼⠃','⠼⠉','⠼⠙','⠼⠑','⠼⠋','⠼⠛','⠼⠓','⠼⠊'],
+  morse: ['-----','.----','..---','...--','....-','.....','-....','--...','---..','----.']
+};
+
+// ローマ数字変換
+function toRomanNumber(num) {
+  const n = parseInt(num, 10);
+  if (isNaN(n) || n <= 0) return num === '0' ? 'N' : String(num);
+  const lookup = [
+    [1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],
+    [100,'C'],[90,'XC'],[50,'L'],[40,'XL'],
+    [10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']
+  ];
+  let res = '', val = n;
+  for (const [v, s] of lookup) {
+    while (val >= v) { res += s; val -= v; }
+  }
+  return res || String(num);
+}
+
+// ゲエズ数字変換
+function toGeezNumber(num) {
+  const n = parseInt(num, 10);
+  if (isNaN(n) || n <= 0) return String(num);
+  const ones = ['','፩','፪','፫','፬','፭','፮','፯','፰','፱'];
+  const tens = ['','፲','፳','፴','፵','፶','፷','፸','፹','፺'];
+  if (n < 10) return ones[n];
+  if (n < 100) return tens[Math.floor(n / 10)] + ones[n % 10];
+  return String(num).replace(/\d/g, d => NUMERAL_SYSTEMS.geez[d] || d);
+}
+
+// Kaktovik数字は20進法。10〜19は1桁のKaktovik数字、20以上は20進の桁列へ変換する。
+function decimalIntegerToKaktovik(value) {
+  const raw = String(value).trim();
+  if (!/^[+-]?\d+$/.test(raw)) return String(value);
+  const negative = raw.startsWith('-');
+  const unsigned = raw.replace(/^[+-]/, '');
+  let n;
+  try { n = BigInt(unsigned || '0'); } catch { return String(value); }
+  if (n === 0n) return NUMERAL_SYSTEMS.kaktovik[0];
+  let out = '';
+  while (n > 0n) {
+    const digit = Number(n % 20n);
+    out = NUMERAL_SYSTEMS.kaktovik[digit] + out;
+    n /= 20n;
+  }
+  return (negative ? '-' : '') + out;
+}
+
+// Kaktovik数字を20進の桁位置から十進整数へ戻す。
+function kaktovikToDecimalInteger(text) {
+  if (text === null || text === undefined || text === '') return '';
+  const s = String(text).trim();
+  const chars = [...s.replace(/^-/, '')];
+  if (chars.length === 0 || chars.some(ch => { const cp=ch.codePointAt(0); return cp < 0x1D2C0 || cp > 0x1D2D3; })) return '';
+  const negative = s.startsWith('-');
+  const digits = negative ? s.slice(1) : s;
+  let n = 0n;
+  for (const ch of digits) {
+    const digit = ch.codePointAt(0) - 0x1D2C0;
+    if (digit < 0 || digit > 19) return '';
+    n = n * 20n + BigInt(digit);
+  }
+  return (negative ? '-' : '') + n.toString();
+}
+
+// 任意の数値を現在の体系に変換
+function convertValueToScript(val, mode) {
+  if (val === null || val === undefined || val === '') return '';
+  const str = String(val);
+  if (!/^\d+$/.test(str)) {
+    return str.replace(/\d/g, d => convertSingleDigitToScript(d, mode));
+  }
+  if (mode === 'roman') return /^\d+$/.test(str) ? toRomanNumber(str) : str;
+  if (mode === 'geez') return /^\d+$/.test(str) ? toGeezNumber(str) : str;
+  if (mode === 'mayan-numerals' || mode === 'mayan') return /^\d+$/.test(str) ? decimalToMayanNumerals(Number(str)) : str;
+  if (mode === 'kaktovik') return decimalIntegerToKaktovik(str);
+  const table = NUMERAL_SYSTEMS[mode];
+  if (!table) return str;
+  return str.split('').map(d => table[parseInt(d, 10)] || d).join(mode === 'morse' ? ' ' : '');
+}
+
+function convertSingleDigitToScript(d, mode) {
+  const idx = parseInt(d, 10);
+  if (isNaN(idx)) return d;
+  if (NUMERAL_SYSTEMS[mode] && NUMERAL_SYSTEMS[mode][idx]) {
+    return NUMERAL_SYSTEMS[mode][idx];
+  }
+  return d;
+}
+
+// 逆変換（各文字体系から標準アラビア数字 0-9 へ復元）
+function normalizeUnicodeDecimalDigits(text) {
+  if (text === null || text === undefined) return '';
+  const s = String(text);
+  const ranges = [
+    [0x30,0x39],[0x660,0x669],[0x6f0,0x6f9],[0x966,0x96f],[0x9e6,0x9ef],
+    [0xa66,0xa6f],[0xae6,0xaef],[0xb66,0xb6f],[0xbe6,0xbef],[0xc66,0xc6f],
+    [0xce6,0xcef],[0xd66,0xd6f],[0xde6,0xdef],[0xe50,0xe59],[0xed0,0xed9],
+    [0xf20,0xf29],[0x1040,0x1049],[0x1090,0x1099],[0x17e0,0x17e9],[0x1810,0x1819],
+    [0x1946,0x194f],[0x19d0,0x19d9],[0x1a80,0x1a89],[0x1a90,0x1a99],[0x1b50,0x1b59],
+    [0x1bb0,0x1bb9],[0x1c40,0x1c49],[0x1c50,0x1c59],[0xa620,0xa629],[0xa8d0,0xa8d9],
+    [0xa900,0xa909],[0xa9d0,0xa9d9],[0xa9f0,0xa9f9],[0xaa50,0xaa59],[0xabf0,0xabf9],
+    [0xff10,0xff19]
+  ];
+  let out='';
+  for (const ch of s) {
+    const cp=ch.codePointAt(0);
+    let mapped=null;
+    for (const [a,b] of ranges) {
+      if (cp>=a && cp<=b) { mapped=String(cp-a); break; }
+    }
+    out += mapped === null ? ch : mapped;
+  }
+  return out;
+}
+
+function parseRomanNumber(text) {
+  const s=String(text||'').trim().toUpperCase();
+  if (!s) return '';
+  if (s==='N') return '0';
+  if (!/^[IVXLCDM]+$/.test(s)) return '';
+  const values={I:1,V:5,X:10,L:50,C:100,D:500,M:1000};
+  let total=0, prev=0;
+  for (let i=s.length-1;i>=0;i--) {
+    const v=values[s[i]];
+    if (v<prev) total-=v; else { total+=v; prev=v; }
+  }
+  return String(total);
+}
+
+function parseKanjiNumber(text) {
+  const s=String(text||'').trim();
+  if (!s) return '';
+  const digitMap={'〇':0,'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'○':0};
+  if ([...s].every(ch=>digitMap[ch]!==undefined)) return [...s].map(ch=>digitMap[ch]).join('');
+  const units={'十':10,'百':100,'千':1000,'万':10000,'億':100000000,'兆':1000000000000};
+  if (![...s].every(ch=>digitMap[ch]!==undefined || units[ch]!==undefined)) return '';
+  let total=0, section=0, number=0;
+  for (const ch of s) {
+    if (digitMap[ch]!==undefined) number=digitMap[ch];
+    else {
+      const u=units[ch];
+      if (u>=10000) { section += number || 1; total += section*u; section=0; number=0; }
+      else { section += (number || 1)*u; number=0; }
+    }
+  }
+  return String(total+section+number);
+}
+
+// 画面や入力欄へ入ってきた「どの数字体系」の数字も、内部値はASCII数字だけで保持する。
+function readNumberAsStandard(text, mode) {
+  if (text === null || text === undefined || text === '') return '';
+  let s=normalizeUnicodeDecimalDigits(text);
+  if (mode==='roman') {
+    const roman=parseRomanNumber(s);
+    if (roman!=='') return roman;
+  }
+  if (mode==='kanji' || mode==='suzhou') {
+    const kanji=parseKanjiNumber(s);
+    if (kanji!=='') return kanji;
+  }
+  if (mode==='morse') return convertScriptToStandardDigits(s,mode);
+  if (mode==='kaktovik') {
+    const kaktovikValue = kaktovikToDecimalInteger(s);
+    if (kaktovikValue !== '') return kaktovikValue;
+  }
+  const table=NUMERAL_SYSTEMS[mode];
+  if (table) {
+    table.forEach((glyph,digit)=>{ if(glyph) s=s.split(glyph).join(String(digit)); });
+  }
+  // MayaのUnicode数字記号（0〜19）は内部の十進値へ戻せるものだけ扱う。
+  for(let i=0;i<MAYAN_NUMERAL_GLYPHS.length;i++) s=s.split(MAYAN_NUMERAL_GLYPHS[i]).join(String(i));
+  // 小数点・符号などは削らず、入力された数値そのものを内部値として保持する。
+  const normalized=normalizeUnicodeDecimalDigits(s);
+  if (/^[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(normalized)) return normalized;
+  return normalized.replace(/[^0-9]/g,'');
+}
+
+// 逆変換（各文字体系から標準アラビア数字 0-9 へ復元）
+function convertScriptToStandardDigits(text, mode) {
+  if (!text) return '';
+  const s=String(text);
+  if (mode==='roman') return parseRomanNumber(s);
+  if (mode==='kanji' || mode==='suzhou') return parseKanjiNumber(s);
+  if (mode==='morse') {
+    const rTable = { '-----':'0','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-....':'6','--...':'7','---..':'8','----.':'9' };
+    return s.split(/\s+/).map(p => rTable[p] !== undefined ? rTable[p] : p).join('');
+  }
+  if (mode==='kaktovik') {
+    const kaktovikValue = kaktovikToDecimalInteger(s);
+    if (kaktovikValue !== '') return kaktovikValue;
+  }
+  const table = NUMERAL_SYSTEMS[mode];
+  let out=normalizeUnicodeDecimalDigits(s);
+  if (table) table.forEach((glyph,digit)=>{if(glyph) out=out.split(glyph).join(String(digit));});
+  return out.replace(/[^0-9]/g, '');
+}
+
+/* ==========================================================================
+   入力欄（input）の自動変換 & 専用キーボード自動生成
+   ========================================================================== */
+let activeCustomInput = null;
+let currentMorseBuffer = '';
+
+function setupDynamicNumericInputs() {
+  const inputs = document.querySelectorAll('input[type="number"], input.time-select, input[data-numeral-input], input[data-numeral-managed]');
+  inputs.forEach(input => {
+    input.setAttribute('data-numeral-managed', '1');
+    const visibleBeforeApply = input.value || '';
+    const storedStd = input.getAttribute('data-std-val');
+    if (storedStd === null) {
+      input.setAttribute('data-std-val', readNumberAsStandard(visibleBeforeApply, currentScriptMode));
+    } else {
+      // 画面側が新しい値へ変更されていて、保存値だけが古い場合は新しい値を優先する。
+      const expected = convertValueToScript(storedStd, currentScriptMode);
+      if (visibleBeforeApply !== '' && visibleBeforeApply !== expected) {
+        const visibleStd = readNumberAsStandard(visibleBeforeApply, currentScriptMode);
+        if (visibleStd !== '') input.setAttribute('data-std-val', visibleStd);
+      }
+    }
+    // 現在の選択体系の数字に打ち替え
+    if (currentScriptMode !== 'standard') {
+      const std = input.getAttribute('data-std-val') || input.value;
+      if (input.type === 'number') input.type = 'text';
+      input.value = convertValueToScript(std, currentScriptMode);
+      input.setAttribute('inputmode', 'none'); // スマホキーボードを抑制
+    } else {
+      input.value = input.getAttribute('data-std-val') || input.value;
+      input.removeAttribute('inputmode');
+    }
+
+    input.onfocus = () => openCustomNumericKeyboard(input);
+    input.oninput = () => {
+      const typed = input.value;
+      const std = readNumberAsStandard(typed, currentScriptMode);
+      input.setAttribute('data-std-val', std);
+      if (currentScriptMode !== 'standard' && std !== '') {
+        const rendered = convertValueToScript(std, currentScriptMode);
+        if (input.value !== rendered) input.value = rendered;
+      }
+    };
+  });
+}
+
+// 専用キーボードの生成と表示
+function openCustomNumericKeyboard(input) {
+  activeCustomInput = input;
+  let kbd = document.getElementById('customNumericKeyboard');
+  if (!kbd) {
+    kbd = document.createElement('div');
+    kbd.id = 'customNumericKeyboard';
+    document.body.appendChild(kbd);
+  }
+
+  kbd.innerHTML = '';
+  const mode = currentScriptMode;
+
+  const header = document.createElement('div');
+  header.className = 'custom-kbd-header';
+  header.innerHTML = `<span>⌨️ ${mode.toUpperCase()} KEYBOARD</span><button class="btn btn-outline" style="padding:2px 10px;" onclick="closeCustomNumericKeyboard()">✕ 閉じる</button>`;
+  kbd.appendChild(header);
+
+  if (mode === 'morse') {
+    // ── モールス信号：立体3Dキーボード ──
+    currentMorseBuffer = '';
+    const morsePanel = document.createElement('div');
+    morsePanel.className = 'morse-3d-panel';
+
+    const disp = document.createElement('div');
+    disp.id = 'morseLiveDisplay';
+    disp.className = 'morse-preview-display';
+    disp.textContent = '・ / － を入力';
+    morsePanel.appendChild(disp);
+
+    const row1 = document.createElement('div');
+    row1.className = 'morse-btn-row';
+
+    const dotBtn = document.createElement('button');
+    dotBtn.type = 'button';
+    dotBtn.className = 'morse-3d-btn';
+    dotBtn.textContent = '・ (トン)';
+    dotBtn.onclick = () => appendMorseChar('.');
+
+    const dashBtn = document.createElement('button');
+    dashBtn.type = 'button';
+    dashBtn.className = 'morse-3d-btn';
+    dashBtn.textContent = '－ (ツー)';
+    dashBtn.onclick = () => appendMorseChar('-');
+
+    row1.appendChild(dotBtn);
+    row1.appendChild(dashBtn);
+    morsePanel.appendChild(row1);
+
+    const row2 = document.createElement('div');
+    row2.className = 'morse-btn-row';
+
+    const commitBtn = document.createElement('button');
+    commitBtn.type = 'button';
+    commitBtn.className = 'morse-3d-btn btn-space';
+    commitBtn.textContent = '✔ 1文字確定';
+    commitBtn.onclick = commitMorseDigit;
+
+    const backBtn = document.createElement('button');
+    backBtn.type = 'button';
+    backBtn.className = 'morse-3d-btn btn-space';
+    backBtn.textContent = '⌫ 1文字削除';
+    backBtn.onclick = deleteCustomKbdChar;
+
+    const doneBtn = document.createElement('button');
+    doneBtn.type = 'button';
+    doneBtn.className = 'morse-3d-btn btn-space';
+    doneBtn.style.background = 'linear-gradient(145deg, #00e676, #00c853)';
+    doneBtn.textContent = '決定';
+    doneBtn.onclick = closeCustomNumericKeyboard;
+
+    row2.appendChild(commitBtn);
+    row2.appendChild(backBtn);
+    row2.appendChild(doneBtn);
+    morsePanel.appendChild(row2);
+
+    kbd.appendChild(morsePanel);
+  } else {
+    // ── 一般数字体系用グリッドキーボード ──
+    const grid = document.createElement('div');
+    grid.className = 'custom-kbd-grid';
+
+    const digits = mode === 'kaktovik' ? [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19] : [1,2,3,4,5,6,7,8,9];
+    digits.forEach(d => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'custom-kbd-btn';
+      btn.textContent = convertSingleDigitToScript(d, mode);
+      btn.onclick = () => appendCustomKbdChar(d, btn.textContent);
+      grid.appendChild(btn);
+    });
+
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'custom-kbd-btn btn-action';
+    clearBtn.textContent = 'C (消去)';
+    clearBtn.onclick = clearCustomKbdInput;
+    grid.appendChild(clearBtn);
+
+    const zeroBtn = document.createElement('button');
+    zeroBtn.type = 'button';
+    zeroBtn.className = 'custom-kbd-btn';
+    zeroBtn.textContent = convertSingleDigitToScript(0, mode);
+    zeroBtn.onclick = () => appendCustomKbdChar(0, zeroBtn.textContent);
+    grid.appendChild(zeroBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'custom-kbd-btn btn-action';
+    delBtn.textContent = '⌫';
+    delBtn.onclick = deleteCustomKbdChar;
+    grid.appendChild(delBtn);
+
+    kbd.appendChild(grid);
+  }
+
+  kbd.style.display = 'block';
+}
+
+function appendCustomKbdChar(stdDigit, scriptChar) {
+  if (!activeCustomInput) return;
+  let std = activeCustomInput.getAttribute('data-std-val') || '';
+  if (currentScriptMode === 'kaktovik') {
+    const current = std === '' ? 0n : BigInt(std);
+    std = (current * 20n + BigInt(stdDigit)).toString();
+  } else {
+    std += String(stdDigit);
+  }
+  activeCustomInput.setAttribute('data-std-val', std);
+  activeCustomInput.value = convertValueToScript(std, currentScriptMode);
+  activeCustomInput.dispatchEvent(new Event('input', { bubbles: true }));
+  activeCustomInput.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function appendMorseChar(ch) {
+  currentMorseBuffer += ch;
+  const disp = document.getElementById('morseLiveDisplay');
+  if (disp) disp.textContent = currentMorseBuffer;
+}
+
+function commitMorseDigit() {
+  if (!currentMorseBuffer || !activeCustomInput) return;
+  const rTable = { '-----':'0','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-....':'6','--...':'7','---..':'8','----.':'9' };
+  const d = rTable[currentMorseBuffer] || '';
+  if (d) {
+    let std = activeCustomInput.getAttribute('data-std-val') || '';
+    std += d;
+    activeCustomInput.setAttribute('data-std-val', std);
+    activeCustomInput.value = convertValueToScript(std, 'morse');
+    activeCustomInput.dispatchEvent(new Event('input', { bubbles: true }));
+    activeCustomInput.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  currentMorseBuffer = '';
+  const disp = document.getElementById('morseLiveDisplay');
+  if (disp) disp.textContent = '確定完了！次を入力';
+}
+
+function deleteCustomKbdChar() {
+  if (!activeCustomInput) return;
+  let std = activeCustomInput.getAttribute('data-std-val') || '';
+  if (currentScriptMode === 'kaktovik' && std !== '') {
+    let k = decimalIntegerToKaktovik(std);
+    k = k.replace(/^-/, '');
+    k = [...k].slice(0, -1).join('');
+    std = k === '' ? '' : kaktovikToDecimalInteger(k);
+  } else {
+    std = std.slice(0, -1);
+  }
+  activeCustomInput.setAttribute('data-std-val', std);
+  activeCustomInput.value = convertValueToScript(std, currentScriptMode);
+  activeCustomInput.dispatchEvent(new Event('input', { bubbles: true }));
+  activeCustomInput.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function clearCustomKbdInput() {
+  if (!activeCustomInput) return;
+  activeCustomInput.setAttribute('data-std-val', '');
+  activeCustomInput.value = '';
+  activeCustomInput.dispatchEvent(new Event('input', { bubbles: true }));
+  activeCustomInput.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function closeCustomNumericKeyboard() {
+  const kbd = document.getElementById('customNumericKeyboard');
+  if (kbd) kbd.style.display = 'none';
+  activeCustomInput = null;
+}
+
+/* ==========================================================================
+   文字体系変更（changeScriptMode 拡張版）
+   ========================================================================== */
 function changeScriptMode(mode) {
-  currentScriptMode = ['standard','mayan-numerals','mayan'].includes(mode) ? mode : 'standard';
+  const nextScriptMode = mode || 'standard';
+  const previousScriptMode = currentScriptMode || 'standard';
+
+  // モード変更前に、現在画面に表示されている数字を必ず最新の内部値へ同期する。
+  // これにより、モード変更後に古い data-std-val / 保存文字列から巻き戻されない。
+  restoreNumeralRenderTokensToStandard();
+  document.querySelectorAll('input[type="number"], input.time-select, input[data-numeral-input], input[data-numeral-managed]').forEach(input => {
+    try {
+      const visible = input.value || '';
+      const std = readNumberAsStandard(visible, previousScriptMode);
+      if (visible !== '' || input.hasAttribute('data-std-val')) {
+        input.setAttribute('data-std-val', std);
+      }
+    } catch (_) {}
+  });
+
+  currentScriptMode = nextScriptMode;
   localStorage.setItem('airplane_game_script_mode', currentScriptMode);
   document.documentElement.dataset.scriptMode = currentScriptMode;
+
   const el = document.getElementById('scriptModeSelector');
-  if (el) el.value = currentScriptMode;
+  if (el && el.value !== currentScriptMode) el.value = currentScriptMode;
 
   if (currentScriptMode === 'mayan-numerals' || currentScriptMode === 'mayan') {
     applyMayanNumeralDisplay();
   } else {
     disableMayanMutationObserver();
-    restoreStandardScriptText();
+    restoreNumeralRenderTokensToStandard();
+    if (currentScriptMode !== 'standard') applyGeneralNumeralDisplay();
   }
 
-  document.querySelectorAll('#title3DCanvas,canvas').forEach(c => c.dataset.scriptMode = currentScriptMode);
-  if (typeof drawFrame === 'function') { try { drawFrame(); } catch (_) {} }
-  if (typeof drawCoinUsageGraph === 'function') { try { drawCoinUsageGraph(); } catch (_) {} }
-}
+  // 画面内の全入力欄の数値を一括変換
+  setupDynamicNumericInputs();
 
+  if (activeCustomInput) openCustomNumericKeyboard(activeCustomInput);
+}
 function initializeScriptMode(){
   const el = document.getElementById('scriptModeSelector');
   if (el) el.value = currentScriptMode;
@@ -4145,51 +4858,75 @@ function applyStaticTextI18n(){
   const reverse=Object.create(null);
   Object.keys(I18N_DICTIONARY||{}).forEach(k=>{
     const m=I18N_DICTIONARY[k];
-    if(m&&m.ja){
-      if(!reverse[m.ja]) reverse[m.ja]=k;
-    }
+    if(!m) return;
+    ['ja','en','zh-CN','zh-TW','ar','ko','eo','mam','th','sw','es','fr','de','pt','hi','id','vi','ru','hira'].forEach(langKey=>{
+      const value=m[langKey];
+      if(typeof value==='string' && value.trim() && !reverse[value.trim()]) reverse[value.trim()]=k;
+    });
   });
   const lang=currentLang;
   const translateExact=(raw)=>{
     const key=reverse[raw];
     if(key) return t(key,raw);
     if(STATIC_UI_TRANSLATIONS && STATIC_UI_TRANSLATIONS.en && STATIC_UI_TRANSLATIONS.en[raw]){
-      if(lang==='en') return STATIC_UI_TRANSLATIONS.en[raw];
-      if(lang==='zh-CN') return STATIC_UI_TRANSLATIONS.en[raw];
-      if(lang==='zh-TW') return toTraditionalChinese(STATIC_UI_TRANSLATIONS.en[raw]);
-      if(lang==='ar') {
-        const englishText = STATIC_UI_TRANSLATIONS.en[raw];
-        const arEntry = Object.values(I18N_DICTIONARY || {}).find(m => m && m.en === englishText && typeof m.ar === 'string' && m.ar.trim());
-        if(arEntry) return arEntry.ar;
-      }
-      if(lang!=='ja'&&lang!=='hira') return STATIC_UI_TRANSLATIONS.en[raw];
+      const englishText = STATIC_UI_TRANSLATIONS.en[raw];
+      const arEntry = Object.values(I18N_DICTIONARY || {}).find(m => m && m.en === englishText && typeof m.ar === 'string' && m.ar.trim());
+      const dictEntry = Object.values(I18N_DICTIONARY || {}).find(m => m && m.en === englishText);
+      if(dictEntry) return getLocalizedMapValue(dictEntry, lang, englishText);
+      if(lang==='zh-TW') return toTraditionalChinese(englishText);
+      return englishText;
     }
-    if(lang!=='ja'&&lang!=='hira'&&/[ぁ-んァ-ン一-龯]/.test(raw)) return raw;
     return raw;
   };
+
+  // ★ 言語切り替えで前の言語の文字が残らないよう、最初の原文を各要素に保持する
+  // 翻訳済みの文字を次回の「原文」として扱わず、常に最初の原文から再翻訳する。
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   const nodes=[];let n;
   while((n=walker.nextNode())) nodes.push(n);
   nodes.forEach(node=>{
     const parent=node.parentElement;
     if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)||parent.closest('[data-i18n]')) return;
-    const raw=node.nodeValue.trim(); if(!raw||!/[ぁ-んァ-ン一-龯]/.test(raw)) return;
+
+    if(node.__i18nOriginalText === undefined) node.__i18nOriginalText=node.nodeValue;
+    const original=node.__i18nOriginalText;
+    const raw=original.trim();
+    if(!raw) return;
+
     const translated=translateExact(raw);
-    if(translated!==raw){node.nodeValue=node.nodeValue.replace(raw,translated);}
+    if(translated!==raw){
+      const leading=original.match(/^\s*/)?.[0]||'';
+      const trailing=original.match(/\s*$/)?.[0]||'';
+      node.nodeValue=leading+translated+trailing;
+    }else{
+      node.nodeValue=original;
+    }
   });
+
   document.querySelectorAll('option:not([data-i18n])').forEach(el=>{
-    const raw=el.textContent.trim(); if(!/[ぁ-んァ-ン一-龯]/.test(raw))return;
-    const translated=translateExact(raw); if(translated!==raw) el.textContent=translated;
+    if(el.__i18nOriginalText === undefined) el.__i18nOriginalText=el.textContent;
+    const original=el.__i18nOriginalText;
+    const raw=original.trim();
+    if(!raw)return;
+    const translated=translateExact(raw);
+    el.textContent=translated;
   });
+
   document.querySelectorAll('input[placeholder]:not([data-i18n-ph]),textarea[placeholder]:not([data-i18n-ph])').forEach(el=>{
-    const raw=el.getAttribute('placeholder')||''; if(!/[ぁ-んァ-ン一-龯]/.test(raw))return;
-    const translated=translateExact(raw); if(translated!==raw) el.placeholder=translated;
+    if(el.__i18nOriginalPlaceholder === undefined) el.__i18nOriginalPlaceholder=el.getAttribute('placeholder')||'';
+    const raw=el.__i18nOriginalPlaceholder;
+    if(!raw)return;
+    el.placeholder=translateExact(raw);
   });
+
   document.querySelectorAll('[aria-label]:not([data-i18n-aria])').forEach(el=>{
-    const raw=el.getAttribute('aria-label')||''; if(!/[ぁ-んァ-ン一-龯]/.test(raw))return;
-    const translated=translateExact(raw); if(translated!==raw) el.setAttribute('aria-label',translated);
+    if(el.__i18nOriginalAriaLabel === undefined) el.__i18nOriginalAriaLabel=el.getAttribute('aria-label')||'';
+    const raw=el.__i18nOriginalAriaLabel;
+    if(!raw)return;
+    el.setAttribute('aria-label',translateExact(raw));
   });
 }
+
 
 // 案内バーの多言語テキスト
 const RESCUE_MESSAGES = {
@@ -4207,24 +4944,6 @@ function neverShowRescueNotice() {
 }
 
 // 救済バーの表示制御（永久非表示の判定に対応）
-function updateRescueNoticeBarVisibility() {
-  const bar = document.getElementById('rescueNoticeBar');
-  const textEl = document.getElementById('rescueNoticeText');
-  if (!bar || !textEl) return;
-
-  const params = new URLSearchParams(window.location.search);
-  const lang = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
-  const isClosedSession = sessionStorage.getItem('airplane_game_notice_closed') === '1';
-  const isNeverShow = localStorage.getItem('airplane_game_notice_never_show') === '1';
-
-  // rescueパラメータがあり、「アラビア語(ar)」で、「一時的に閉じておらず」「一生表示しないも選んでいない」ときだけ表示
-  if (params.has('rescue') && lang === 'ar' && !isClosedSession && !isNeverShow) {
-    textEl.textContent = RESCUE_MESSAGES['ar'] || RESCUE_MESSAGES['ja'];
-    bar.style.display = 'flex';
-  } else {
-    bar.style.display = 'none';
-  }
-}
 
 
 
@@ -4307,6 +5026,9 @@ function changeLanguage(lang) {
   if (typeof renderPedometerLegend === 'function') renderPedometerLegend();
   if (typeof updateCoinUsageGraphMeta === 'function') updateCoinUsageGraphMeta();
   if (typeof drawCoinUsageGraph === 'function') drawCoinUsageGraph();
+
+  // 言語切替で再描画された数字も、現在の数字体系へ必ず再適用する。
+  refreshScriptDisplayAfterRender();
 
   if (currentScriptMode === 'mayan-numerals' || currentScriptMode === 'mayan') {
     document.querySelectorAll('[data-standard-script-text]').forEach(el => el.removeAttribute('data-standard-script-text'));
@@ -6331,6 +7053,22 @@ async function handleCustomFontUpload(input) {
   input.value = '';
 }
 
+async function ensureActiveCustomFontLoaded(){
+  if(document.getElementById('cfgFontFamily')?.value!=='custom') return false;
+  try{
+    const id=localStorage.getItem('airplane_game_custom_font_id')||'';
+    const record=id?await getRegisteredCustomFont(id):null;
+    if(!record?.buffer) return false;
+    const family=getCustomFontFamily(record.name||'UploadedFont',record.id);
+    if(document.fonts && document.fonts.check(`16px \"${family}\"`)) return true;
+    await installCustomFont(record.name||'UploadedFont',record.buffer,record.mimeType||'font/ttf',false,false,record.id);
+    return true;
+  }catch(e){
+    console.warn('オフラインカスタムフォント読み込み失敗:',e);
+    return false;
+  }
+}
+
 function applyFontSettings() {
   const family = document.getElementById('cfgFontFamily').value;
   const sizeNum = document.getElementById('cfgFontSizeNum').value;
@@ -6339,6 +7077,7 @@ function applyFontSettings() {
   const fontStr = (family === 'mincho') ? '"Yu Mincho", "Hiragino Mincho ProN", serif' : (family === 'custom' ? `"${customName}", sans-serif` : '"Hiragino Sans", "Meiryo", sans-serif');
   document.documentElement.style.setProperty('--font-family', fontStr);
   document.documentElement.style.setProperty('--font-size', `${sizeNum}${sizeUnit}`);
+  if (family === 'custom') ensureActiveCustomFontLoaded();
 }
 
 function toggleSearchBarVisibility() {
@@ -6765,10 +7504,6 @@ function ensureQuestionTranslations(lang) {
 
 function translateQuestionText(raw, lang) {
   return questionLocalizedText(raw, lang);
-}
-function ensureQuestionTranslations(lang) {
-  seedQuestionContent();
-  return true;
 }
 
 function saveQuestionTranslationCache(){try{localStorage.setItem(QUESTION_TRANSLATION_CACHE_KEY,JSON.stringify(QUESTION_CONTENT_I18N));}catch(e){}}
@@ -7377,7 +8112,16 @@ function restoreFormState(list){
   if(!Array.isArray(list))return;
   for(const item of list){
     try{const el=document.getElementById(item.id)||document.querySelector(`[name="${CSS.escape(item.name||'')}"]`);if(!el)continue;
-      if(el.tagName==='INPUT'){if(el.type!=='file')el.value=item.value??'';if('checked'in item)el.checked=!!item.checked;}
+      if(el.tagName==='INPUT'){
+        if(el.type!=='file'){
+          el.value=item.value??'';
+          if(el.matches('input[type=number], input.time-select, input[data-numeral-input]')){
+            const std=readNumberAsStandard(el.value, currentScriptMode);
+            el.setAttribute('data-std-val', std);
+          }
+        }
+        if('checked'in item)el.checked=!!item.checked;
+      }
       else if(el.tagName==='SELECT'){el.value=item.value??'';}
       else if(el.tagName==='TEXTAREA')el.value=item.value??'';
       else if(el.isContentEditable)el.innerHTML=item.textContent||'';
@@ -7610,6 +8354,10 @@ function parseHtmlTableRows(text){
   return Array.from(doc.querySelectorAll('table tbody tr')).map(tr=>Array.from(tr.cells).map(cell=>cell.textContent.trim())).filter(row=>row.length);
 }
 
+function restoreInputReset(input){
+  try{ if(input) input.value=''; }catch(_){}
+}
+
 async function handlePartialRestore(event,type){
   const input=event?.target;
   const file=input?.files?.[0];
@@ -7667,60 +8415,6 @@ function validateBackupPayload(parsed) {
 /* ==========================================================================
    超高速・安全 IndexedDB 復元（ロック即座回避・タイムアウト付き）
    ========================================================================== */
-async function restoreIndexedDB(snapshot) {
-  if (!window.indexedDB || !Array.isArray(snapshot)) return;
-
-  // 既存の接続を確実に切断
-  if (dbInstance) {
-    try { dbInstance.close(); } catch (_) {}
-    dbInstance = null;
-  }
-
-  const targetDbName = 'AirplaneGamesDB_v3';
-
-  // 1.5秒でタイムアウトして全体のフリーズを絶対に防ぐ
-  return Promise.race([
-    new Promise(async (resolve) => {
-      try {
-        const req = indexedDB.open(targetDbName);
-        req.onblocked = () => resolve(); // ロック時は待たずに次へ進む
-        req.onerror = () => resolve();
-        req.onsuccess = async () => {
-          const db = req.result;
-          try {
-            for (const spec of snapshot) {
-              if (!spec || !Array.isArray(spec.stores)) continue;
-              for (const st of spec.stores) {
-                if (!st || !st.name || !db.objectStoreNames.contains(st.name)) continue;
-                try {
-                  const tx = db.transaction(st.name, 'readwrite');
-                  const store = tx.objectStore(st.name);
-                  store.clear();
-                  for (const rec of (st.records || [])) {
-                    const refs = new Map();
-                    const val = decodeBackupValue(rec.value, refs);
-                    const key = decodeBackupValue(rec.key, refs);
-                    if (store.keyPath === null || store.keyPath === undefined) {
-                      store.put(val, key);
-                    } else {
-                      store.put(val);
-                    }
-                  }
-                } catch (_) {}
-              }
-            }
-          } finally {
-            db.close();
-            resolve();
-          }
-        };
-      } catch (_) {
-        resolve();
-      }
-    }),
-    new Promise((resolve) => setTimeout(resolve, 1500))
-  ]);
-}
 
 
 /* ==========================================================================
@@ -8324,13 +9018,6 @@ function hideRescueNoticeBar() {
 }
 
 // 救済案内バーの表示状態を更新
-function updateRescueNoticeBarVisibility() {
-  if (RescueParameterManager.hasRescueParam()) {
-    showRescueNoticeBar();
-  } else {
-    hideRescueNoticeBar();
-  }
-}
 
 // 翻訳辞書に救済案内バーのテキストがなければ追加（フォールバック）
 if (typeof I18N_DICTIONARY !== 'undefined' && !I18N_DICTIONARY.rescue_notice_bar) {
@@ -8365,23 +9052,6 @@ function hideRescueNoticeOnly() {
 }
 
 // 救済バーの表示制御（閉じるボタンの判定に対応）
-function updateRescueNoticeBarVisibility() {
-  const bar = document.getElementById('rescueNoticeBar');
-  const textEl = document.getElementById('rescueNoticeText');
-  if (!bar || !textEl) return;
-
-  const params = new URLSearchParams(window.location.search);
-  const lang = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
-  const isClosed = sessionStorage.getItem('airplane_game_notice_closed') === '1';
-
-  // rescueパラメータがあり、「アラビア語(ar)」で、「まだ✕で閉じていない」ときだけ表示
-  if (params.has('rescue') && lang === 'ar' && !isClosed) {
-    textEl.textContent = RESCUE_MESSAGES['ar'] || RESCUE_MESSAGES['ja'];
-    bar.style.display = 'block';
-  } else {
-    bar.style.display = 'none';
-  }
-}
 // パラメータ外しボタンを押した時の処理（URLを綺麗にしてバーを非表示）
 function removeRescueParam() {
   try {
@@ -8396,6 +9066,8 @@ function removeRescueParam() {
 }
 
 // 救済バーの表示制御（★アラビア語選択時のみ表示）
+
+// 救済バーの表示状態を一元管理（重複定義による上書きを防止）
 function updateRescueNoticeBarVisibility() {
   const bar = document.getElementById('rescueNoticeBar');
   const textEl = document.getElementById('rescueNoticeText');
@@ -8403,13 +9075,18 @@ function updateRescueNoticeBarVisibility() {
 
   const params = new URLSearchParams(window.location.search);
   const lang = currentLang || localStorage.getItem('airplane_game_lang') || 'ja';
+  const isClosedSession = sessionStorage.getItem('airplane_game_notice_closed') === '1';
+  const isNeverShow = localStorage.getItem('airplane_game_notice_never_show') === '1';
 
-  // rescueパラメータがあり、かつ「アラビア語(ar)のときだけ」表示
-  if (params.has('rescue') && lang === 'ar') {
+  if (params.has('rescue') && lang === 'ar' && !isClosedSession && !isNeverShow) {
     textEl.textContent = RESCUE_MESSAGES['ar'] || RESCUE_MESSAGES['ja'];
-    bar.style.display = 'block';
+    bar.style.display = 'flex';
+    bar.style.visibility = 'visible';
+    bar.style.direction = 'rtl';
+    bar.style.textAlign = 'right';
   } else {
     bar.style.display = 'none';
+    bar.style.visibility = 'hidden';
   }
 }
 
@@ -8516,4 +9193,3 @@ window.__airplaneSafeAddEventListener(window, 'load', () => {
 </script>
 </body>
 </html>
-
