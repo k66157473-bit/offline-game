@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
 <head>
@@ -1091,6 +1090,12 @@ nav.tabs {
   backdrop-filter: blur(8px);
 }
 
+
+#customNumericKeyboard { direction: ltr; }
+html[dir="rtl"] #customNumericKeyboard .custom-kbd-header,
+html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
+#customNumericKeyboard .custom-kbd-header span { min-width: 0; overflow-wrap: anywhere; }
+#customNumericKeyboard .custom-kbd-btn, #customNumericKeyboard .morse-3d-btn { overflow-wrap: anywhere; white-space: normal; }
 .custom-kbd-header {
   display: flex;
   justify-content: space-between;
@@ -1107,6 +1112,24 @@ nav.tabs {
   gap: 8px;
   max-width: 420px;
   margin: 0 auto;
+  width: 100%;
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 4px 10px;
+  box-sizing: border-box;
+}
+
+/* カクトビックのキーボードボタンにも埋め込み専用フォントを適用する。 */
+#customNumericKeyboard.kaktovik-mode .custom-kbd-btn:not(.btn-action) {
+  font-family: 'KaktovikNumeralsEmbedded', 'Segoe UI Symbol', 'Segoe UI Historic', sans-serif !important;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: antialiased;
+}
+#customNumericKeyboard.toto-mode .custom-kbd-btn:not(.btn-action) {
+  font-family: 'NotoSerifTotoEmbedded', 'Segoe UI Symbol', 'Segoe UI Historic', sans-serif !important;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: antialiased;
 }
 
 .custom-kbd-btn {
@@ -1140,15 +1163,25 @@ nav.tabs {
 
 /* ─── 数字キーボード・カスタマイズ ─── */
 #customNumericKeyboard.custom-kbd-custom-size {
-  width: var(--custom-kbd-width, min(100vw, 420px));
-  height: var(--custom-kbd-height, auto);
+  width: min(var(--custom-kbd-width, 420px), calc(100vw - 8px));
+  height: min(var(--custom-kbd-height, 360px), calc(100vh - 8px));
   left: 50%;
   right: auto;
+  bottom: 4px;
+  top: auto;
   transform: translateX(-50%);
   max-width: calc(100vw - 8px);
-  min-width: 220px;
+  max-height: calc(100vh - 8px);
+  min-width: min(220px, calc(100vw - 8px));
   min-height: 180px;
   overflow: hidden;
+  box-sizing: border-box;
+}
+#customNumericKeyboard.custom-kbd-positioned {
+  transform: none;
+}
+#customNumericKeyboard.custom-kbd-positioned .custom-kbd-header {
+  cursor: move;
 }
 .custom-kbd-resize-handle {
   position: absolute;
@@ -4704,17 +4737,38 @@ const NUMERIC_KBD_I18N = {
   button: {ja:'ボタン色',en:'Button color',hira:'ぼたんしょく',ko:'버튼 색상','zh-CN':'按钮颜色','zh-TW':'按鈕顏色',ar:'لون الأزرار',eo:'Butona koloro',mam:'Button color',th:'สีปุ่ม',sw:'Rangi ya vitufe',es:'Color de botones',fr:'Couleur des boutons',de:'Tastenfarbe',pt:'Cor dos botões',hi:'बटन रंग',id:'Warna tombol',vi:'Màu nút',ru:'Цвет кнопок'},
   freeResize: {ja:'右下のハンドルをマウス・タッチでドラッグしても変更できます。',en:'You can also drag the lower-right handle with a mouse or touch.',hira:'みぎしたの はんどるを まうす・たっちで どらっぐしても へんこうできます。',ko:'오른쪽 아래 핸들을 마우스나 터치로 드래그해도 변경할 수 있습니다.','zh-CN':'也可以用鼠标或触摸拖动右下角手柄调整。','zh-TW':'也可以用滑鼠或觸控拖曳右下角控制點調整。',ar:'يمكنك أيضاً السحب بالماوس أو اللمس من المقبض السفلي الأيمن.',eo:'Vi ankaŭ povas treni la malsupran dekstran tenilon per muso aŭ tuŝo.',mam:'También puedes mover el asa de abajo con mouse o touch.',th:'สามารถลากจุดจับมุมขวาล่างด้วยเมาส์หรือการสัมผัสได้',sw:'Unaweza pia kuburuta kishikio cha chini kulia kwa kipanya au mguso.',es:'También puedes arrastrar el asa inferior derecha con ratón o táctil.',fr:'Vous pouvez aussi faire glisser la poignée en bas à droite avec la souris ou le tactile.',de:'Sie können auch den Griff unten rechts per Maus oder Touch ziehen.',pt:'Você também pode arrastar a alça inferior direita com mouse ou toque.',hi:'आप नीचे दाईं ओर के हैंडल को माउस या टच से खींचकर भी बदल सकते हैं।',id:'Anda juga dapat menyeret pegangan kanan bawah dengan mouse atau sentuhan.',vi:'Bạn cũng có thể kéo tay cầm góc dưới bên phải bằng chuột hoặc cảm ứng.',ru:'Можно также перетаскивать маркер внизу справа мышью или касанием.'},
   reset: {ja:'初期値に戻す',en:'Reset',hira:'しょきちに もどす',ko:'초기값으로','zh-CN':'恢复默认','zh-TW':'恢復預設',ar:'إعادة الضبط',eo:'Restarigi',mam:'Reset',th:'รีเซ็ต',sw:'Weka upya',es:'Restablecer',fr:'Réinitialiser',de:'Zurücksetzen',pt:'Redefinir',hi:'रीसेट',id:'Atur ulang',vi:'Đặt lại',ru:'Сбросить'},
-  save: {ja:'保存してキーボードへ',en:'Save and return',hira:'ほぞんして きーぼーどへ',ko:'저장하고 키보드로','zh-CN':'保存并返回键盘','zh-TW':'儲存並返回鍵盤',ar:'حفظ والعودة',eo:'Konservi kaj reiru',mam:'Save and return',th:'บันทึกและกลับไป',sw:'Hifadhi na urudi',es:'Guardar y volver',fr:'Enregistrer et revenir',de:'Speichern und zurück',pt:'Salvar e voltar',hi:'सहेजें और लौटें',id:'Simpan dan kembali',vi:'Lưu và quay lại',ru:'Сохранить и вернуться'}
+  save: {ja:'保存してキーボードへ',en:'Save and return',hira:'ほぞんして きーぼーどへ',ko:'저장하고 키보드로','zh-CN':'保存并返回键盘','zh-TW':'儲存並返回鍵盤',ar:'حفظ والعودة',eo:'Konservi kaj reiru',mam:'Save and return',th:'บันทึกและกลับไป',sw:'Hifadhi na urudi',es:'Guardar y volver',fr:'Enregistrer et revenir',de:'Speichern und zurück',pt:'Salvar e voltar',hi:'सहेजें और लौटें',id:'Simpan dan kembali',vi:'Lưu và quay lại',ru:'Сохранить и вернуться'},
+  clear: {ja:'C（消去）',en:'C (Clear)',hira:'C（けす）',ko:'C (지우기)','zh-CN':'C（清除）','zh-TW':'C（清除）',ar:'C (مسح)',eo:'C (Forigi)',mam:'C (Jolb’en)',th:'C (ล้าง)',sw:'C (Futa)',es:'C (Borrar)',fr:'C (Effacer)',de:'C (Löschen)',pt:'C (Limpar)',hi:'C (साफ़)',id:'C (Hapus)',vi:'C (Xóa)',ru:'C (Очистить)'},
+  delete: {ja:'⌫（1文字削除）',en:'⌫ (Delete one)',hira:'⌫（1もじ けす）',ko:'⌫ (한 글자 삭제)','zh-CN':'⌫（删除一位）','zh-TW':'⌫（刪除一位）',ar:'⌫ (حذف واحد)',eo:'⌫ (Forigi unu)',mam:'⌫ (Jolb’en jun)',th:'⌫ (ลบหนึ่งตัว)',sw:'⌫ (Futa moja)',es:'⌫ (Borrar uno)',fr:'⌫ (Supprimer un)',de:'⌫ (Eins löschen)',pt:'⌫ (Apagar um)',hi:'⌫ (एक हटाएँ)',id:'⌫ (Hapus satu)',vi:'⌫ (Xóa một)',ru:'⌫ (Удалить один)'},
+  done: {ja:'決定',en:'Done',hira:'けってい',ko:'완료','zh-CN':'完成','zh-TW':'完成',ar:'تم',eo:'Fini',mam:'B’an',th:'เสร็จสิ้น',sw:'Imekamilika',es:'Listo',fr:'Terminé',de:'Fertig',pt:'Concluído',hi:'पूर्ण',id:'Selesai',vi:'Xong',ru:'Готово'},
+  morseDot: {ja:'・（トン）',en:'・ (Dot)',hira:'・（とん）',ko:'・ (점)','zh-CN':'・（点）','zh-TW':'・（點）',ar:'・ (نقطة)',eo:'・ (Punkto)',mam:'・ (Punto)',th:'・ (จุด)',sw:'・ (Nukta)',es:'・ (Punto)',fr:'・ (Point)',de:'・ (Punkt)',pt:'・ (Ponto)',hi:'・ (बिंदु)',id:'・ (Titik)',vi:'・ (Chấm)',ru:'・ (Точка)'},
+  morseDash: {ja:'－（ツー）',en:'－ (Dash)',hira:'－（つー）',ko:'－ (대시)','zh-CN':'－（划）','zh-TW':'－（劃）',ar:'－ (شرطة)',eo:'－ (Streketo)',mam:'－ (Raya)',th:'－ (ขีด)',sw:'－ (Mstari)',es:'－ (Raya)',fr:'－ (Tiret)',de:'－ (Strich)',pt:'－ (Traço)',hi:'－ (डैश)',id:'－ (Garis)',vi:'－ (Gạch)',ru:'－ (Тире)'},
+  morseCommit: {ja:'✔ 1文字確定',en:'✔ Commit character',hira:'✔ 1もじ かくてい',ko:'✔ 문자 확정','zh-CN':'✔ 确定字符','zh-TW':'✔ 確定字元',ar:'✔ تأكيد الحرف',eo:'✔ Konfirmi signon',mam:'✔ Tz’aqsa jun k’ul',th:'✔ ยืนยันตัวอักษร',sw:'✔ Thibitisha herufi',es:'✔ Confirmar carácter',fr:'✔ Valider le caractère',de:'✔ Zeichen bestätigen',pt:'✔ Confirmar caractere',hi:'✔ अक्षर निश्चित करें',id:'✔ Konfirmasi karakter',vi:'✔ Xác nhận ký tự',ru:'✔ Подтвердить символ'},
+  morseDelete: {ja:'⌫ 1文字削除',en:'⌫ Delete character',hira:'⌫ 1もじ けす',ko:'⌫ 문자 삭제','zh-CN':'⌫ 删除字符','zh-TW':'⌫ 刪除字元',ar:'⌫ حذف الحرف',eo:'⌫ Forigi signon',mam:'⌫ Jolb’en k’ul',th:'⌫ ลบตัวอักษร',sw:'⌫ Futa herufi',es:'⌫ Borrar carácter',fr:'⌫ Supprimer le caractère',de:'⌫ Zeichen löschen',pt:'⌫ Apagar caractere',hi:'⌫ अक्षर हटाएँ',id:'⌫ Hapus karakter',vi:'⌫ Xóa ký tự',ru:'⌫ Удалить символ'},
+  morseDone: {ja:'決定',en:'Done',hira:'けってい',ko:'완료','zh-CN':'完成','zh-TW':'完成',ar:'تم',eo:'Fini',mam:'B’an',th:'เสร็จสิ้น',sw:'Imekamilika',es:'Listo',fr:'Terminé',de:'Fertig',pt:'Concluído',hi:'पूर्ण',id:'Selesai',vi:'Xong',ru:'Готово'},
+  morsePlaceholder: {ja:'・ / － を入力',en:'Enter ・ / －',hira:'・ / － を にゅうりょく',ko:'・ / － 입력','zh-CN':'输入 ・ / －','zh-TW':'輸入 ・ / －',ar:'أدخل ・ / －',eo:'Enigu ・ / －',mam:'Tz’ib’en ・ / －',th:'ป้อน ・ / －',sw:'Ingiza ・ / －',es:'Introducir ・ / －',fr:'Entrer ・ / －',de:'・ / － eingeben',pt:'Digite ・ / －',hi:'・ / － दर्ज करें',id:'Masukkan ・ / －',vi:'Nhập ・ / －',ru:'Введите ・ / －'},
+  morseComplete: {ja:'確定完了！次を入力',en:'Committed! Enter the next one',hira:'かくてい かんりょう！つぎを にゅうりょく',ko:'확정 완료! 다음을 입력하세요','zh-CN':'已确定！请输入下一个','zh-TW':'已確定！請輸入下一個',ar:'تم التأكيد! أدخل التالي',eo:'Konfirmita! Enigu la sekvan',mam:'¡Tz’aqsa! Tz’ib’en junx',th:'ยืนยันแล้ว! ป้อนตัวถัดไป',sw:'Imethibitishwa! Ingiza inayofuata',es:'¡Confirmado! Introduce el siguiente',fr:'Validé ! Entrez le suivant',de:'Bestätigt! Nächstes eingeben',pt:'Confirmado! Digite o próximo',hi:'पुष्टि हुई! अगला दर्ज करें',id:'Terkonfirmasi! Masukkan berikutnya',vi:'Đã xác nhận! Nhập ký tự tiếp theo',ru:'Подтверждено! Введите следующий'},
+  modes: {ja:'標準:標準数字, roman:ローマ数字, kanji:漢数字, devanagari:デーヴァナーガリー, eastern-arabic:東アラビア数字, thai:タイ数字, myanmar:ミャンマー数字, khmer:クメール数字, geez:ゲエズ数字, suzhou:蘇州号碼, ol-chiki:オルチキ数字, kannada:カンナダ数字, meetei:メイテイ数字, kaktovik:カクトビック数字, toto:トト数字, braille:点字数字, morse:モールス信号',en:'Standard, Roman, Kanji, Devanagari, Eastern Arabic, Thai, Myanmar, Khmer, Ge’ez, Suzhou, Ol Chiki, Kannada, Meetei, Kaktovik, Toto, Braille, Morse',hira:'ひょうじゅん、ろーま、かんじ、でーゔぁなーがりー、ひがしあらびあ、たい、みゃんまー、くめーる、げえず、そしゅう、おるちき、かんなだ、めいてい、かくとびっく、とと、てんじ、もーるす'}
 };
 function numericKbdText(key){ const map=NUMERIC_KBD_I18N[key]; if(!map) return key; return map[currentLang] || map.en || map.ja || key; }
+function numericKbdModeText(mode){ const map=NUMERIC_KBD_I18N.modes || {}; const all=map[currentLang] || map.en || map.ja || ''; const names=all.split(/, /); const order=['standard','roman','kanji','devanagari','eastern-arabic','thai','myanmar','khmer','geez','suzhou','ol-chiki','kannada','meetei','kaktovik','toto','braille','morse']; const i=order.indexOf(mode); return i>=0 ? names[i] || mode : mode; }
 
-const NUMERIC_KBD_DEFAULTS = { width: 420, height: 360, background: '#1e1e1e', button: '#ffffff' };
+const NUMERIC_KBD_DEFAULTS = { width: 420, height: 360, background: '#1e1e1e', button: '#ffffff', x: null, y: null };
 function loadNumericKeyboardSettings(){
   try { const raw=JSON.parse(localStorage.getItem('airplane_game_numeric_keyboard_settings')||'{}'); return {...NUMERIC_KBD_DEFAULTS,...raw}; }
   catch(e){ return {...NUMERIC_KBD_DEFAULTS}; }
 }
+function clampNumericKeyboardPosition(x, y, width, height){
+  const maxX=Math.max(4, window.innerWidth-width-4);
+  const maxY=Math.max(4, window.innerHeight-height-4);
+  return { x: Math.max(4, Math.min(maxX, Number(x))), y: Math.max(4, Math.min(maxY, Number(y))) };
+}
 function saveNumericKeyboardSettings(settings){
-  const normalized={ width:Math.max(220,Math.min(window.innerWidth-8,Number(settings.width)||NUMERIC_KBD_DEFAULTS.width)), height:Math.max(180,Math.min(window.innerHeight-8,Number(settings.height)||NUMERIC_KBD_DEFAULTS.height)), background: /^#[0-9a-fA-F]{6}$/.test(settings.background||'')?settings.background:NUMERIC_KBD_DEFAULTS.background, button: /^#[0-9a-fA-F]{6}$/.test(settings.button||'')?settings.button:NUMERIC_KBD_DEFAULTS.button };
+  const width=Math.max(220,Math.min(Math.max(220,window.innerWidth-8),Number(settings.width)||NUMERIC_KBD_DEFAULTS.width));
+  const height=Math.max(180,Math.min(Math.max(180,window.innerHeight-8),Number(settings.height)||NUMERIC_KBD_DEFAULTS.height));
+  const hasPosition=Number.isFinite(Number(settings.x)) && Number.isFinite(Number(settings.y));
+  const pos=hasPosition ? clampNumericKeyboardPosition(Number(settings.x),Number(settings.y),width,height) : {x:null,y:null};
+  const normalized={ width, height, x:pos.x, y:pos.y, background: /^#[0-9a-fA-F]{6}$/.test(settings.background||'')?settings.background:NUMERIC_KBD_DEFAULTS.background, button: /^#[0-9a-fA-F]{6}$/.test(settings.button||'')?settings.button:NUMERIC_KBD_DEFAULTS.button };
   localStorage.setItem('airplane_game_numeric_keyboard_settings',JSON.stringify(normalized));
   return normalized;
 }
@@ -4724,6 +4778,13 @@ function applyNumericKeyboardSettings(kbd, settings=loadNumericKeyboardSettings(
   kbd.classList.add('custom-kbd-custom-size');
   kbd.style.setProperty('--custom-kbd-width', `${st.width}px`);
   kbd.style.setProperty('--custom-kbd-height', `${st.height}px`);
+  if (st.x !== null && st.y !== null) {
+    kbd.classList.add('custom-kbd-positioned');
+    kbd.style.left=`${st.x}px`; kbd.style.top=`${st.y}px`; kbd.style.bottom='auto';
+  } else {
+    kbd.classList.remove('custom-kbd-positioned');
+    kbd.style.left='50%'; kbd.style.top='auto'; kbd.style.bottom='4px';
+  }
   kbd.style.background=st.background;
   kbd.querySelectorAll('.custom-kbd-btn:not(.btn-done), .morse-3d-btn.btn-space').forEach(el=>el.style.backgroundColor=st.button);
   kbd.querySelectorAll('.custom-kbd-btn:not(.btn-done)').forEach(el=>el.style.color='#111');
@@ -4753,6 +4814,18 @@ function showNumericKeyboardSettings(){
 function attachNumericKeyboardResizeHandle(kbd){
   let h=kbd.querySelector('.custom-kbd-resize-handle'); if(!h){h=document.createElement('div');h.className='custom-kbd-resize-handle';h.title=numericKbdText('freeResize');kbd.appendChild(h);}
   h.onpointerdown=(e)=>{ e.preventDefault(); h.setPointerCapture?.(e.pointerId); const startX=e.clientX,startY=e.clientY,st=loadNumericKeyboardSettings(); const move=ev=>{ const next={...st,width:st.width+(startX-ev.clientX)*2,height:st.height+(startY-ev.clientY)}; applyNumericKeyboardSettings(kbd,next); }; const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); h.removeEventListener('pointercancel',up); }; h.addEventListener('pointermove',move);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up); };
+  const header=kbd.querySelector('.custom-kbd-header');
+  if(header){
+    header.onpointerdown=(e)=>{
+      if(e.target.closest('button')) return;
+      e.preventDefault();
+      const rect=kbd.getBoundingClientRect();
+      const startX=e.clientX,startY=e.clientY,startLeft=rect.left,startTop=rect.top,st=loadNumericKeyboardSettings();
+      const move=ev=>{ const pos=clampNumericKeyboardPosition(startLeft+(ev.clientX-startX),startTop+(ev.clientY-startY),rect.width,rect.height); applyNumericKeyboardSettings(kbd,{...st,x:pos.x,y:pos.y}); };
+      const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); header.releasePointerCapture?.(e.pointerId); header.removeEventListener('pointermove',move); header.removeEventListener('pointerup',up); header.removeEventListener('pointercancel',up); };
+      header.setPointerCapture?.(e.pointerId); header.addEventListener('pointermove',move); header.addEventListener('pointerup',up); header.addEventListener('pointercancel',up);
+    };
+  }
 }
 
 let activeCustomInput = null;
@@ -4810,10 +4883,13 @@ function openCustomNumericKeyboard(input) {
 
   kbd.innerHTML = '';
   const mode = currentScriptMode;
+  kbd.classList.remove('kaktovik-mode','toto-mode');
+  if (mode === 'kaktovik') kbd.classList.add('kaktovik-mode');
+  if (mode === 'toto') kbd.classList.add('toto-mode');
 
   const header = document.createElement('div');
   header.className = 'custom-kbd-header';
-  header.innerHTML = `<span>⌨️ ${numericKbdText('title')} — ${mode.toUpperCase()}</span><span style="display:flex;gap:6px;"><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="showNumericKeyboardSettings()">⚙️ ${numericKbdText('settings')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="closeCustomNumericKeyboard()">✕ ${numericKbdText('close')}</button></span>`;
+  header.innerHTML = `<span>⌨️ ${numericKbdText('title')} — ${numericKbdModeText(mode)}</span><span style="display:flex;gap:6px;"><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="showNumericKeyboardSettings()">⚙️ ${numericKbdText('settings')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="closeCustomNumericKeyboard()">✕ ${numericKbdText('close')}</button></span>`;
   kbd.appendChild(header);
 
   if (mode === 'morse') {
@@ -4834,13 +4910,13 @@ function openCustomNumericKeyboard(input) {
     const dotBtn = document.createElement('button');
     dotBtn.type = 'button';
     dotBtn.className = 'morse-3d-btn';
-    dotBtn.textContent = '・ (トン)';
+    dotBtn.textContent = numericKbdText('morseDot');
     dotBtn.onclick = () => appendMorseChar('.');
 
     const dashBtn = document.createElement('button');
     dashBtn.type = 'button';
     dashBtn.className = 'morse-3d-btn';
-    dashBtn.textContent = '－ (ツー)';
+    dashBtn.textContent = numericKbdText('morseDash');
     dashBtn.onclick = () => appendMorseChar('-');
 
     row1.appendChild(dotBtn);
@@ -4853,20 +4929,20 @@ function openCustomNumericKeyboard(input) {
     const commitBtn = document.createElement('button');
     commitBtn.type = 'button';
     commitBtn.className = 'morse-3d-btn btn-space';
-    commitBtn.textContent = '✔ 1文字確定';
+    commitBtn.textContent = numericKbdText('morseCommit');
     commitBtn.onclick = commitMorseDigit;
 
     const backBtn = document.createElement('button');
     backBtn.type = 'button';
     backBtn.className = 'morse-3d-btn btn-space';
-    backBtn.textContent = '⌫ 1文字削除';
+    backBtn.textContent = numericKbdText('morseDelete');
     backBtn.onclick = deleteCustomKbdChar;
 
     const doneBtn = document.createElement('button');
     doneBtn.type = 'button';
     doneBtn.className = 'morse-3d-btn btn-space';
     doneBtn.style.background = 'linear-gradient(145deg, #00e676, #00c853)';
-    doneBtn.textContent = '決定';
+    doneBtn.textContent = numericKbdText('morseDone');
     doneBtn.onclick = closeCustomNumericKeyboard;
 
     row2.appendChild(commitBtn);
@@ -4893,7 +4969,7 @@ function openCustomNumericKeyboard(input) {
     const clearBtn = document.createElement('button');
     clearBtn.type = 'button';
     clearBtn.className = 'custom-kbd-btn btn-action';
-    clearBtn.textContent = 'C (消去)';
+    clearBtn.textContent = numericKbdText('clear');
     clearBtn.onclick = clearCustomKbdInput;
     grid.appendChild(clearBtn);
 
@@ -4954,7 +5030,7 @@ function commitMorseDigit() {
   }
   currentMorseBuffer = '';
   const disp = document.getElementById('morseLiveDisplay');
-  if (disp) disp.textContent = '確定完了！次を入力';
+  if (disp) disp.textContent = numericKbdText('morseComplete');
 }
 
 function deleteCustomKbdChar() {
