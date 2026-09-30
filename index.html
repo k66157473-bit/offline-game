@@ -1126,6 +1126,85 @@ nav.tabs {
   box-shadow: 0 4px #880e4f;
 }
 
+/* ─── 数字キーボード・カスタマイズ ─── */
+#customNumericKeyboard.custom-kbd-custom-size {
+  width: var(--custom-kbd-width, min(100vw, 420px));
+  height: var(--custom-kbd-height, auto);
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 8px);
+  min-width: 220px;
+  min-height: 180px;
+  overflow: hidden;
+}
+.custom-kbd-resize-handle {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: nwse-resize;
+  touch-action: none;
+  background: linear-gradient(135deg, transparent 45%, rgba(255,255,255,.9) 46%, rgba(255,255,255,.9) 52%, transparent 53%);
+  opacity: .8;
+  z-index: 3;
+}
+.custom-kbd-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+  margin: 0 auto;
+  color: #fff;
+  overflow: auto;
+  height: calc(100% - 42px);
+  padding: 4px 8px 16px;
+  box-sizing: border-box;
+}
+.custom-kbd-setting-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(120px, 1.5fr);
+  gap: 8px;
+  align-items: center;
+}
+.custom-kbd-setting-row input[type="number"],
+.custom-kbd-setting-row input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 38px;
+  border-radius: 7px;
+  border: 1px solid #aaa;
+  padding: 6px 8px;
+  font-size: 15px;
+}
+.custom-kbd-setting-color {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.custom-kbd-setting-color input[type="color"] {
+  width: 48px;
+  height: 38px;
+  padding: 2px;
+  border-radius: 7px;
+  border: 1px solid #aaa;
+}
+.custom-kbd-setting-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+.custom-kbd-setting-preview {
+  border: 1px dashed rgba(255,255,255,.45);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  font-size: 13px;
+}
 /* ─── モールス信号専用：超立体3Dボタン ─── */
 .morse-3d-panel {
   display: flex;
@@ -2436,6 +2515,31 @@ const AUTHOR_NAMES = {
 
 
 const KOUSHIN_DATA = [
+{
+    pinned: false,
+    date: '2026/09/30 14:50',
+    desc: {
+      ja: '数字キーボードの幅・高さ・色をマウス、タッチ、自由入力でカスタマイズできる設定画面を追加し、キーボード上の設定タブから開けるようにしました。設定は多言語化し、.itsmeなどの既存バックアップ対象にも保存されます。',
+      en: 'Added a settings screen for freely customizing numeric keyboard width, height, and colors with mouse, touch, or direct input. It opens from the Settings tab on the keyboard, is multilingual, and is included in existing backups such as .itsme.',
+      hira: 'すうじきーぼーどの はば・たかさ・いろを まうす、たっち、じゆうにゅうりょくで かすたまいずできる せっていがめんを ついかしました。きーぼーどの せっていたぶから ひらけて、たげんごかし、.itsmeなどの きぞんばっくあっぷにも ほぞんされます。',
+      ko: '숫자 키보드의 너비·높이·색상을 마우스, 터치 또는 직접 입력으로 자유롭게 사용자 지정하는 설정 화면을 추가했습니다. 키보드의 설정 탭에서 열 수 있으며 다국어를 지원하고 .itsme 등의 기존 백업에도 저장됩니다.',
+      'zh-CN': '新增数字键盘宽度、高度和颜色的自定义设置，可通过鼠标、触摸或直接输入调整。可从键盘上的设置标签打开，支持多语言，并会保存到现有的 .itsme 等备份中。',
+      'zh-TW': '新增數字鍵盤寬度、高度與顏色的自訂設定，可透過滑鼠、觸控或直接輸入調整。可從鍵盤上的設定分頁開啟，支援多語言，並會儲存到現有的 .itsme 等備份中。',
+      ar: 'تمت إضافة شاشة إعدادات لتخصيص عرض لوحة الأرقام وارتفاعها وألوانها بالماوس أو اللمس أو الإدخال المباشر، ويمكن فتحها من علامة الإعدادات على لوحة المفاتيح، وهي متعددة اللغات وتُحفظ ضمن النسخ الاحتياطية الحالية مثل .itsme.',
+      eo: 'Aldonis agordan ekranon por libere agordi la larĝon, altecon kaj kolorojn de la nombra klavaro per muso, tuŝo aŭ rekta enigo. Ĝi malfermiĝas per la agorda langeto de la klavaro, estas plurlingva kaj konserviĝas en ekzistantaj sekurkopioj kiel .itsme.',
+      mam: 'Ma b’ant jun xmayb’il tu’n tk’ama’j width, height ex color te numeric keyboard tuk’il mouse, touch, ex direct input. Atz’el tuj tab te settings, nim yol, ex nja’b’en tuj backups .itsme.',
+      th: 'เพิ่มหน้าการตั้งค่าสำหรับปรับความกว้าง ความสูง และสีของแป้นพิมพ์ตัวเลขด้วยเมาส์ การสัมผัส หรือการป้อนค่าโดยตรง เปิดได้จากแท็บการตั้งค่าบนแป้นพิมพ์ รองรับหลายภาษา และบันทึกลงในข้อมูลสำรองเดิม เช่น .itsme',
+      sw: 'Imeongeza skrini ya mipangilio ya kubadilisha upana, urefu na rangi za kibodi ya nambari kwa kipanya, mguso au kuingiza moja kwa moja. Inafunguliwa kutoka kichupo cha mipangilio kwenye kibodi, ina lugha nyingi, na huhifadhiwa katika nakala za chelezo kama .itsme.',
+      es: 'Se añadió una pantalla de ajustes para personalizar libremente el ancho, alto y colores del teclado numérico con ratón, táctil o entrada directa. Se abre desde la pestaña de ajustes del teclado, es multilingüe y se guarda en copias existentes como .itsme.',
+      fr: 'Ajout d’un écran de réglages permettant de personnaliser librement la largeur, la hauteur et les couleurs du clavier numérique avec la souris, le tactile ou la saisie directe. Il est accessible depuis l’onglet des réglages du clavier, multilingue et sauvegardé dans les sauvegardes existantes comme .itsme.',
+      de: 'Ein Einstellungsbildschirm zum freien Anpassen von Breite, Höhe und Farben der Zifferntastatur per Maus, Touch oder Direkteingabe wurde hinzugefügt. Er ist über den Einstellungsreiter der Tastatur erreichbar, mehrsprachig und wird in bestehenden Backups wie .itsme gespeichert.',
+      pt: 'Foi adicionada uma tela de configurações para personalizar livremente largura, altura e cores do teclado numérico com mouse, toque ou entrada direta. Ela é aberta pela aba de configurações do teclado, é multilíngue e é incluída nos backups existentes, como .itsme.',
+      hi: 'संख्या कीबोर्ड की चौड़ाई, ऊंचाई और रंगों को माउस, टच या सीधे इनपुट से स्वतंत्र रूप से अनुकूलित करने के लिए सेटिंग स्क्रीन जोड़ी गई। इसे कीबोर्ड के सेटिंग टैब से खोला जा सकता है, यह बहुभाषी है और .itsme जैसे मौजूदा बैकअप में सहेजा जाता है।',
+      id: 'Menambahkan layar pengaturan untuk menyesuaikan lebar, tinggi, dan warna papan ketik angka dengan mouse, sentuhan, atau input langsung. Dapat dibuka dari tab pengaturan pada keyboard, multibahasa, dan tersimpan dalam cadangan yang ada seperti .itsme.',
+      vi: 'Đã thêm màn hình cài đặt để tùy chỉnh tự do chiều rộng, chiều cao và màu sắc của bàn phím số bằng chuột, cảm ứng hoặc nhập trực tiếp. Có thể mở từ tab cài đặt trên bàn phím, hỗ trợ đa ngôn ngữ và được lưu trong các bản sao lưu hiện có như .itsme.',
+      ru: 'Добавлен экран настроек для свободной настройки ширины, высоты и цветов цифровой клавиатуры мышью, касанием или прямым вводом. Он открывается через вкладку настроек на клавиатуре, поддерживает несколько языков и сохраняется в существующих резервных копиях, включая .itsme.'
+    }
+  },
 {
     pinned: false,
     date: '2026/09/30 14:02',
@@ -3966,6 +4070,8 @@ function runCoinAutoGrants() {
 let coinHistoryPage = 1;
 function saveConfig() {
   saveAllConfig();
+  // 設定保存後も、現在選択中のフォントを必ず再同期する。
+  if (typeof applyFontSettings === 'function') applyFontSettings();
 }
 
 function toggleGameFeatureSetting() {
@@ -4575,6 +4681,68 @@ function convertScriptToStandardDigits(text, mode) {
 /* ==========================================================================
    入力欄（input）の自動変換 & 専用キーボード自動生成
    ========================================================================== */
+const NUMERIC_KBD_I18N = {
+  title: {ja:'数字キーボード',en:'Numeric Keyboard',hira:'すうじきーぼーど',ko:'숫자 키보드','zh-CN':'数字键盘','zh-TW':'數字鍵盤',ar:'لوحة الأرقام',eo:'Nombra Klavaro',mam:'Numeric Keyboard',th:'แป้นพิมพ์ตัวเลข',sw:'Kibodi ya nambari',es:'Teclado numérico',fr:'Clavier numérique',de:'Zifferntastatur',pt:'Teclado numérico',hi:'संख्या कीबोर्ड',id:'Papan Ketik Angka',vi:'Bàn phím số',ru:'Цифровая клавиатура'},
+  settings: {ja:'設定',en:'Settings',hira:'せってい',ko:'설정','zh-CN':'设置','zh-TW':'設定',ar:'الإعدادات',eo:'Agordoj',mam:'Settings',th:'การตั้งค่า',sw:'Mipangilio',es:'Ajustes',fr:'Paramètres',de:'Einstellungen',pt:'Configurações',hi:'सेटिंग्स',id:'Pengaturan',vi:'Cài đặt',ru:'Настройки'},
+  close: {ja:'閉じる',en:'Close',hira:'とじる',ko:'닫기','zh-CN':'关闭','zh-TW':'關閉',ar:'إغلاق',eo:'Fermi',mam:'Tzapin',th:'ปิด',sw:'Funga',es:'Cerrar',fr:'Fermer',de:'Schließen',pt:'Fechar',hi:'बंद करें',id:'Tutup',vi:'Đóng',ru:'Закрыть'},
+  back: {ja:'キーボードへ戻る',en:'Back to keyboard',hira:'きーぼーどへ もどる',ko:'키보드로 돌아가기','zh-CN':'返回键盘','zh-TW':'返回鍵盤',ar:'العودة إلى لوحة المفاتيح',eo:'Reiri al klavaro',mam:'Tzajb’ila teclado',th:'กลับไปยังแป้นพิมพ์',sw:'Rudi kwenye kibodi',es:'Volver al teclado',fr:'Retour au clavier',de:'Zur Tastatur',pt:'Voltar ao teclado',hi:'कीबोर्ड पर लौटें',id:'Kembali ke keyboard',vi:'Quay lại bàn phím',ru:'Вернуться к клавиатуре'},
+  width: {ja:'幅',en:'Width',hira:'はば',ko:'너비','zh-CN':'宽度','zh-TW':'寬度',ar:'العرض',eo:'Larĝo',mam:'Width',th:'ความกว้าง',sw:'Upana',es:'Ancho',fr:'Largeur',de:'Breite',pt:'Largura',hi:'चौड़ाई',id:'Lebar',vi:'Chiều rộng',ru:'Ширина'},
+  height: {ja:'高さ',en:'Height',hira:'たかさ',ko:'높이','zh-CN':'高度','zh-TW':'高度',ar:'الارتفاع',eo:'Alteco',mam:'Height',th:'ความสูง',sw:'Urefu',es:'Alto',fr:'Hauteur',de:'Höhe',pt:'Altura',hi:'ऊंचाई',id:'Tinggi',vi:'Chiều cao',ru:'Высота'},
+  background: {ja:'背景色',en:'Background color',hira:'はいけいしょく',ko:'배경색','zh-CN':'背景色','zh-TW':'背景色',ar:'لون الخلفية',eo:'Fona koloro',mam:'Background color',th:'สีพื้นหลัง',sw:'Rangi ya usuli',es:'Color de fondo',fr:'Couleur de fond',de:'Hintergrundfarbe',pt:'Cor de fundo',hi:'पृष्ठभूमि रंग',id:'Warna latar',vi:'Màu nền',ru:'Цвет фона'},
+  button: {ja:'ボタン色',en:'Button color',hira:'ぼたんしょく',ko:'버튼 색상','zh-CN':'按钮颜色','zh-TW':'按鈕顏色',ar:'لون الأزرار',eo:'Butona koloro',mam:'Button color',th:'สีปุ่ม',sw:'Rangi ya vitufe',es:'Color de botones',fr:'Couleur des boutons',de:'Tastenfarbe',pt:'Cor dos botões',hi:'बटन रंग',id:'Warna tombol',vi:'Màu nút',ru:'Цвет кнопок'},
+  freeResize: {ja:'右下のハンドルをマウス・タッチでドラッグしても変更できます。',en:'You can also drag the lower-right handle with a mouse or touch.',hira:'みぎしたの はんどるを まうす・たっちで どらっぐしても へんこうできます。',ko:'오른쪽 아래 핸들을 마우스나 터치로 드래그해도 변경할 수 있습니다.','zh-CN':'也可以用鼠标或触摸拖动右下角手柄调整。','zh-TW':'也可以用滑鼠或觸控拖曳右下角控制點調整。',ar:'يمكنك أيضاً السحب بالماوس أو اللمس من المقبض السفلي الأيمن.',eo:'Vi ankaŭ povas treni la malsupran dekstran tenilon per muso aŭ tuŝo.',mam:'También puedes mover el asa de abajo con mouse o touch.',th:'สามารถลากจุดจับมุมขวาล่างด้วยเมาส์หรือการสัมผัสได้',sw:'Unaweza pia kuburuta kishikio cha chini kulia kwa kipanya au mguso.',es:'También puedes arrastrar el asa inferior derecha con ratón o táctil.',fr:'Vous pouvez aussi faire glisser la poignée en bas à droite avec la souris ou le tactile.',de:'Sie können auch den Griff unten rechts per Maus oder Touch ziehen.',pt:'Você também pode arrastar a alça inferior direita com mouse ou toque.',hi:'आप नीचे दाईं ओर के हैंडल को माउस या टच से खींचकर भी बदल सकते हैं।',id:'Anda juga dapat menyeret pegangan kanan bawah dengan mouse atau sentuhan.',vi:'Bạn cũng có thể kéo tay cầm góc dưới bên phải bằng chuột hoặc cảm ứng.',ru:'Можно также перетаскивать маркер внизу справа мышью или касанием.'},
+  reset: {ja:'初期値に戻す',en:'Reset',hira:'しょきちに もどす',ko:'초기값으로','zh-CN':'恢复默认','zh-TW':'恢復預設',ar:'إعادة الضبط',eo:'Restarigi',mam:'Reset',th:'รีเซ็ต',sw:'Weka upya',es:'Restablecer',fr:'Réinitialiser',de:'Zurücksetzen',pt:'Redefinir',hi:'रीसेट',id:'Atur ulang',vi:'Đặt lại',ru:'Сбросить'},
+  save: {ja:'保存してキーボードへ',en:'Save and return',hira:'ほぞんして きーぼーどへ',ko:'저장하고 키보드로','zh-CN':'保存并返回键盘','zh-TW':'儲存並返回鍵盤',ar:'حفظ والعودة',eo:'Konservi kaj reiru',mam:'Save and return',th:'บันทึกและกลับไป',sw:'Hifadhi na urudi',es:'Guardar y volver',fr:'Enregistrer et revenir',de:'Speichern und zurück',pt:'Salvar e voltar',hi:'सहेजें और लौटें',id:'Simpan dan kembali',vi:'Lưu và quay lại',ru:'Сохранить и вернуться'}
+};
+function numericKbdText(key){ const map=NUMERIC_KBD_I18N[key]; if(!map) return key; return map[currentLang] || map.en || map.ja || key; }
+
+const NUMERIC_KBD_DEFAULTS = { width: 420, height: 360, background: '#1e1e1e', button: '#ffffff' };
+function loadNumericKeyboardSettings(){
+  try { const raw=JSON.parse(localStorage.getItem('airplane_game_numeric_keyboard_settings')||'{}'); return {...NUMERIC_KBD_DEFAULTS,...raw}; }
+  catch(e){ return {...NUMERIC_KBD_DEFAULTS}; }
+}
+function saveNumericKeyboardSettings(settings){
+  const normalized={ width:Math.max(220,Math.min(window.innerWidth-8,Number(settings.width)||NUMERIC_KBD_DEFAULTS.width)), height:Math.max(180,Math.min(window.innerHeight-8,Number(settings.height)||NUMERIC_KBD_DEFAULTS.height)), background: /^#[0-9a-fA-F]{6}$/.test(settings.background||'')?settings.background:NUMERIC_KBD_DEFAULTS.background, button: /^#[0-9a-fA-F]{6}$/.test(settings.button||'')?settings.button:NUMERIC_KBD_DEFAULTS.button };
+  localStorage.setItem('airplane_game_numeric_keyboard_settings',JSON.stringify(normalized));
+  return normalized;
+}
+function applyNumericKeyboardSettings(kbd, settings=loadNumericKeyboardSettings()){
+  if(!kbd) return settings;
+  const st=saveNumericKeyboardSettings(settings);
+  kbd.classList.add('custom-kbd-custom-size');
+  kbd.style.setProperty('--custom-kbd-width', `${st.width}px`);
+  kbd.style.setProperty('--custom-kbd-height', `${st.height}px`);
+  kbd.style.background=st.background;
+  kbd.querySelectorAll('.custom-kbd-btn:not(.btn-done), .morse-3d-btn.btn-space').forEach(el=>el.style.backgroundColor=st.button);
+  kbd.querySelectorAll('.custom-kbd-btn:not(.btn-done)').forEach(el=>el.style.color='#111');
+  return st;
+}
+function showNumericKeyboardSettings(){
+  const kbd=document.getElementById('customNumericKeyboard'); if(!kbd) return;
+  const st=loadNumericKeyboardSettings();
+  kbd.innerHTML=`<div class="custom-kbd-header"><span>⚙️ ${numericKbdText('settings')}</span><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="openCustomNumericKeyboard(activeCustomInput)">${numericKbdText('back')}</button></div>`;
+  const panel=document.createElement('div'); panel.className='custom-kbd-settings';
+  panel.innerHTML=`<div class="custom-kbd-setting-preview">${numericKbdText('freeResize')}</div>
+    <label class="custom-kbd-setting-row"><span>${numericKbdText('width')}</span><input id="customKbdWidthInput" type="number" min="220" step="1" value="${Math.round(st.width)}"></label>
+    <label class="custom-kbd-setting-row"><span>${numericKbdText('height')}</span><input id="customKbdHeightInput" type="number" min="180" step="1" value="${Math.round(st.height)}"></label>
+    <label class="custom-kbd-setting-row"><span>${numericKbdText('background')}</span><div class="custom-kbd-setting-color"><input id="customKbdBgColor" type="color" value="${st.background}"><input id="customKbdBgHex" type="text" value="${st.background}" maxlength="7" inputmode="text"></div></label>
+    <label class="custom-kbd-setting-row"><span>${numericKbdText('button')}</span><div class="custom-kbd-setting-color"><input id="customKbdBtnColor" type="color" value="${st.button}"><input id="customKbdBtnHex" type="text" value="${st.button}" maxlength="7" inputmode="text"></div></label>
+    <div class="custom-kbd-setting-buttons"><button type="button" class="btn btn-outline" id="customKbdResetBtn">${numericKbdText('reset')}</button><button type="button" class="btn btn-primary" id="customKbdSaveBtn">${numericKbdText('save')}</button></div>`;
+  kbd.appendChild(panel);
+  const live=()=>{ const next={width:Number(document.getElementById('customKbdWidthInput').value),height:Number(document.getElementById('customKbdHeightInput').value),background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim()}; applyNumericKeyboardSettings(kbd,next); };
+  ['customKbdWidthInput','customKbdHeightInput','customKbdBgHex','customKbdBtnHex'].forEach(id=>document.getElementById(id).addEventListener('input',live));
+  const bindColor=(colorId,hexId)=>document.getElementById(colorId).addEventListener('input',e=>{document.getElementById(hexId).value=e.target.value;live();});
+  bindColor('customKbdBgColor','customKbdBgHex'); bindColor('customKbdBtnColor','customKbdBtnHex');
+  document.getElementById('customKbdResetBtn').onclick=()=>{localStorage.removeItem('airplane_game_numeric_keyboard_settings');showNumericKeyboardSettings();};
+  document.getElementById('customKbdSaveBtn').onclick=()=>{ saveNumericKeyboardSettings({width:document.getElementById('customKbdWidthInput').value,height:document.getElementById('customKbdHeightInput').value,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim()}); openCustomNumericKeyboard(activeCustomInput); };
+  applyNumericKeyboardSettings(kbd,st);
+  attachNumericKeyboardResizeHandle(kbd);
+}
+function attachNumericKeyboardResizeHandle(kbd){
+  let h=kbd.querySelector('.custom-kbd-resize-handle'); if(!h){h=document.createElement('div');h.className='custom-kbd-resize-handle';h.title=numericKbdText('freeResize');kbd.appendChild(h);}
+  h.onpointerdown=(e)=>{ e.preventDefault(); h.setPointerCapture?.(e.pointerId); const startX=e.clientX,startY=e.clientY,st=loadNumericKeyboardSettings(); const move=ev=>{ const next={...st,width:st.width+(startX-ev.clientX)*2,height:st.height+(startY-ev.clientY)}; applyNumericKeyboardSettings(kbd,next); }; const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); h.removeEventListener('pointercancel',up); }; h.addEventListener('pointermove',move);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up); };
+}
+
 let activeCustomInput = null;
 let currentMorseBuffer = '';
 
@@ -4633,7 +4801,7 @@ function openCustomNumericKeyboard(input) {
 
   const header = document.createElement('div');
   header.className = 'custom-kbd-header';
-  header.innerHTML = `<span>⌨️ ${mode.toUpperCase()} KEYBOARD</span><button class="btn btn-outline" style="padding:2px 10px;" onclick="closeCustomNumericKeyboard()">✕ 閉じる</button>`;
+  header.innerHTML = `<span>⌨️ ${numericKbdText('title')} — ${mode.toUpperCase()}</span><span style="display:flex;gap:6px;"><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="showNumericKeyboardSettings()">⚙️ ${numericKbdText('settings')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="closeCustomNumericKeyboard()">✕ ${numericKbdText('close')}</button></span>`;
   kbd.appendChild(header);
 
   if (mode === 'morse') {
@@ -4734,6 +4902,8 @@ function openCustomNumericKeyboard(input) {
     kbd.appendChild(grid);
   }
 
+  applyNumericKeyboardSettings(kbd);
+  attachNumericKeyboardResizeHandle(kbd);
   kbd.style.display = 'block';
 }
 
@@ -5026,6 +5196,9 @@ function changeLanguage(lang) {
   if (typeof renderPedometerLegend === 'function') renderPedometerLegend();
   if (typeof updateCoinUsageGraphMeta === 'function') updateCoinUsageGraphMeta();
   if (typeof drawCoinUsageGraph === 'function') drawCoinUsageGraph();
+
+  // 再描画後も現在選択中のフォントを必ず再適用する。
+  if (typeof applyFontSettings === 'function') applyFontSettings();
 
   // 言語切替で再描画された数字も、現在の数字体系へ必ず再適用する。
   refreshScriptDisplayAfterRender();
@@ -7069,16 +7242,67 @@ async function ensureActiveCustomFontLoaded(){
   }
 }
 
-function applyFontSettings() {
-  const family = document.getElementById('cfgFontFamily').value;
-  const sizeNum = document.getElementById('cfgFontSizeNum').value;
-  const sizeUnit = document.getElementById('cfgFontSizeUnit').value;
-  const customName = getActiveCustomFontFamily();
-  const fontStr = (family === 'mincho') ? '"Yu Mincho", "Hiragino Mincho ProN", serif' : (family === 'custom' ? `"${customName}", sans-serif` : '"Hiragino Sans", "Meiryo", sans-serif');
-  document.documentElement.style.setProperty('--font-family', fontStr);
-  document.documentElement.style.setProperty('--font-size', `${sizeNum}${sizeUnit}`);
-  if (family === 'custom') ensureActiveCustomFontLoaded();
+async function applyFontSettings() {
+  const familyEl = document.getElementById('cfgFontFamily');
+  const sizeEl = document.getElementById('cfgFontSizeNum');
+  const unitEl = document.getElementById('cfgFontSizeUnit');
+  if (!familyEl || !sizeEl || !unitEl) return;
+
+  const family = familyEl.value;
+  const sizeNum = sizeEl.value;
+  const sizeUnit = unitEl.value;
+  const root = document.documentElement;
+
+  // 1. 現在選択されているフォントを確定する。
+  let fontStr;
+  if (family === 'mincho') {
+    fontStr = '"Yu Mincho", "Hiragino Mincho ProN", serif';
+  } else if (family === 'custom') {
+    // 2. カスタムフォントはロード完了を待ってから適用する。
+    try {
+      await ensureActiveCustomFontLoaded();
+    } catch (_) {}
+    const customName = getActiveCustomFontFamily();
+    fontStr = `"${customName}", sans-serif`;
+  } else {
+    fontStr = '"Hiragino Sans", "Meiryo", sans-serif';
+  }
+
+  // 3. CSS変数を現在の設定で更新する。
+  root.style.setProperty('--font-family', fontStr);
+  root.style.setProperty('--font-size', `${sizeNum}${sizeUnit}`);
+  root.dataset.fontFamilySync = family;
+
+  // 5. 数字体系専用フォントが必要なモードだけは既存の専用CSSを優先する。
+  //    それ以外の通常UIはユーザーが選択したフォントを必ず使用する。
+  const scriptMode = root.dataset.scriptMode || currentScriptMode || 'standard';
+  const specialSelectors = [
+    '.game-hud-score',
+    '.game-hud-timer',
+    '.flight-hud-clock',
+    '.morse-preview-display',
+    '.custom-numeral-render',
+    '.mayan-script-rendered'
+  ];
+  const numeralFontMode = (scriptMode === 'mayan' || scriptMode === 'mayan-numerals' || scriptMode === 'kaktovik' || scriptMode === 'toto');
+
+  // 4. 通常要素へ現在のフォントを同期する。
+  document.querySelectorAll('body, body input, body select, body button, body textarea, body option, body label, body p, body span, body div, body td, body th, body h1, body h2, body h3, body h4, body h5, body h6, body a').forEach(el => {
+    if (numeralFontMode && (specialSelectors.some(sel => el.matches(sel)) || specialSelectors.some(sel => el.closest(sel)))) return;
+    // kaktovik/toto/mayan のCSSが body 等に !important で指定される場合も、
+    // 数字専用表示以外は選択中フォントへ戻す。
+    el.style.setProperty('font-family', 'var(--font-family)', 'important');
+  });
+
+  // 数字体系変更・言語変更などで新しく生成された要素にも直ちに同期する。
+  if (numeralFontMode) {
+    document.querySelectorAll('body input, body select, body button, body textarea, body label, body p, body span, body div, body td, body th, body h1, body h2, body h3, body h4, body h5, body h6, body a').forEach(el => {
+      const isSpecial = specialSelectors.some(sel => el.matches(sel)) || specialSelectors.some(sel => el.closest(sel));
+      if (!isSpecial) el.style.setProperty('font-family', 'var(--font-family)', 'important');
+    });
+  }
 }
+
 
 function toggleSearchBarVisibility() {
   const showGame = document.getElementById('cfgShowSearchGame').checked;
