@@ -1505,6 +1505,83 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
   opacity:1 !important;
 }
 </style>
+<style id="numeric-keyboard-vertical-scroll-fix">
+/* キーボードを小さくして内容が高さを超えても、縦方向に最後まで操作できるようにする */
+#customNumericKeyboard.custom-kbd-custom-size .custom-kbd-grid {
+  min-height: 0 !important;
+  max-height: calc(100% - 48px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  align-content: start;
+}
+#customNumericKeyboard.custom-kbd-custom-size.custom-kbd-shrink-buttons .custom-kbd-grid {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+#customNumericKeyboard.custom-kbd-custom-size.custom-kbd-scroll-buttons .custom-kbd-grid {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+}
+#customNumericKeyboard.custom-kbd-custom-size .morse-3d-panel {
+  min-height: 0 !important;
+  max-height: calc(100% - 48px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+#customNumericKeyboard.custom-kbd-mapping-open {
+  overflow: hidden !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel {
+  min-height: 0 !important;
+  height: 100% !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-scroll {
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table {
+  min-width: 100% !important;
+  width: max-content !important;
+}
+</style>
+
+<style id="numeric-mapping-table-visibility-fix">
+/* 対応表が縦につぶれないよう、表の表示領域を確保して内部スクロール */
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-panel {
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-scroll {
+  flex:1 1 240px !important;
+  min-height:180px !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:auto !important;
+  flex-shrink:0 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table {
+  height:auto !important;
+  min-height:180px !important;
+  border-collapse:collapse !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table th,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table td {
+  min-height:42px !important;
+  height:42px !important;
+  padding:8px 10px !important;
+  line-height:1.35 !important;
+  vertical-align:middle !important;
+  white-space:nowrap !important;
+}
+</style>
 </head>
 <body>
 <div id="mouseStalker">★</div>
@@ -2788,6 +2865,11 @@ const AUTHOR_NAMES = {
 
 
 const KOUSHIN_DATA = [
+  { pinned:false, date:'2026/10/01 21:49', desc:{
+    ja:'数字キーボードを小さくしたときも内容が途切れず縦スクロールできるようにし、対応表も縦・横スクロールに対応しました。キーボード設定を.itsmeへ明示保存・復元できるようにし、点字数字の入力時にクリック音ではなく「ピー」のような専用電子音を鳴らせる設定を追加しました。音量は端末とアプリの音量設定に従い、消音も可能です。',
+    en:'Made the numeric keyboard vertically scrollable when its resized content exceeds the visible area, and added vertical and horizontal scrolling to the Mapping Table. Numeric keyboard settings are now explicitly saved and restored in .itsme backups, and a setting was added for a dedicated electronic beep-like sound when entering Braille digits instead of a click sound. Volume follows the device and app volume settings, with mute available.',
+    hira:'すうじ きーぼーどを ちいさくした ときも ないようが きれず たて すくろーるできるようにし、たいおうひょうも たて・よこ すくろーるに たいおうしました。きーぼーど せっていを .itsmeへ めいじ ほぞん・ふくげんできるようにし、てんじ すうじの にゅうりょくじに くりっくおんではなく「ぴー」のような せんよう でんしおんを ならせる せっていを ついかしました。おんりょうは たんまつと あぷりの おんりょう せっていに したがい、しょうおんも できます。'
+  } },
   { pinned:false, date:'2026/10/01 21:23', desc:{
     ja:'数字キーボードの対応表タブを追加しました。選択中の数字プリセットに応じて通常数字との対応表を自動更新でき、横スクロール、セル選択による入力候補、コピー、通常数字から選択した数字形式への変換、入力欄への打ち込み、CSV・TSV・JSON・HTML・TXT形式でのダウンロード、多言語表示に対応しました。',
     en:'Added a Mapping Table tab to the numeric keyboard. The table automatically updates to match the selected numeral preset, supports horizontal scrolling, selecting cells as input candidates, copying, converting standard digits to the selected numeral format, inserting into input fields, downloading as CSV, TSV, JSON, HTML, or TXT, and multilingual display.',
@@ -5045,6 +5127,7 @@ const NUMERIC_KBD_I18N = {
   width: {ja:'幅',en:'Width',hira:'はば',ko:'너비','zh-CN':'宽度','zh-TW':'寬度',ar:'العرض',eo:'Larĝo',mam:'Width',th:'ความกว้าง',sw:'Upana',es:'Ancho',fr:'Largeur',de:'Breite',pt:'Largura',hi:'चौड़ाई',id:'Lebar',vi:'Chiều rộng',ru:'Ширина'},
   height: {ja:'高さ',en:'Height',hira:'たかさ',ko:'높이','zh-CN':'高度','zh-TW':'高度',ar:'الارتفاع',eo:'Alteco',mam:'Height',th:'ความสูง',sw:'Urefu',es:'Alto',fr:'Hauteur',de:'Höhe',pt:'Altura',hi:'ऊंचाई',id:'Tinggi',vi:'Chiều cao',ru:'Высота'},
   noKeyboard: {ja:'キーボードにならないようにする',en:'Do not show the keyboard automatically',hira:'きーぼーどに ならないようにする',ko:'키보드를 자동으로 표시하지 않기','zh-CN':'不自动显示键盘','zh-TW':'不要自動顯示鍵盤',ar:'عدم إظهار لوحة المفاتيح تلقائياً',eo:'Ne montri la klavaron aŭtomate',mam:'Do not show keyboard automatically',th:'ไม่แสดงแป้นพิมพ์อัตโนมัติ',sw:'Usionyeshe kibodi kiotomatiki',es:'No mostrar el teclado automáticamente',fr:'Ne pas afficher automatiquement le clavier',de:'Tastatur nicht automatisch anzeigen',pt:'Não mostrar o teclado automaticamente',hi:'कीबोर्ड अपने आप न दिखाएँ',id:'Jangan tampilkan keyboard otomatis',vi:'Không tự động hiển thị bàn phím',ru:'Не показывать клавиатуру автоматически'},
+  brailleSound: {ja:'点字入力音',en:'Braille key sound',hira:'てんじ にゅうりょくおん',ko:'점자 입력음','zh-CN':'盲文输入音','zh-TW':'盲文輸入音',ar:'صوت إدخال برايل',eo:'Sono de brajla enigo',mam:'Braille key sound',th:'เสียงป้อนอักษรเบรลล์',sw:'Sauti ya kuingiza Braille',es:'Sonido de entrada braille',fr:'Son de saisie braille',de:'Braille-Eingabeton',pt:'Som de entrada Braille',hi:'ब्रेल इनपुट ध्वनि',id:'Suara input Braille',vi:'Âm thanh nhập Braille',ru:'Звук ввода Брайля'},
   showKeyboard: {ja:'キーボード表示',en:'Show keyboard',hira:'きーぼーど ひょうじ',ko:'키보드 표시','zh-CN':'显示键盘','zh-TW':'顯示鍵盤',ar:'إظهار لوحة المفاتيح',eo:'Montri klavaron',mam:'Show keyboard',th:'แสดงแป้นพิมพ์',sw:'Onyesha kibodi',es:'Mostrar teclado',fr:'Afficher le clavier',de:'Tastatur anzeigen',pt:'Mostrar teclado',hi:'कीबोर्ड दिखाएँ',id:'Tampilkan keyboard',vi:'Hiển thị bàn phím',ru:'Показать клавиатуру'},
   shrinkButtons: {ja:'ボタンをキーボードサイズに合わせて縮小',en:'Shrink buttons with keyboard size',hira:'ぼたんを きーぼーど さいずに あわせて しゅくしょう',ko:'키보드를 줄일 때 버튼도 축소', 'zh-CN':'按钮随键盘尺寸缩小', 'zh-TW':'按鈕隨鍵盤尺寸縮小', ar:'تصغير الأزرار مع حجم لوحة المفاتيح', eo:'Malgrandigi butonojn kun la klavaro', mam:'Shrink buttons with keyboard size', th:'ย่อปุ่มตามขนาดแป้นพิมพ์', sw:'Punguza vitufe pamoja na kibodi', es:'Reducir botones con el teclado', fr:'Réduire les boutons avec le clavier', de:'Tasten mit der Tastatur verkleinern', pt:'Reduzir botões com o teclado', hi:'कीबोर्ड के साथ बटन छोटे करें', id:'Perkecil tombol bersama keyboard', vi:'Thu nhỏ nút theo kích thước bàn phím', ru:'Уменьшать кнопки вместе с клавиатурой'},
   background: {ja:'背景色',en:'Background color',hira:'はいけいしょく',ko:'배경색','zh-CN':'背景色','zh-TW':'背景色',ar:'لون الخلفية',eo:'Fona koloro',mam:'Background color',th:'สีพื้นหลัง',sw:'Rangi ya usuli',es:'Color de fondo',fr:'Couleur de fond',de:'Hintergrundfarbe',pt:'Cor de fundo',hi:'पृष्ठभूमि रंग',id:'Warna latar',vi:'Màu nền',ru:'Цвет фона'},
@@ -5080,7 +5163,7 @@ const NUMERIC_KBD_I18N = {
 function numericKbdText(key){ const map=NUMERIC_KBD_I18N[key]; if(!map) return key; return map[currentLang] || map.en || map.ja || key; }
 function numericKbdModeText(mode){ const map=NUMERIC_KBD_I18N.modes || {}; const all=map[currentLang] || map.en || map.ja || ''; const names=all.split(/, /); const order=['standard','roman','kanji','devanagari','eastern-arabic','thai','myanmar','khmer','geez','suzhou','ol-chiki','kannada','meetei','kaktovik','toto','braille','morse']; const i=order.indexOf(mode); return i>=0 ? names[i] || mode : mode; }
 
-const NUMERIC_KBD_DEFAULTS = { width: 420, height: 360, background: '#1e1e1e', button: '#ffffff', x: null, y: null, shrinkButtons: false, noKeyboard: false };
+const NUMERIC_KBD_DEFAULTS = { width: 420, height: 360, background: '#1e1e1e', button: '#ffffff', x: null, y: null, shrinkButtons: false, noKeyboard: false, brailleSound: true };
 function loadNumericKeyboardSettings(){
   try { const raw=JSON.parse(localStorage.getItem('airplane_game_numeric_keyboard_settings')||'{}'); return {...NUMERIC_KBD_DEFAULTS,...raw}; }
   catch(e){ return {...NUMERIC_KBD_DEFAULTS}; }
@@ -5095,7 +5178,7 @@ function saveNumericKeyboardSettings(settings){
   const height=Math.max(180,Math.min(Math.max(180,window.innerHeight-8),Number(settings.height)||NUMERIC_KBD_DEFAULTS.height));
   const hasPosition=Number.isFinite(Number(settings.x)) && Number.isFinite(Number(settings.y));
   const pos=hasPosition ? clampNumericKeyboardPosition(Number(settings.x),Number(settings.y),width,height) : {x:null,y:null};
-  const normalized={ width, height, x:pos.x, y:pos.y, background: /^#[0-9a-fA-F]{6}$/.test(settings.background||'')?settings.background:NUMERIC_KBD_DEFAULTS.background, button: /^#[0-9a-fA-F]{6}$/.test(settings.button||'')?settings.button:NUMERIC_KBD_DEFAULTS.button, shrinkButtons: !!settings.shrinkButtons, noKeyboard: !!settings.noKeyboard };
+  const normalized={ width, height, x:pos.x, y:pos.y, background: /^#[0-9a-fA-F]{6}$/.test(settings.background||'')?settings.background:NUMERIC_KBD_DEFAULTS.background, button: /^#[0-9a-fA-F]{6}$/.test(settings.button||'')?settings.button:NUMERIC_KBD_DEFAULTS.button, shrinkButtons: !!settings.shrinkButtons, noKeyboard: !!settings.noKeyboard, brailleSound: settings.brailleSound !== false };
   localStorage.setItem('airplane_game_numeric_keyboard_settings',JSON.stringify(normalized));
   return normalized;
 }
@@ -5130,16 +5213,17 @@ function showNumericKeyboardSettings(){
     <label class="custom-kbd-setting-row"><span>${numericKbdText('height')}</span><input id="customKbdHeightInput" type="number" min="180" step="1" value="${Math.round(st.height)}"></label>
     <label class="custom-kbd-setting-row custom-kbd-checkbox-row"><span>${numericKbdText('shrinkButtons')}</span><input id="customKbdShrinkButtons" type="checkbox" ${st.shrinkButtons ? 'checked' : ''}></label>
     <label class="custom-kbd-setting-row custom-kbd-checkbox-row"><span>${numericKbdText('noKeyboard')}</span><input id="customKbdNoKeyboard" type="checkbox" ${st.noKeyboard ? 'checked' : ''}></label>
+    <label class="custom-kbd-setting-row custom-kbd-checkbox-row"><span>${numericKbdText('brailleSound')}</span><input id="customKbdBrailleSound" type="checkbox" ${st.brailleSound !== false ? 'checked' : ''}></label>
     <label class="custom-kbd-setting-row"><span>${numericKbdText('background')}</span><div class="custom-kbd-setting-color"><input id="customKbdBgColor" type="color" value="${st.background}"><input id="customKbdBgHex" type="text" value="${st.background}" maxlength="7" inputmode="text"></div></label>
     <label class="custom-kbd-setting-row"><span>${numericKbdText('button')}</span><div class="custom-kbd-setting-color"><input id="customKbdBtnColor" type="color" value="${st.button}"><input id="customKbdBtnHex" type="text" value="${st.button}" maxlength="7" inputmode="text"></div></label>
     <div class="custom-kbd-setting-buttons"><button type="button" class="btn btn-outline" id="customKbdResetBtn">${numericKbdText('reset')}</button><button type="button" class="btn btn-primary" id="customKbdSaveBtn">${numericKbdText('save')}</button></div>`;
   kbd.appendChild(panel);
-  const live=()=>{ const cur=loadNumericKeyboardSettings(); const next={width:Number(document.getElementById('customKbdWidthInput').value),height:Number(document.getElementById('customKbdHeightInput').value),x:cur.x,y:cur.y,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked,noKeyboard:document.getElementById('customKbdNoKeyboard').checked}; applyNumericKeyboardSettings(kbd,next); };
-  ['customKbdWidthInput','customKbdHeightInput','customKbdBgHex','customKbdBtnHex','customKbdShrinkButtons','customKbdNoKeyboard'].forEach(id=>document.getElementById(id).addEventListener('input',live));
+  const live=()=>{ const cur=loadNumericKeyboardSettings(); const next={width:Number(document.getElementById('customKbdWidthInput').value),height:Number(document.getElementById('customKbdHeightInput').value),x:cur.x,y:cur.y,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked,noKeyboard:document.getElementById('customKbdNoKeyboard').checked,brailleSound:document.getElementById('customKbdBrailleSound').checked}; applyNumericKeyboardSettings(kbd,next); };
+  ['customKbdWidthInput','customKbdHeightInput','customKbdBgHex','customKbdBtnHex','customKbdShrinkButtons','customKbdNoKeyboard','customKbdBrailleSound'].forEach(id=>document.getElementById(id).addEventListener('input',live));
   const bindColor=(colorId,hexId)=>document.getElementById(colorId).addEventListener('input',e=>{document.getElementById(hexId).value=e.target.value;live();});
   bindColor('customKbdBgColor','customKbdBgHex'); bindColor('customKbdBtnColor','customKbdBtnHex');
   document.getElementById('customKbdResetBtn').onclick=()=>{localStorage.removeItem('airplane_game_numeric_keyboard_settings');showNumericKeyboardSettings();};
-  document.getElementById('customKbdSaveBtn').onclick=()=>{ saveNumericKeyboardSettings({width:document.getElementById('customKbdWidthInput').value,height:document.getElementById('customKbdHeightInput').value,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked,noKeyboard:document.getElementById('customKbdNoKeyboard').checked}); updateNumericKeyboardNoAutoShowUI(); openCustomNumericKeyboard(activeCustomInput); };
+  document.getElementById('customKbdSaveBtn').onclick=()=>{ saveNumericKeyboardSettings({width:document.getElementById('customKbdWidthInput').value,height:document.getElementById('customKbdHeightInput').value,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked,noKeyboard:document.getElementById('customKbdNoKeyboard').checked,brailleSound:document.getElementById('customKbdBrailleSound').checked}); updateNumericKeyboardNoAutoShowUI(); openCustomNumericKeyboard(activeCustomInput); };
   applyNumericKeyboardSettings(kbd,st);
   attachNumericKeyboardResizeHandle(kbd);
 }
@@ -5490,6 +5574,7 @@ function openCustomNumericKeyboard(input) {
 
 function appendCustomKbdChar(stdDigit, scriptChar) {
   if (!activeCustomInput) return;
+  if (currentScriptMode === 'braille' && loadNumericKeyboardSettings().brailleSound !== false) playBrailleInputSound();
   let std = activeCustomInput.getAttribute('data-std-val') || '';
   if (currentScriptMode === 'kaktovik') {
     const current = std === '' ? 0n : BigInt(std);
@@ -5969,22 +6054,22 @@ function triggerHaptic(pattern = 15) {
   }
 }
 
-function playClickSound() {
+function playBrailleInputSound() {
   triggerHaptic(12);
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(1200, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.03);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.09);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.11);
     osc.connect(gain);
     gain.connect(masterGainNode || ctx.destination);
     osc.start();
-    osc.stop(ctx.currentTime + 0.035);
+    osc.stop(ctx.currentTime + 0.12);
   } catch (e) {}
 }
 
@@ -9202,6 +9287,8 @@ async function buildCompleteBackupPayload(){
     selectedGame: currentGame,
     language: currentLang,
     scriptMode: currentScriptMode,
+    numericKeyboardSettings: loadNumericKeyboardSettings(),
+    numericMappingState: loadNumericMappingState(),
     scores: memoryStore.scores,
     coins: memoryStore.coins,
     coinBankBalance: memoryStore.coinBankBalance,
@@ -9588,6 +9675,15 @@ async function handleRestoreFile(e) {
       if (data.storage) {
         if (data.storage.localStorage) storageRestore(localStorage, data.storage.localStorage);
         if (data.storage.sessionStorage) storageRestore(sessionStorage, data.storage.sessionStorage);
+      }
+
+      // 数字キーボード設定・対応表状態の復元（.itsmeに明示保存された設定を優先）
+      if (data.numericKeyboardSettings) {
+        try { saveNumericKeyboardSettings(data.numericKeyboardSettings); } catch (_) {}
+        updateNumericKeyboardNoAutoShowUI();
+      }
+      if (data.numericMappingState) {
+        try { saveNumericMappingState(data.numericMappingState); } catch (_) {}
       }
 
       // 2. メモリ変数の復元
