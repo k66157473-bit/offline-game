@@ -1188,16 +1188,6 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
 #customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn { font-size:clamp(10px, calc(var(--custom-kbd-width,420px) / 24), 20px); padding:clamp(4px, calc(var(--custom-kbd-height,360px) / 38), 12px) 2px; }
 #customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn.btn-action { font-size:clamp(9px, calc(var(--custom-kbd-width,420px) / 32), 14px); }
 
-/* スマホ用電卓：左下の\を長押ししたときだけ移動する。 */
-#airplaneMiniCalculator { position:fixed; left:18px; bottom:18px; width:250px; max-width:calc(100vw - 36px); z-index:2147483600; background:rgba(25,25,25,.97); color:#fff; border:2px solid var(--accent-pink,#ff4081); border-radius:14px; box-shadow:0 8px 30px rgba(0,0,0,.4); overflow:hidden; touch-action:none; }
-#airplaneMiniCalculator .calc-display { width:100%; box-sizing:border-box; padding:12px; font-size:22px; text-align:right; background:#111; color:#fff; border:0; outline:0; }
-#airplaneMiniCalculator .calc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:7px; }
-#airplaneMiniCalculator .calc-grid button { min-height:42px; font-size:16px; border-radius:8px; border:1px solid #666; background:#eee; color:#111; user-select:none; }
-#airplaneMiniCalculator .calc-move-handle { position:absolute; left:0; bottom:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff; background:#444; border-radius:0 8px 0 0; user-select:none; touch-action:none; }
-#airplaneMiniCalculator.calc-moving { opacity:.9; }
-@media (min-width:601px){ #airplaneMiniCalculator{ display:none; } }
-@media (max-width:600px){ #airplaneMiniCalculator{ width:220px; } #airplaneMiniCalculator .calc-grid button{min-height:38px;} }
-
 /* カクトビックのキーボードボタンにも埋め込み専用フォントを適用する。 */
 #customNumericKeyboard.kaktovik-mode .custom-kbd-btn:not(.btn-action) {
   font-family: 'KaktovikNumeralsEmbedded', 'Segoe UI Symbol', 'Segoe UI Historic', sans-serif !important;
@@ -1237,6 +1227,39 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
   color: #fff !important;
   border-color: #c2185b;
   box-shadow: 0 4px #880e4f;
+}
+
+
+/* ─── スマホでも押しやすい数字キーボード操作補強 ─── */
+#customNumericKeyboard .custom-kbd-header {
+  min-height: 44px;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#customNumericKeyboard .custom-kbd-btn,
+#customNumericKeyboard .morse-3d-btn {
+  min-width: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#customNumericKeyboard .custom-kbd-resize-handle {
+  width: 44px;
+  height: 44px;
+  right: 0;
+  bottom: 0;
+  touch-action: none;
+}
+#customNumericKeyboard .custom-kbd-grid {
+  padding: 2px;
+  box-sizing: border-box;
+}
+@media (pointer: coarse) {
+  #customNumericKeyboard .custom-kbd-grid { gap: 7px; }
+  #customNumericKeyboard .custom-kbd-btn,
+  #customNumericKeyboard .morse-3d-btn { min-width: 46px; min-height: 46px; }
 }
 
 /* ─── 数字キーボード・カスタマイズ ─── */
@@ -1663,18 +1686,6 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
 
 <main>
   <!-- 1. ゲームタブ -->
-  <div id="airplaneMiniCalculator" aria-label="Calculator">
-  <input id="miniCalcDisplay" class="calc-display" value="0" readonly>
-  <div class="calc-grid">
-    <button type="button" onclick="miniCalcPress('C')">C</button><button type="button" onclick="miniCalcPress('⌫')">⌫</button><button type="button" onclick="miniCalcPress('/')">÷</button><button type="button" onclick="miniCalcPress('*')">×</button>
-    <button type="button" onclick="miniCalcPress('7')">7</button><button type="button" onclick="miniCalcPress('8')">8</button><button type="button" onclick="miniCalcPress('9')">9</button><button type="button" onclick="miniCalcPress('-')">−</button>
-    <button type="button" onclick="miniCalcPress('4')">4</button><button type="button" onclick="miniCalcPress('5')">5</button><button type="button" onclick="miniCalcPress('6')">6</button><button type="button" onclick="miniCalcPress('+')">+</button>
-    <button type="button" onclick="miniCalcPress('1')">1</button><button type="button" onclick="miniCalcPress('2')">2</button><button type="button" onclick="miniCalcPress('3')">3</button><button type="button" onclick="miniCalcPress('=')">=</button>
-    <button type="button" onclick="miniCalcPress('0')" style="grid-column:span 2;">0</button><button type="button" onclick="miniCalcPress('.')">.</button>
-  </div>
-  <div id="miniCalcMoveHandle" class="calc-move-handle" aria-label="">\</div>
-</div>
-
 <section id="gameTab" class="tab-content active">
     <div class="game-controls-bar">
       <input type="text" id="gameSearchInput" class="search-input" data-i18n-ph="ph_search_game" placeholder="ゲームを検索..." oninput="filterGames()">
@@ -2865,12 +2876,17 @@ const AUTHOR_NAMES = {
 
 
 const KOUSHIN_DATA = [
-  { pinned:false, date:'2026/10/01 21:49', desc:{
+  { pinned:false, date:'2026/10/01 21:50', desc:{
+    ja:'スマホ版に表示されていた電卓を、すべての端末から削除しました。電卓の表示・入力・移動機能を削除し、数字キーボードなど既存の入力機能はそのまま維持しています。',
+    en:'Removed the calculator that was displayed on the mobile version from all devices. The calculator display, input, and movement functions were removed while existing input features such as the numeric keyboard remain unchanged.',
+    hira:'すまほばんに ひょうじされていた でんたくを、すべての たんまつから さくじょしました。でんたくの ひょうじ・にゅうりょく・いどう きのうを さくじょし、すうじ きーぼーどなど きぞんの にゅうりょく きのうは そのまま いじしました。'
+  }},
+{ pinned:false, date:'2026/10/01 21:43', desc:{
     ja:'数字キーボードを小さくしたときも内容が途切れず縦スクロールできるようにし、対応表も縦・横スクロールに対応しました。キーボード設定を.itsmeへ明示保存・復元できるようにし、点字数字の入力時にクリック音ではなく「ピー」のような専用電子音を鳴らせる設定を追加しました。音量は端末とアプリの音量設定に従い、消音も可能です。',
     en:'Made the numeric keyboard vertically scrollable when its resized content exceeds the visible area, and added vertical and horizontal scrolling to the Mapping Table. Numeric keyboard settings are now explicitly saved and restored in .itsme backups, and a setting was added for a dedicated electronic beep-like sound when entering Braille digits instead of a click sound. Volume follows the device and app volume settings, with mute available.',
     hira:'すうじ きーぼーどを ちいさくした ときも ないようが きれず たて すくろーるできるようにし、たいおうひょうも たて・よこ すくろーるに たいおうしました。きーぼーど せっていを .itsmeへ めいじ ほぞん・ふくげんできるようにし、てんじ すうじの にゅうりょくじに くりっくおんではなく「ぴー」のような せんよう でんしおんを ならせる せっていを ついかしました。おんりょうは たんまつと あぷりの おんりょう せっていに したがい、しょうおんも できます。'
   } },
-  { pinned:false, date:'2026/10/01 21:23', desc:{
+  { pinned:false, date:'2026/10/01 20:25', desc:{
     ja:'数字キーボードの対応表タブを追加しました。選択中の数字プリセットに応じて通常数字との対応表を自動更新でき、横スクロール、セル選択による入力候補、コピー、通常数字から選択した数字形式への変換、入力欄への打ち込み、CSV・TSV・JSON・HTML・TXT形式でのダウンロード、多言語表示に対応しました。',
     en:'Added a Mapping Table tab to the numeric keyboard. The table automatically updates to match the selected numeral preset, supports horizontal scrolling, selecting cells as input candidates, copying, converting standard digits to the selected numeral format, inserting into input fields, downloading as CSV, TSV, JSON, HTML, or TXT, and multilingual display.',
     hira:'すうじ きーぼーどの たいおうひょう たぶを ついかしました。せんたくちゅうの すうじ ぷりせっとに おうじて つうじょう すうじとの たいおうひょうを じどう こうしんでき、よこ すくろーる、せる せんたくによる にゅうりょく こうほ、こぴー、つうじょう すうじから せんたくした すうじ けいしきへの へんかん、にゅうりょくらんへの うちこみ、CSV・TSV・JSON・HTML・TXT けいしきでの だうんろーど、たげんご ひょうじに たいおうしました。',
@@ -2891,7 +2907,7 @@ const KOUSHIN_DATA = [
     vi:'Đã thêm tab Bảng đối chiếu vào bàn phím số. Bảng tự động cập nhật theo hệ số đã chọn và hỗ trợ cuộn ngang, chọn ô làm nội dung chờ nhập, sao chép, chuyển chữ số chuẩn sang định dạng đã chọn, chèn vào ô nhập, tải xuống CSV, TSV, JSON, HTML và TXT, cùng hiển thị đa ngôn ngữ.',
     ru:'В цифровую клавиатуру добавлена вкладка таблицы соответствий. Таблица автоматически обновляется в соответствии с выбранной системой чисел и поддерживает горизонтальную прокрутку, выбор ячейки как кандидата для ввода, копирование, преобразование обычных цифр в выбранный формат, вставку в поля ввода, загрузку в CSV, TSV, JSON, HTML и TXT, а также многоязычное отображение.'
   } },
-  { pinned:false, date:'2026/10/01 19:02', desc:{ ja:'すべての日付検索の選択解除、数字キーボードのサイズ・ボタン縮小設定と画面内配置、スマホ操作の安定化、フライトタイマーの表示不具合修正、メモタブの機内アナウンス聞き取りメモ、データ削除処理を追加・修正しました。', en:'Added date-selection clear buttons to all date searches, keyboard size/button scaling and in-screen positioning, stabilized mobile operation, fixed the flight timer display, added an in-flight announcement memo pad to the Memo tab, and fixed data deletion.', hira:'すべての ひづけ けんさくの せんたく かいじょ、すうじ きーぼーどの さいず・ぼたん しゅくしょう せっていと がめんない はいち、すまほ そうさの あんていか、ふらいと たいまーの ひょうじ ふぐあい しゅうせい、めも たぶの きない あんない ききとり めも、でーた さくじょ しょりを ついか・しゅうせいしました.' } },
+  { pinned:false, date:'2026/10/01 07:02', desc:{ ja:'すべての日付検索の選択解除、数字キーボードのサイズ・ボタン縮小設定と画面内配置、スマホ操作の安定化、フライトタイマーの表示不具合修正、メモタブの機内アナウンス聞き取りメモ、データ削除処理を追加・修正しました。', en:'Added date-selection clear buttons to all date searches, keyboard size/button scaling and in-screen positioning, stabilized mobile operation, fixed the flight timer display, added an in-flight announcement memo pad to the Memo tab, and fixed data deletion.', hira:'すべての ひづけ けんさくの せんたく かいじょ、すうじ きーぼーどの さいず・ぼたん しゅくしょう せっていと がめんない はいち、すまほ そうさの あんていか、ふらいと たいまーの ひょうじ ふぐあい しゅうせい、めも たぶの きない あんない ききとり めも、でーた さくじょ しょりを ついか・しゅうせいしました.' } },
 {
     pinned: false,
     date: '2026/09/30 14:50',
@@ -5227,6 +5243,28 @@ function showNumericKeyboardSettings(){
   applyNumericKeyboardSettings(kbd,st);
   attachNumericKeyboardResizeHandle(kbd);
 }
+function enableNumericKeyboardTouchHitArea(kbd){
+  const grid=kbd?.querySelector('.custom-kbd-grid');
+  if(!grid || grid.dataset.touchHitAreaReady==='1') return;
+  grid.dataset.touchHitAreaReady='1';
+  grid.addEventListener('pointerdown',(e)=>{
+    if(e.pointerType==='mouse' || e.target.closest('button')) return;
+    const buttons=[...grid.querySelectorAll('button')];
+    let nearest=null, best=Infinity;
+    buttons.forEach(btn=>{
+      const r=btn.getBoundingClientRect();
+      const cx=r.left+r.width/2, cy=r.top+r.height/2;
+      const d=Math.hypot(e.clientX-cx,e.clientY-cy);
+      if(d<best){best=d;nearest=btn;}
+    });
+    const hitRadius=Math.max(28, Math.min(38, Math.min(grid.clientWidth/6, grid.clientHeight/4)));
+    if(nearest && best<=hitRadius){
+      e.preventDefault();
+      nearest.click();
+    }
+  },{passive:false});
+}
+
 function attachNumericKeyboardResizeHandle(kbd){
   let h=kbd.querySelector('.custom-kbd-resize-handle'); if(!h){h=document.createElement('div');h.className='custom-kbd-resize-handle';h.title=numericKbdText('freeResize');kbd.appendChild(h);}
   h.onpointerdown=(e)=>{ e.preventDefault(); h.setPointerCapture?.(e.pointerId); const startX=e.clientX,startY=e.clientY,st=loadNumericKeyboardSettings(); const move=ev=>{ const next={...st,width:st.width+(startX-ev.clientX)*2,height:st.height+(startY-ev.clientY)}; applyNumericKeyboardSettings(kbd,next); }; const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); h.removeEventListener('pointercancel',up); }; h.addEventListener('pointermove',move);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up); };
@@ -5569,6 +5607,7 @@ function openCustomNumericKeyboard(input) {
 
   applyNumericKeyboardSettings(kbd);
   attachNumericKeyboardResizeHandle(kbd);
+  enableNumericKeyboardTouchHitArea(kbd);
   kbd.style.display = 'block';
 }
 
@@ -8056,32 +8095,6 @@ function applyDpadSettings() {
 let flightRemainingSeconds = 6.5 * 3600;
 let flightTimerInterval = null;
 
-let miniCalcExpression='';
-function miniCalcPress(key){
-  const d=document.getElementById('miniCalcDisplay'); if(!d) return;
-  if(key==='C'){miniCalcExpression=''; d.value='0'; return;}
-  if(key==='⌫'){miniCalcExpression=miniCalcExpression.slice(0,-1); d.value=miniCalcExpression||'0'; return;}
-  if(key==='='){
-    try { if(!/^[0-9+\-*/.() ]+$/.test(miniCalcExpression)) throw new Error('invalid'); const result=Function('"use strict";return ('+miniCalcExpression+')')(); if(!Number.isFinite(result)) throw new Error('invalid'); miniCalcExpression=String(result); d.value=miniCalcExpression; } catch(e){ d.value='Error'; miniCalcExpression=''; }
-    return;
-  }
-  miniCalcExpression += key; d.value=miniCalcExpression;
-}
-function initMiniCalculatorDrag(){
-  const panel=document.getElementById('airplaneMiniCalculator'), handle=document.getElementById('miniCalcMoveHandle'); if(!panel||!handle) return;
-  let timer=null, dragging=false, startX=0,startY=0,startL=0,startT=0;
-  const begin=e=>{
-    if(!window.matchMedia('(max-width: 600px)').matches) return;
-    e.preventDefault(); e.stopPropagation();
-    timer=setTimeout(()=>{ dragging=true; panel.classList.add('calc-moving'); const r=panel.getBoundingClientRect(); startX=e.clientX??e.touches?.[0]?.clientX??0; startY=e.clientY??e.touches?.[0]?.clientY??0; startL=r.left; startT=r.top; },550);
-  };
-  const move=e=>{ if(!dragging) return; e.preventDefault(); e.stopPropagation(); const x=e.clientX??e.touches?.[0]?.clientX??0,y=e.clientY??e.touches?.[0]?.clientY??0; const maxL=Math.max(4,innerWidth-panel.offsetWidth-4),maxT=Math.max(4,innerHeight-panel.offsetHeight-4); panel.style.left=Math.max(4,Math.min(maxL,startL+x-startX))+'px'; panel.style.top=Math.max(4,Math.min(maxT,startT+y-startY))+'px'; panel.style.right='auto'; panel.style.bottom='auto'; };
-  const end=e=>{ if(timer){clearTimeout(timer);timer=null;} if(dragging){e.preventDefault();e.stopPropagation();dragging=false;panel.classList.remove('calc-moving');} };
-  ['pointerdown','touchstart'].forEach(ev=>handle.addEventListener(ev,begin,{passive:false}));
-  ['pointermove','touchmove'].forEach(ev=>handle.addEventListener(ev,move,{passive:false}));
-  ['pointerup','pointercancel','touchend','touchcancel'].forEach(ev=>handle.addEventListener(ev,end,{passive:false}));
-}
-
 function saveCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) localStorage.setItem('airplane_game_cabin_announcement_memo',el.value); }
 function loadCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) el.value=localStorage.getItem('airplane_game_cabin_announcement_memo')||''; }
 function clearCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el){el.value=''; saveCabinAnnouncementMemo(); el.focus();} }
@@ -8140,7 +8153,7 @@ function updateWorldClock() {
   }
 }
 setInterval(updateWorldClock, 1000);
-window.__airplaneSafeAddEventListener(window, 'load', () => { loadCabinAnnouncementMemo(); initMiniCalculatorDrag(); });
+window.__airplaneSafeAddEventListener(window, 'load', () => { loadCabinAnnouncementMemo(); });
 
 /* ==========================================================================
    5. プロフィール & 経過時間 & 動画録画
