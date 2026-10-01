@@ -905,6 +905,43 @@ html[data-script-mode="toto"] input[data-numeral-managed],
 html[data-script-mode="toto"] input[type="number"] {
   font-family: 'NotoSerifTotoEmbedded', 'Segoe UI Symbol', 'Segoe UI Historic', sans-serif !important;
 }
+/* 数字体系のUnicode文字化け防止：各体系の専用フォントを最優先し、端末の選択フォントによる欠字を防ぐ。 */
+html[data-script-mode="devanagari"] .numeral-script-token,
+html[data-script-mode="devanagari"] input[data-numeral-managed],
+html[data-script-mode="devanagari"] input[data-numeral-input] { font-family: "Noto Sans Devanagari", "Noto Sans", sans-serif !important; }
+html[data-script-mode="eastern-arabic"] .numeral-script-token,
+html[data-script-mode="eastern-arabic"] input[data-numeral-managed],
+html[data-script-mode="eastern-arabic"] input[data-numeral-input] { font-family: "Noto Sans Arabic", "Noto Sans", sans-serif !important; }
+html[data-script-mode="thai"] .numeral-script-token,
+html[data-script-mode="thai"] input[data-numeral-managed],
+html[data-script-mode="thai"] input[data-numeral-input] { font-family: "Noto Sans Thai", "Noto Sans", sans-serif !important; }
+html[data-script-mode="myanmar"] .numeral-script-token,
+html[data-script-mode="myanmar"] input[data-numeral-managed],
+html[data-script-mode="myanmar"] input[data-numeral-input] { font-family: "Noto Sans Myanmar", "Noto Sans", sans-serif !important; }
+html[data-script-mode="khmer"] .numeral-script-token,
+html[data-script-mode="khmer"] input[data-numeral-managed],
+html[data-script-mode="khmer"] input[data-numeral-input] { font-family: "Noto Sans Khmer", "Noto Sans", sans-serif !important; }
+html[data-script-mode="geez"] .numeral-script-token,
+html[data-script-mode="geez"] input[data-numeral-managed],
+html[data-script-mode="geez"] input[data-numeral-input] { font-family: "Noto Sans Ethiopic", "Noto Sans", sans-serif !important; }
+html[data-script-mode="ol-chiki"] .numeral-script-token,
+html[data-script-mode="ol-chiki"] input[data-numeral-managed],
+html[data-script-mode="ol-chiki"] input[data-numeral-input] { font-family: "Noto Sans Ol Chiki", "Noto Sans", sans-serif !important; }
+html[data-script-mode="kannada"] .numeral-script-token,
+html[data-script-mode="kannada"] input[data-numeral-managed],
+html[data-script-mode="kannada"] input[data-numeral-input] { font-family: "Noto Sans Kannada", "Noto Sans", sans-serif !important; }
+html[data-script-mode="meetei"] .numeral-script-token,
+html[data-script-mode="meetei"] input[data-numeral-managed],
+html[data-script-mode="meetei"] input[data-numeral-input] { font-family: "Noto Sans Meetei Mayek", "Noto Sans", sans-serif !important; }
+html[data-script-mode="suzhou"] .numeral-script-token,
+html[data-script-mode="suzhou"] input[data-numeral-managed],
+html[data-script-mode="suzhou"] input[data-numeral-input] { font-family: "Noto Sans Symbols 2", "Noto Sans CJK JP", sans-serif !important; }
+html[data-script-mode="braille"] .numeral-script-token,
+html[data-script-mode="braille"] input[data-numeral-managed],
+html[data-script-mode="braille"] input[data-numeral-input] { font-family: "Noto Sans Symbols 2", "Segoe UI Symbol", sans-serif !important; }
+html[data-script-mode="morse"] .numeral-script-token,
+html[data-script-mode="morse"] input[data-numeral-managed],
+html[data-script-mode="morse"] input[data-numeral-input] { font-family: "Noto Sans Mono", monospace !important; }
 html[data-script-mode="mayan"] .mayan-script-rendered {
   text-shadow: 0 0 1px rgba(0,0,0,0.4);
 }
@@ -1120,6 +1157,12 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
   box-sizing: border-box;
 }
 
+/* 小さいキーボードでは、設定に応じてボタンを縮小するか、縦横スクロールできるようにする。 */
+#customNumericKeyboard.custom-kbd-scroll-buttons .custom-kbd-grid { overflow:auto; min-width:420px; }
+#customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-grid { min-width:0; overflow:hidden; }
+#customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn { font-size:clamp(10px, calc(var(--custom-kbd-width,420px) / 24), 20px); padding:clamp(4px, calc(var(--custom-kbd-height,360px) / 38), 12px) 2px; }
+#customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn.btn-action { font-size:clamp(9px, calc(var(--custom-kbd-width,420px) / 32), 14px); }
+
 /* カクトビックのキーボードボタンにも埋め込み専用フォントを適用する。 */
 #customNumericKeyboard.kaktovik-mode .custom-kbd-btn:not(.btn-action) {
   font-family: 'KaktovikNumeralsEmbedded', 'Segoe UI Symbol', 'Segoe UI Historic', sans-serif !important;
@@ -1177,6 +1220,11 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
   overflow: hidden;
   box-sizing: border-box;
 }
+#customNumericKeyboard.custom-kbd-scroll-buttons .custom-kbd-grid { overflow-x: auto; overflow-y: auto; }
+#customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-grid { overflow: hidden; }
+#customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn { font-size: clamp(11px, calc(var(--custom-kbd-width, 420px) / 22), 20px); padding: clamp(5px, calc(var(--custom-kbd-height, 360px) / 34), 12px) 2px; border-radius: clamp(5px, calc(var(--custom-kbd-width, 420px) / 42), 10px); box-shadow: 0 3px #999; }
+#customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn.btn-action { font-size: clamp(9px, calc(var(--custom-kbd-width, 420px) / 30), 14px); }
+#customNumericKeyboard.custom-kbd-shrink-buttons .morse-3d-btn { font-size: clamp(10px, calc(var(--custom-kbd-width, 420px) / 28), 18px); padding: clamp(5px, calc(var(--custom-kbd-height, 360px) / 36), 12px) 6px; }
 #customNumericKeyboard.custom-kbd-positioned {
   transform: none;
 }
@@ -1196,6 +1244,28 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
   opacity: .8;
   z-index: 3;
 }
+.custom-kbd-move-handle {
+  position: absolute;
+  left: 3px;
+  bottom: 3px;
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,.9);
+  background: rgba(255,255,255,.08);
+  font-size: 22px;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 4;
+}
+.custom-kbd-move-handle:active { cursor: grabbing; }
+
 .custom-kbd-settings {
   display: flex;
   flex-direction: column;
@@ -1313,6 +1383,7 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
 </style>
 </head>
 <body>
+<div id="whiteoutOverlay" aria-hidden="true"></div>
 <div id="mouseStalker">★</div>
 <!-- 画面最上部に表示される救済案内バー -->
 <div id="rescueNoticeBar" class="rescue-notice-bar" style="display: none;">
@@ -1337,6 +1408,7 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
     <button class="tab-btn" onclick="switchTab('howToTab', this)" data-i18n="tab_howto">使い方</button>
     <button class="tab-btn" onclick="toggleHeader(false)" data-i18n="tab_hide_header">ヘッダー非表示</button>
     <button class="tab-btn" onclick="switchTab('settingsTab', this)" data-i18n="tab_settings">設定</button>
+    <button class="tab-btn" onclick="switchTab('memoTab', this)" data-i18n="tab_memo">メモ</button>
     <button class="tab-btn" onclick="switchTab('profileTab', this)" data-i18n="tab_profile">プロフィール</button>
     <button class="tab-btn" onclick="switchTab('historyTab', this)" data-i18n="tab_history">更新履歴</button>
     <button class="tab-btn" onclick="switchTab('dataTab', this)" data-i18n="tab_data">データ</button>
@@ -1624,7 +1696,6 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
           <option value="device" data-i18n="val_device">端末設定に従う</option>
         </select>
       </div>
-
       <!-- 機内特化設定 -->
       <div class="config-item">
         <label data-i18n="cfg_night_flight">🌙 機内消灯モード (超低輝度・漆黒)</label>
@@ -1707,8 +1778,8 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
       <div class="config-item">
         <label data-i18n="cfg_flight_timer">⏱️ フライトタイマー (到着カウントダウン)</label>
         <div style="display:flex; gap:6px; align-items:center;">
-          <input type="number" id="cfgFlightHours" data-i18n-ph="ph_hours" placeholder="時間" min="0" max="24" value="6" style="width:65px;" onchange="initFlightTimer(); saveConfig();"> 時間
-          <input type="number" id="cfgFlightMinutes" data-i18n-ph="ph_minutes" placeholder="分" min="0" max="59" value="30" style="width:65px;" onchange="initFlightTimer(); saveConfig();"> 分
+          <input type="number" id="cfgFlightHours" data-i18n-ph="ph_hours" placeholder="時間" min="0" max="24" value="6" style="width:65px;" oninput="initFlightTimer(); saveConfig();" onchange="initFlightTimer(); saveConfig();"> 時間
+          <input type="number" id="cfgFlightMinutes" data-i18n-ph="ph_minutes" placeholder="分" min="0" max="59" value="30" style="width:65px;" oninput="initFlightTimer(); saveConfig();" onchange="initFlightTimer(); saveConfig();"> 分
           <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="resetFlightTimer()" data-i18n="btn_timer_reset">リセット</button>
         </div>
       </div>
@@ -1733,6 +1804,20 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
   </section>
 
   <!-- 5. プロフィールタブ -->
+  <!-- メモタブ -->
+  <section id="memoTab" class="tab-content">
+    <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="tab_memo">メモ</h2>
+    <div class="config-item" style="grid-column:1 / -1;">
+      <label data-i18n="cabin_announcement_memo">✈️ 機内アナウンス聞き取りメモ</label>
+      <textarea id="cabinAnnouncementMemo" data-i18n-ph="cabin_announcement_memo_ph" placeholder="例：ただいま巡航高度35,000フィートです。" style="width:100%; min-height:250px; box-sizing:border-box; resize:vertical; padding:10px; border-radius:10px; border:1px solid var(--border-color); background:rgba(255,255,255,.08); color:inherit; line-height:1.6;" oninput="saveCabinAnnouncementMemo()"></textarea>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;">
+        <button type="button" class="btn btn-secondary" onclick="clearCabinAnnouncementMemo()" data-i18n="cabin_announcement_clear">クリア</button>
+        <button type="button" class="btn btn-outline" onclick="downloadCabinAnnouncementMemo()" data-i18n="cabin_announcement_download">txt保存</button>
+        <span id="cabinAnnouncementMemoStatus" style="font-size:12px; opacity:.75;" data-i18n="cabin_announcement_saved">自動保存済み（オフライン）</span>
+      </div>
+    </div>
+  </section>
+
   <section id="profileTab" class="tab-content">
     <h2 style="color: var(--accent-pink); margin-bottom: 15px;" data-i18n="profile_title">管理者情報 & 自作プロフィール</h2>
     
@@ -1907,6 +1992,7 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
       <input type="text" id="scoreSearchInput" class="search-input" data-i18n-ph="ph_search_score" placeholder="スコアを検索..." oninput="scorePage=1; renderScoreTable()">
       <label style="display:flex; gap:5px; align-items:center;"><span data-i18n="lbl_score_date">日付</span><input type="date" id="scoreDateInput" onchange="scorePage=1; renderScoreTable()"></label>
+      <button type="button" class="btn btn-outline" onclick="clearScoreDateFilter()" data-i18n="btn_clear_score_date">日付選択を解除</button>
       <select id="scoreSortSelect" class="time-select" onchange="scorePage=1; renderScoreTable()">
         <option value="newest" data-i18n="opt_newest">最新順</option>
         <option value="oldest" data-i18n="opt_oldest">古い順</option>
@@ -2020,6 +2106,7 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
       <input type="text" id="coinHistorySearchInput" class="search-input" data-i18n-ph="coin_history_search" placeholder="使用履歴を検索..." oninput="coinHistoryPage=1; renderCoinHistoryTable()">
       <label style="display:flex; gap:5px; align-items:center;"><span data-i18n="lbl_score_date">日付</span><input type="date" id="coinHistoryDateInput" onchange="coinHistoryPage=1; renderCoinHistoryTable()"></label>
+      <button type="button" class="btn btn-outline" onclick="clearCoinHistoryDateFilter()" data-i18n="btn_clear_score_date">日付選択を解除</button>
       <select id="coinHistorySortSelect" class="time-select" onchange="coinHistoryPage=1; renderCoinHistoryTable()">
         <option value="newest" data-i18n="opt_newest">最新順</option>
         <option value="oldest" data-i18n="opt_oldest">古い順</option>
@@ -2176,6 +2263,7 @@ const I18N_DICTIONARY = {
   tab_howto: { ja: "使い方", en: "How to Play", hira: "つかいかた", ko: "이용 방법", 'zh-CN': "玩法说明", 'zh-TW': "玩法說明", ar: "كيفية اللعب", eo: "Kiel Ludi", mam: "How to Play", th: "วิธีเล่น", sw: "Jinsi ya Kucheza", es: "Cómo jugar", fr: "Comment jouer", de: "Anleitung", pt: "Como jogar", hi: "कैसे खेलें", id: "Cara Bermain", vi: "Cách chơi", ru: "Как играть"},
   tab_hide_header: { ja: "ヘッダー非表示", en: "Hide Header", hira: "へっだー ひひょうじ", ko: "헤더 숨기기", 'zh-CN': "隐藏顶栏", 'zh-TW': "隱藏頂欄", ar: "إخفاء الرأس", eo: "Kaŝi Kapon", mam: "Hide Header", th: "ซ่อนส่วนหัว", sw: "Ficha Kichwa", es: "Ocultar encabezado", fr: "Masquer l'en-tête", de: "Kopfzeile ausblenden", pt: "Ocultar cabeçalho", hi: "हेडर छिपाएँ", id: "Sembunyikan Header", vi: "Ẩn đầu trang", ru: "Скрыть заголовок"},
   tab_settings: { ja: "設定", en: "Settings", hira: "せってい", ko: "설정", 'zh-CN': "设置", 'zh-TW': "設定", ar: "الإعدادات", eo: "Agordoj", mam: "Settings", th: "การตั้งค่า", sw: "Mipangilio", es: "Ajustes", fr: "Paramètres", de: "Einstellungen", pt: "Configurações", hi: "सेटिंग्स", id: "Pengaturan", vi: "Cài đặt", ru: "Настройки"},
+  tab_memo: { ja: "メモ", en: "Memo", hira: "めも", ko: "메모", 'zh-CN': "备忘录", 'zh-TW': "備忘錄", ar: "مذكرة", eo: "Notoj", mam: "Memo", th: "บันทึก", sw: "Dokezo", es: "Notas", fr: "Mémo", de: "Memo", pt: "Memo", hi: "मेमो", id: "Memo", vi: "Ghi chú", ru: "Заметка"},
   tab_profile: { ja: "プロフィール", en: "Profile", hira: "ぷろふぃーる", ko: "프로필", 'zh-CN': "个人档案", 'zh-TW': "個人檔案", ar: "الملف الشخصي", eo: "Profilo", mam: "Profile", th: "โปรไฟล์", sw: "Wasifu", es: "Perfil", fr: "Profil", de: "Profil", pt: "Perfil", hi: "प्रोफ़ाइल", id: "Profil", vi: "Hồ sơ", ru: "Профиль"},
   tab_history: { ja: "更新履歴", en: "History", hira: "こうしん りれき", ko: "업데이트 내역", 'zh-CN': "更新历史", 'zh-TW': "更新歷史", ar: "سجل التحديثات", eo: "Historio", mam: "History", th: "ประวัติการอัปเดต", sw: "Historia", es: "Historial", fr: "Historique", de: "Verlauf", pt: "Histórico", hi: "इतिहास", id: "Riwayat", vi: "Lịch sử", ru: "История"},
   tab_data: { ja: "データ", en: "Data", hira: "でーた", ko: "데이터", 'zh-CN': "数据", 'zh-TW': "數據", ar: "البيانات", eo: "Datumoj", mam: "Data", th: "ข้อมูล", sw: "Taarifa", es: "Datos", fr: "Données", de: "Daten", pt: "Dados", hi: "डेटा", id: "Data tersimpan", vi: "Dữ liệu", ru: "Данные"},
@@ -2272,6 +2360,7 @@ btn_remove_param: { ja: "パラメータを削除", en: "Remove parameter", hira
   howto_vs_desc: { ja: "1台の端末で隣の人と対戦！画面の左右をタップして障害物を飛び越え、最後まで生き残った方の勝利！", en: "Local 2-Player battle on 1 device! Tap left/right to jump over obstacles. Last survivor wins!", hira: "1つの がめんで ふたりで たいせん！さいごまで のこったほうが かち！", ko: "기기 하나로 2인 대전! 화면 좌우를 탭하여 장애물을 넘고 마지막까지 생존한 쪽이 승리!", 'zh-CN': "同机双人对战！点击屏幕左右侧跳过障碍，最后生还者获胜！", 'zh-TW': "同機雙人對戰！點擊螢幕左右側跳過障礙，最後生還者獲勝！", ar: "معركة ثنائية على جهاز واحد! انقر على اليمين واليسار للقفز. الفائز هو من يصمد للنهاية!", eo: "Loka 2-ludanta batalo sur unu aparato! Frapetu maldekstre/dekstre por salti. Lasta pluvivanto venkas!", mam: "Local 2-Player battle on 1 device! Tap left/right to jump over obstacles. Last survivor wins!", th: "ประลอง 2 คนในเครื่องเดียว! แตะฝั่งซ้าย/ขวาเพื่อกระโดดหลบสิ่งกีดขวาง ใครรอดคนสุดท้ายชนะ", sw: "Pambana wachezaji wawili kwenye kifaa kimoja! Gusa kushoto/kulia kuruka vizingiti.", es: "¡Duelo de 2 jugadores en un solo dispositivo! Toca izquierda o derecha para saltar y sobrevive.", fr: "Affrontez votre voisin sur le même appareil ! Touchez à gauche ou à droite pour sauter les obstacles.", de: "2-Spieler-Duell an einem Gerät! Links oder rechts tippen, um Hindernisse zu überspringen.", pt: "Batalha para 2 jogadores no mesmo aparelho! Toque na esquerda ou direita para pular os obstáculos.", hi: "एक ही डिवाइस पर 2 खिलाड़ी मुकाबला! बाधाओं से बचने के लिए बाएं/दाएं टैप करें।", id: "Pertempuran 2 pemain di 1 perangkat! Ketuk kiri/kanan untuk melompati rintangan. Bertahanlah sampai akhir!", vi: "Đối đầu 2 người trên cùng 1 máy! Chạm bên trái/phải để nhảy tránh chướng ngại vật. Ai sống sót sau cùng sẽ thắng!", ru: "Битва на двоих на одном устройстве! Нажимайте слева или справа для прыжка. Побеждает выживший!"},
   howto_h3: { ja: "3. スコア保存・画像書き出し・バックアップ", en: "3. Score Saving, Exports & Backups", hira: "3. すこあほぞん と ばっくあっぷ", ko: "3. 스코어 저장, 내보내기 및 백업", 'zh-CN': "3. 分数记录与备份导出", 'zh-TW': "3. 分數記錄與備份匯出", ar: "3. حفظ النتائج والنسخ الاحتياطي", eo: "3. Konservado de Poentoj kaj Savkopio", mam: "3. Score Saving, Exports & Backups", th: "3. การบันทึกคะแนน ส่งออกรูปภาพ และสำรองข้อมูล", sw: "3. Kuhifadhi Alama, Picha & Nakala", es: "3. Guardado de puntuaciones, exportaciones y copias de seguridad", fr: "3. Sauvegarde des scores, export d'images et sauvegarde", de: "3. Spielstände speichern, Bildexport & Backup", pt: "3. Salvar pontuações, exportar imagens e backup", hi: "3. स्कोर सहेजना, इमेज निर्यात और बैकअप", id: "3. Simpan Skor, Ekspor Gambar & Cadangan", vi: "3. Lưu điểm, xuất hình ảnh & sao lưu", ru: "3. Сохранение очков, экспорт и резервное копирование"},
   howto_p3: { ja: "遊んだ記録は自動で「データ」タブに蓄積されます。表はPNG/JPEG/AVIF/WebP/HTML/GIF形式で保存可能。背景色と文字色の同化防止フィルターが施されています。.itsmeや.indexeddb、ZIP形式で全データを一括バックアップ・復元できます。", en: "Scores are logged automatically in the Data tab. Export table to PNG/JPEG/AVIF/WebP/HTML/GIF without contrast issues. Backup whole data as .itsme, .indexeddb, or ZIP.", hira: "すこあは じどうで きろくされます。しゃしんや ほぞんふぁいるで ほぞんや ふくげんが できます。", ko: "플레이 기록은 데이터 탭에 자동 보관됩니다. 다양한 포맷(PNG/JPEG/AVIF/WebP/HTML/GIF)으로 내보낼 수 있으며, 백업/복원을 지원합니다.", 'zh-CN': "游玩记录会自动存入数据标签页。支持导出多种格式，并具备完备的备份与还原系统。", 'zh-TW': "遊玩記錄會自動存入數據標籤頁。支援匯出多種格式，並具備完備的備份與還原系統。", ar: "يتم حفظ السجلات تلقائيًا وتصديرها بصيغ متعددة مع ميزة النسخ الاحتياطي الكامل.", eo: "Poentaroj estas aŭtomate registritaj en Datumoj kaj elporteblaj en multaj formatoj.", mam: "Scores are logged automatically in the Data tab. Export table to PNG/JPEG/AVIF/WebP/HTML/GIF without contrast issues. Backup whole data as .itsme, .indexeddb, or ZIP.", th: "บันทึกการเล่นจะถูกเก็บในแท็บ 'ข้อมูล' โดยอัตโนมัติ ส่งออกได้หลายฟอร์แมต และสำรองข้อมูลได้สมบูรณ์", sw: "Alama zinahifadhiwa kiotomatiki kwenye kichupo cha Data. Hamisha kama picha au uhifadhi nakala kamili ya ZIP/itsme.", es: "Las puntuaciones se registran automáticamente en la pestaña Datos. Exporta la tabla a múltiples formatos y haz copias de seguridad completas.", fr: "Les scores sont enregistrés dans l'onglet Données. Exportez sous divers formats (PNG, WebP...) et sauvegardez tout en un clic.", de: "Spielstände werden automatisch im Reiter Daten erfasst. Exportieren Sie Tabellen als Bild und sichern Sie alle Daten als ZIP.", pt: "As pontuações são gravadas automaticamente na aba Dados. Exporte em vários formatos e faça backup completo com segurança.", hi: "रिकॉर्ड स्वचालित रूप से 'डेटा' टैब में जमा होते हैं। इसे कई प्रारूपों में निर्यात और बैकअप किया जा सकता है।", id: "Catatan permainan otomatis tersimpan di tab Data. Ekspor tabel ke विभिन्न format gambar atau cadangkan seluruh data.", vi: "Lịch sử chơi được tự động ghi lại trong tab Dữ liệu. Bạn có thể xuất thành hình ảnh hoặc sao lưu toàn bộ dễ dàng.", ru: "Результаты автоматически сохраняются во вкладке Данные. Экспортируйте таблицы в виде изображений или делайте бэкап в ZIP."},
+  btn_clear_score_date: { ja: '日付選択を解除', en: 'Clear date selection', hira: 'ひづけ せんたくを かいじょ', ko: '날짜 선택 해제', 'zh-CN': '取消日期选择', 'zh-TW': '取消日期選擇', ar: 'إلغاء تحديد التاريخ', eo: 'Forigi datan elekton', mam: 'Clear date selection', th: 'ล้างการเลือกวันที่', sw: 'Futa uteuzi wa tarehe', es: 'Borrar selección de fecha', fr: 'Effacer la date sélectionnée', de: 'Datumswahl aufheben', pt: 'Limpar seleção de data', hi: 'तारीख चयन साफ़ करें', id: 'Hapus pilihan tanggal', vi: 'Bỏ chọn ngày', ru: 'Сбросить выбор даты' },
   btn_delete_all_data: { ja: "データを削除", en: "Delete All Data", hira: "でーたを けす", ko: "데이터 삭제", 'zh-CN': "清除全部数据", 'zh-TW': "清除全部數據", ar: "حذف جميع البيانات", eo: "Forigi Ĉiujn Datumojn", mam: "Delete All Data", th: "ลบข้อมูลทั้งหมด", sw: "Futa Data Zote", es: "Eliminar todos los datos", fr: "Supprimer toutes les données", de: "Alle Daten löschen", pt: "Excluir todos os dados", hi: "सभी डेटा हटाएं", id: "Hapus Semua Data", vi: "Xóa toàn bộ dữ liệu", ru: "Удалить все данные"},
   settings_title: { ja: "各種設定 & カスタマイズ", en: "Settings & Customization", hira: "せってい", ko: "각종 설정", 'zh-CN': "各项设置", 'zh-TW': "各項設定", ar: "الإعدادات والتخصيص", eo: "Agordoj", mam: "Settings & Customization", th: "การตั้งค่าและการปรับแต่ง", sw: "Mipangilio & Kubinafsisha", es: "Ajustes y personalización", fr: "Paramètres et personnalisation", de: "Einstellungen & Anpassung", pt: "Configurações e personalização", hi: "सेटिंग्स और अनुकूलन", id: "Pengaturan & Kustomisasi", vi: "Cài đặt & Tùy chỉnh", ru: "Настройки и кастомизация"},
   btn_reset_config: { ja: "設定を初期化", en: "Reset Settings", hira: "せっていを もどす", ko: "설정 초기화", 'zh-CN': "重置设置", 'zh-TW': "重設設定", ar: "إعادة ضبط الإعدادات", eo: "Restarigi Agordojn", mam: "Reset Settings", th: "รีเซ็ตการตั้งค่า", sw: "Weka Upya Mipangilio", es: "Restablecer ajustes", fr: "Réinitialiser les réglages", de: "Einstellungen zurücksetzen", pt: "Redefinir configurações", hi: "सेटिंग्स रीसेट करें", id: "Atur Ulang Pengaturan", vi: "Đặt lại cài đặt", ru: "Сбросить настройки"},
@@ -2430,6 +2519,11 @@ btn_remove_param: { ja: "パラメータを削除", en: "Remove parameter", hira
   world_clock_now:{ja:"日本",en:"Japan",hira:"にほん",ko:"일본",'zh-CN':"日本",'zh-TW':"日本",ar:"اليابان",eo:"Japanio",mam:"Japan",th:"ญี่ปุ่น",sw:"Japani",es:"Japón",fr:"Japon",de: "Japanische Zeit",pt:"Japão",hi:"जापान",id:"Jepang",vi:"Nhật Bản",ru:"Япония"},
   world_clock_local:{ja:"現地",en:"Local",hira:"げんち",ko:"현지",'zh-CN':"当地",'zh-TW':"當地",ar:"محلي",eo:"Loka",mam:"Local",th:"เวลาท้องถิ่น",sw:"Mahali",es: "Hora local",fr: "Heure locale",de:"Lokal",pt: "Hora local",hi:"स्थानीय",id:"Lokal",vi:"Địa phương",ru:"Местное"},
   cfg_flag_region: {ja:'🚩 国旗クイズ 出題地域フィルター', en:'🚩 Flag quiz region filter', hira:'🚩 こっき くいず しゅつだい ちいき ふぃるたー', ko:'🚩 국기 퀴즈 출제 지역 필터', 'zh-CN':'🚩 国旗问答地区筛选', 'zh-TW':'🚩 國旗問答地區篩選', ar:'🚩 مرشح منطقة مسابقة الأعلام', eo:'🚩 Filtro de regionoj por flagkvizo', mam:'🚩 Flag quiz region filter', th:'🚩 ตัวกรองภูมิภาคแบบทดสอบธง', sw:'🚩 Kichujio cha eneo la chemsha bongo ya bendera', es:'🚩 Filtro de región del cuestionario de banderas', fr:'🚩 Filtre de région du quiz des drapeaux', de:'🚩 Regionenfilter für Flaggenquiz', pt:'🚩 Filtro de região do quiz de bandeiras', hi:'🚩 क्विज़ क्षेत्र फ़िल्टर', id:'🚩 Filter wilayah kuis bendera', vi:'🚩 Bộ lọc khu vực câu đố quốc kỳ', ru:'🚩 Фильтр региона викторины по флагам'},
+  cabin_announcement_memo: {ja:'✈️ 機内アナウンス聞き取りメモ',en:'✈️ In-flight announcement memo',hira:'✈️ きない あんない ききとり めも',ko:'✈️ 기내 방송 메모', 'zh-CN':'✈️ 机内广播备忘录', 'zh-TW':'✈️ 機內廣播備忘錄', ar:'✈️ مذكرة إعلانات الطائرة', eo:'✈️ Notoj pri anoncoj dumfluge', mam:'✈️ In-flight announcement memo', th:'✈️ บันทึกประกาศบนเครื่องบิน', sw:'✈️ Dokezo la tangazo la ndani ya ndege', es:'✈️ Bloc de anuncios de vuelo', fr:'✈️ Bloc-notes des annonces en vol', de:'✈️ Notizblock für Bordansagen', pt:'✈️ Bloco de notas de anúncios de voo', hi:'✈️ उड़ान घोषणा नोटपैड', id:'✈️ Memo pengumuman penerbangan', vi:'✈️ Ghi chú thông báo trên máy bay', ru:'✈️ Заметки бортовых объявлений'},
+  cabin_announcement_memo_ph: {ja:'例：ただいま巡航高度35,000フィートです。',en:'Example: We are now cruising at 35,000 feet.',hira:'れい：ただいま じゅんこう こうど 35,000 ふぃーとです。',ko:'예: 현재 순항 고도는 35,000피트입니다.', 'zh-CN':'例如：目前巡航高度为35,000英尺。', 'zh-TW':'例如：目前巡航高度為35,000英尺。', ar:'مثال: نحن الآن على ارتفاع تحليق 35,000 قدم.', eo:'Ekzemplo: Ni nun krozas je 35,000 futoj.', mam:'Example: We are now cruising at 35,000 feet.', th:'ตัวอย่าง: ขณะนี้เราบินที่ระดับความสูง 35,000 ฟุต', sw:'Mfano: Sasa tunasafiri katika futi 35,000.', es:'Ejemplo: Ahora estamos a 35.000 pies de crucero.', fr:'Exemple : Nous sommes actuellement à 35 000 pieds.', de:'Beispiel: Wir fliegen derzeit auf 35.000 Fuß.', pt:'Exemplo: Estamos agora a 35.000 pés de altitude de cruzeiro.', hi:'उदाहरण: हम अभी 35,000 फीट की ऊंचाई पर उड़ रहे हैं।', id:'Contoh: Saat ini kami berada di ketinggian jelajah 35.000 kaki.', vi:'Ví dụ: Hiện chúng tôi đang bay ở độ cao hành trình 35.000 feet.', ru:'Пример: Сейчас мы летим на эшелоне 35 000 футов.'},
+  cabin_announcement_clear: {ja:'クリア',en:'Clear',hira:'くりあ',ko:'지우기','zh-CN':'清除','zh-TW':'清除',ar:'مسح',eo:'Forigi',mam:'Clear',th:'ล้าง',sw:'Futa',es:'Borrar',fr:'Effacer',de:'Löschen',pt:'Limpar',hi:'साफ़ करें',id:'Hapus',vi:'Xóa',ru:'Очистить'},
+  cabin_announcement_download: {ja:'txt保存',en:'Save TXT',hira:'txt ほぞん',ko:'TXT 저장','zh-CN':'保存TXT','zh-TW':'儲存TXT',ar:'حفظ TXT',eo:'Konservi TXT',mam:'Save TXT',th:'บันทึก TXT',sw:'Hifadhi TXT',es:'Guardar TXT',fr:'Enregistrer TXT',de:'TXT speichern',pt:'Salvar TXT',hi:'TXT सहेजें',id:'Simpan TXT',vi:'Lưu TXT',ru:'Сохранить TXT'},
+  cabin_announcement_saved: {ja:'自動保存済み（オフライン）',en:'Auto-saved offline',hira:'じどう ほぞんずみ（おふらいん）',ko:'오프라인 자동 저장됨','zh-CN':'已离线自动保存','zh-TW':'已離線自動儲存',ar:'تم الحفظ تلقائياً دون اتصال',eo:'Aŭtomate konservita eksterrete',mam:'Auto-saved offline',th:'บันทึกอัตโนมัติแบบออฟไลน์แล้ว',sw:'Imehifadhiwa kiotomatiki nje ya mtandao',es:'Guardado automáticamente sin conexión',fr:'Enregistré automatiquement hors ligne',de:'Offline automatisch gespeichert',pt:'Salvo automaticamente offline',hi:'ऑफ़लाइन स्वतः सहेजा गया',id:'Tersimpan otomatis offline',vi:'Đã tự động lưu ngoại tuyến',ru:'Автосохранение офлайн'},
   cfg_flight_timer: {ja:'⏱️ フライトタイマー (到着カウントダウン)', en:'⏱️ Flight timer (arrival countdown)', hira:'⏱️ ふらいと たいまー（とうちゃく かうんとだうん）', ko:'⏱️ 비행 타이머(도착 카운트다운)', 'zh-CN':'⏱️ 飞行计时器（到达倒计时）', 'zh-TW':'⏱️ 飛行計時器（抵達倒數）', ar:'⏱️ مؤقت الرحلة (عد تنازلي للوصول)', eo:'⏱️ Tempigilo de flugo (kalkulado ĝis alveno)', mam:'⏱️ Flight timer (arrival countdown)', th:'⏱️ ตัวจับเวลาเที่ยวบิน (นับถอยหลังถึงจุดหมาย)', sw:'⏱️ Kipima muda wa safari (hesabu ya kuwasili)', es:'⏱️ Temporizador de vuelo (cuenta atrás de llegada)', fr:'⏱️ Minuteur de vol (compte à rebours d’arrivée)', de:'⏱️ Flugtimer (Ankunfts-Countdown)', pt:'⏱️ Temporizador de voo (contagem regressiva para chegada)', hi:'⏱️ उड़ान टाइमर (आगमन उलटी गिनती)', id:'⏱️ Pengatur waktu penerbangan (hitung mundur kedatangan)', vi:'⏱️ Bộ hẹn giờ chuyến bay (đếm ngược đến nơi)', ru:'⏱️ Таймер полёта (обратный отсчёт до прибытия)'},
   cfg_gamespeed: {ja:'⚡ ゲームスピード倍率', en:'⚡ Game speed multiplier', hira:'⚡ げーむ すぴーど ばいりつ', ko:'⚡ 게임 속도 배율', 'zh-CN':'⚡ 游戏速度倍率', 'zh-TW':'⚡ 遊戲速度倍率', ar:'⚡ معامل سرعة اللعبة', eo:'⚡ Multobligilo de ludrapideco', mam:'⚡ Game speed multiplier', th:'⚡ ตัวคูณความเร็วเกม', sw:'⚡ Kizidishi cha kasi ya mchezo', es:'⚡ Multiplicador de velocidad del juego', fr:'⚡ Multiplicateur de vitesse du jeu', de:'⚡ Spielgeschwindigkeitsfaktor', pt:'⚡ Multiplicador de velocidade do jogo', hi:'⚡ गेम गति गुणक', id:'⚡ Pengali kecepatan permainan', vi:'⚡ Hệ số tốc độ trò chơi', ru:'⚡ Множитель скорости игры'},
   cfg_invincible: {ja:'🛡️ 無敵・練習モード (棒とビ)', en:'🛡️ Invincible / practice mode (Stick Jump)', hira:'🛡️ むてき・れんしゅう もーど（ぼうとび）', ko:'🛡️ 무적·연습 모드(스틱 점프)', 'zh-CN':'🛡️ 无敌/练习模式（火柴人跳跃）', 'zh-TW':'🛡️ 無敵／練習模式（火柴人跳躍）', ar:'🛡️ وضع عدم الهزيمة / التدريب (قفز العصا)', eo:'🛡️ Nevenkebla / ekzercreĝimo (Stik-ĵeto)', mam:'🛡️ Invincible / practice mode (Stick Jump)', th:'🛡️ โหมดอมตะ/ฝึกซ้อม (สติกจัมป์)', sw:'🛡️ Hali ya kutoshindwa/mazoezi (Stick Jump)', es:'🛡️ Modo invencible/práctica (Salto de palo)', fr:'🛡️ Mode invincible / entraînement (Stick Jump)', de:'🛡️ Unbesiegbar-/Übungsmodus (Stick Jump)', pt:'🛡️ Modo invencível/treino (Stick Jump)', hi:'🛡️ अजेय/अभ्यास मोड (स्टिक जंप)', id:'🛡️ Mode kebal/latihan (Stick Jump)', vi:'🛡️ Chế độ bất tử/luyện tập (Stick Jump)', ru:'🛡️ Режим неуязвимости/тренировки (Прыжок палочки)'},
@@ -2561,6 +2655,31 @@ const AUTHOR_NAMES = {
 
 const KOUSHIN_DATA = [
 {
+  pinned:false,
+  date:'2026/10/01 19:02',
+  desc:{
+    ja:'すべての日付検索の選択解除、数字キーボードのサイズ・ボタン縮小設定と画面内配置、スマホ操作の安定化、フライトタイマーの表示不具合修正、メモタブの機内アナウンス聞き取りメモ、データ削除処理を追加・修正しました。',
+    en:'Added clear-selection controls to all date searches, numeric keyboard size/button scaling and in-screen positioning, stabilized mobile operation, fixed the flight timer display issue, added an in-flight announcement listening memo to the Memo tab, and added and fixed data deletion processing.',
+    hira:'すべての ひづけ けんさくの せんたく かいじょ、すうじ きーぼーどの さいず・ぼたん しゅくしょう せっていと がめんない はいち、すまほ そうさの あんていか、ふらいと たいまーの ひょうじ ふぐあい しゅうせい、めも たぶの きない あんない ききとり めも、でーた さくじょ しょりを ついか・しゅうせいしました。',
+    ko:'모든 날짜 검색의 선택 해제, 숫자 키보드 크기 및 버튼 축소 설정과 화면 내 배치, 스마트폰 조작 안정화, 비행 타이머 표시 오류 수정, 메모 탭에 기내 안내방송 듣기 메모 추가, 데이터 삭제 처리를 추가 및 수정했습니다.',
+    'zh-CN':'新增所有日期搜索的取消选择功能、数字键盘大小和按钮缩放设置及屏幕内位置调整，提升了手机操作的稳定性，修复了飞行计时器显示问题，在备忘录标签中加入了机内广播听写备忘录，并新增和修复了数据删除处理。',
+    'zh-TW':'新增所有日期搜尋的取消選取功能、數字鍵盤大小與按鈕縮放設定及螢幕內位置調整，提升了手機操作的穩定性，修正了飛行計時器顯示問題，在備忘錄分頁中加入了機內廣播聽寫備忘錄，並新增與修正了資料刪除處理。',
+    ar:'تمت إضافة إلغاء تحديد جميع عمليات البحث عن التواريخ، وإعدادات حجم لوحة الأرقام وتصغير الأزرار ووضعها داخل الشاشة، وتحسين استقرار التشغيل على الهاتف، وإصلاح مشكلة عرض مؤقت الرحلة، وإضافة مذكرة للاستماع إلى إعلانات الطائرة في تبويب المذكرات، وإضافة وإصلاح معالجة حذف البيانات.',
+    eo:'Aldonis nuligadon de elektado por ĉiuj datserĉoj, agordojn por la grandeco de la numera klavaro kaj ŝrumpigo de butonoj kaj ilia poziciigo en la ekrano, stabiligis funkciadon ĉe saĝtelefonoj, riparis la ekranan problemon de la flugtempigilo, aldonis aŭskultan noton pri flugilaj anoncoj al la Memoriga langeto, kaj aldonis kaj riparis datumforigan traktadon.',
+    mam:'Added clear-selection controls to all date searches, numeric keyboard size and button scaling settings and in-screen positioning, stabilized smartphone operation, fixed the flight timer display issue, added an in-flight announcement listening memo to the Memo tab, and added and fixed data deletion processing.',
+    th:'เพิ่มการยกเลิกการเลือกในการค้นหาวันที่ทั้งหมด เพิ่มการตั้งค่าขนาดแป้นพิมพ์ตัวเลข การย่อปุ่ม และการจัดตำแหน่งภายในหน้าจอ ปรับปรุงความเสถียรในการใช้งานบนสมาร์ตโฟน แก้ไขปัญหาการแสดงผลตัวจับเวลาเที่ยวบิน เพิ่มบันทึกการฟังประกาศบนเครื่องบินในแท็บบันทึก และเพิ่มและแก้ไขการจัดการลบข้อมูล',
+    sw:'Imeongeza kuondoa uteuzi katika utafutaji wote wa tarehe, mipangilio ya ukubwa wa kibodi ya nambari na kupunguza vitufe pamoja na uwekaji wake ndani ya skrini, imeimarisha uendeshaji kwenye simu mahiri, imerekebisha tatizo la kuonyesha kipima muda cha safari ya ndege, imeongeza kumbukumbu ya kusikiliza matangazo ya ndani ya ndege kwenye kichupo cha Memo, na imeongeza na kurekebisha uchakataji wa kufuta data.',
+    es:'Se añadieron controles para cancelar la selección en todas las búsquedas de fechas, ajustes del tamaño del teclado numérico y reducción de botones con posicionamiento dentro de la pantalla, se estabilizó el funcionamiento en smartphones, se corrigió el problema de visualización del temporizador de vuelo, se añadió una nota para escuchar los anuncios a bordo en la pestaña de notas y se añadió y corrigió el procesamiento de eliminación de datos.',
+    fr:'Ajout de la désélection dans toutes les recherches de dates, des réglages de taille du clavier numérique et de réduction des boutons avec positionnement dans l’écran, amélioration de la stabilité sur smartphone, correction du problème d’affichage du minuteur de vol, ajout d’une note d’écoute des annonces à bord dans l’onglet Mémo, ainsi qu’ajout et correction du traitement de suppression des données.',
+    de:'Auswahlaufhebung für alle Datumssuchen, Einstellungen für die Größe der Zahlentastatur und die Verkleinerung der Schaltflächen sowie deren Positionierung auf dem Bildschirm hinzugefügt, die Bedienung auf Smartphones stabilisiert, ein Anzeigeproblem des Flugtimers behoben, eine Notiz zum Anhören von Bordansagen im Memo-Tab hinzugefügt sowie die Datenlöschung ergänzt und korrigiert.',
+    pt:'Foram adicionados o cancelamento da seleção em todas as pesquisas de datas, configurações de tamanho do teclado numérico e redução dos botões com posicionamento na tela, a operação em smartphones foi estabilizada, o problema de exibição do temporizador de voo foi corrigido, foi adicionada uma anotação para ouvir anúncios a bordo na aba de Memo e o processamento de exclusão de dados foi adicionado e corrigido.',
+    hi:'सभी तारीख खोजों में चयन हटाने की सुविधा, संख्यात्मक कीबोर्ड के आकार और बटन छोटे करने की सेटिंग तथा स्क्रीन के अंदर स्थिति निर्धारित करने की सुविधा जोड़ी गई, स्मार्टफोन संचालन को अधिक स्थिर किया गया, फ्लाइट टाइमर की प्रदर्शन समस्या ठीक की गई, मेमो टैब में विमान के अंदर की घोषणाएँ सुनने के लिए मेमो जोड़ा गया तथा डेटा हटाने की प्रक्रिया जोड़ी और ठीक की गई।',
+    id:'Menambahkan pembatalan pilihan pada semua pencarian tanggal, pengaturan ukuran keyboard angka dan pengecilan tombol serta penempatannya di dalam layar, menstabilkan pengoperasian pada ponsel cerdas, memperbaiki masalah tampilan pengatur waktu penerbangan, menambahkan memo untuk mendengarkan pengumuman di dalam pesawat pada tab Memo, serta menambahkan dan memperbaiki proses penghapusan data.',
+    vi:'Đã thêm chức năng bỏ chọn cho tất cả tìm kiếm ngày tháng, cài đặt kích thước bàn phím số và thu nhỏ nút cùng với khả năng định vị trong màn hình, ổn định thao tác trên điện thoại thông minh, sửa lỗi hiển thị bộ hẹn giờ chuyến bay, thêm ghi chú nghe thông báo trên máy bay vào tab Ghi chú, đồng thời thêm và sửa chức năng xử lý xóa dữ liệu.',
+    ru:'Добавлено снятие выбора во всех поисках по датам, настройки размера цифровой клавиатуры и уменьшения кнопок с возможностью размещения внутри экрана, повышена стабильность работы на смартфонах, исправлена проблема отображения таймера полёта, добавлена заметка для прослушивания объявлений на борту во вкладке «Заметки», а также добавлена и исправлена обработка удаления данных.'
+  }
+},
+  {
     pinned: false,
     date: '2026/09/30 14:50',
     desc: {
@@ -3509,6 +3628,7 @@ const availableActions = [
    完全安全版 saveAllConfig（未存在要素の null 参照エラーを100%防止）
    ========================================================================== */
 function saveAllConfig() {
+  if (window.__dataDeletionInProgress) return;
   if (window.__itsmeRestoreInProgress) return;
 
   const getVal = (id, fallback = '') => {
@@ -3565,7 +3685,8 @@ function saveAllConfig() {
     flightHours: getVal('cfgFlightHours', '6'),
     flightMinutes: getVal('cfgFlightMinutes', '30'),
     timezoneDiff: getVal('cfgTimezoneDiff', '-7'),
-    coinBalanceAddAmount: typeof getCoinBalanceAddAmount === 'function' ? getCoinBalanceAddAmount() : 800000
+    coinBalanceAddAmount: typeof getCoinBalanceAddAmount === 'function' ? getCoinBalanceAddAmount() : 800000,
+    formState: typeof snapshotFormState === 'function' ? snapshotFormState() : []
   };
 
   try {
@@ -4733,6 +4854,7 @@ const NUMERIC_KBD_I18N = {
   back: {ja:'キーボードへ戻る',en:'Back to keyboard',hira:'きーぼーどへ もどる',ko:'키보드로 돌아가기','zh-CN':'返回键盘','zh-TW':'返回鍵盤',ar:'العودة إلى لوحة المفاتيح',eo:'Reiri al klavaro',mam:'Tzajb’ila teclado',th:'กลับไปยังแป้นพิมพ์',sw:'Rudi kwenye kibodi',es:'Volver al teclado',fr:'Retour au clavier',de:'Zur Tastatur',pt:'Voltar ao teclado',hi:'कीबोर्ड पर लौटें',id:'Kembali ke keyboard',vi:'Quay lại bàn phím',ru:'Вернуться к клавиатуре'},
   width: {ja:'幅',en:'Width',hira:'はば',ko:'너비','zh-CN':'宽度','zh-TW':'寬度',ar:'العرض',eo:'Larĝo',mam:'Width',th:'ความกว้าง',sw:'Upana',es:'Ancho',fr:'Largeur',de:'Breite',pt:'Largura',hi:'चौड़ाई',id:'Lebar',vi:'Chiều rộng',ru:'Ширина'},
   height: {ja:'高さ',en:'Height',hira:'たかさ',ko:'높이','zh-CN':'高度','zh-TW':'高度',ar:'الارتفاع',eo:'Alteco',mam:'Height',th:'ความสูง',sw:'Urefu',es:'Alto',fr:'Hauteur',de:'Höhe',pt:'Altura',hi:'ऊंचाई',id:'Tinggi',vi:'Chiều cao',ru:'Высота'},
+  shrinkButtons: {ja:'ボタンをキーボードサイズに合わせて縮小',en:'Shrink buttons with keyboard size',hira:'ぼたんを きーぼーど さいずに あわせて しゅくしょう',ko:'키보드를 줄일 때 버튼도 축소', 'zh-CN':'按钮随键盘尺寸缩小', 'zh-TW':'按鈕隨鍵盤尺寸縮小', ar:'تصغير الأزرار مع حجم لوحة المفاتيح', eo:'Malgrandigi butonojn kun la klavaro', mam:'Shrink buttons with keyboard size', th:'ย่อปุ่มตามขนาดแป้นพิมพ์', sw:'Punguza vitufe pamoja na kibodi', es:'Reducir botones con el teclado', fr:'Réduire les boutons avec le clavier', de:'Tasten mit der Tastatur verkleinern', pt:'Reduzir botões com o teclado', hi:'कीबोर्ड के साथ बटन छोटे करें', id:'Perkecil tombol bersama keyboard', vi:'Thu nhỏ nút theo kích thước bàn phím', ru:'Уменьшать кнопки вместе с клавиатурой'},
   background: {ja:'背景色',en:'Background color',hira:'はいけいしょく',ko:'배경색','zh-CN':'背景色','zh-TW':'背景色',ar:'لون الخلفية',eo:'Fona koloro',mam:'Background color',th:'สีพื้นหลัง',sw:'Rangi ya usuli',es:'Color de fondo',fr:'Couleur de fond',de:'Hintergrundfarbe',pt:'Cor de fundo',hi:'पृष्ठभूमि रंग',id:'Warna latar',vi:'Màu nền',ru:'Цвет фона'},
   button: {ja:'ボタン色',en:'Button color',hira:'ぼたんしょく',ko:'버튼 색상','zh-CN':'按钮颜色','zh-TW':'按鈕顏色',ar:'لون الأزرار',eo:'Butona koloro',mam:'Button color',th:'สีปุ่ม',sw:'Rangi ya vitufe',es:'Color de botones',fr:'Couleur des boutons',de:'Tastenfarbe',pt:'Cor dos botões',hi:'बटन रंग',id:'Warna tombol',vi:'Màu nút',ru:'Цвет кнопок'},
   freeResize: {ja:'右下のハンドルをマウス・タッチでドラッグしても変更できます。',en:'You can also drag the lower-right handle with a mouse or touch.',hira:'みぎしたの はんどるを まうす・たっちで どらっぐしても へんこうできます。',ko:'오른쪽 아래 핸들을 마우스나 터치로 드래그해도 변경할 수 있습니다.','zh-CN':'也可以用鼠标或触摸拖动右下角手柄调整。','zh-TW':'也可以用滑鼠或觸控拖曳右下角控制點調整。',ar:'يمكنك أيضاً السحب بالماوس أو اللمس من المقبض السفلي الأيمن.',eo:'Vi ankaŭ povas treni la malsupran dekstran tenilon per muso aŭ tuŝo.',mam:'También puedes mover el asa de abajo con mouse o touch.',th:'สามารถลากจุดจับมุมขวาล่างด้วยเมาส์หรือการสัมผัสได้',sw:'Unaweza pia kuburuta kishikio cha chini kulia kwa kipanya au mguso.',es:'También puedes arrastrar el asa inferior derecha con ratón o táctil.',fr:'Vous pouvez aussi faire glisser la poignée en bas à droite avec la souris ou le tactile.',de:'Sie können auch den Griff unten rechts per Maus oder Touch ziehen.',pt:'Você também pode arrastar a alça inferior direita com mouse ou toque.',hi:'आप नीचे दाईं ओर के हैंडल को माउस या टच से खींचकर भी बदल सकते हैं।',id:'Anda juga dapat menyeret pegangan kanan bawah dengan mouse atau sentuhan.',vi:'Bạn cũng có thể kéo tay cầm góc dưới bên phải bằng chuột hoặc cảm ứng.',ru:'Можно также перетаскивать маркер внизу справа мышью или касанием.'},
@@ -4753,7 +4875,7 @@ const NUMERIC_KBD_I18N = {
 function numericKbdText(key){ const map=NUMERIC_KBD_I18N[key]; if(!map) return key; return map[currentLang] || map.en || map.ja || key; }
 function numericKbdModeText(mode){ const map=NUMERIC_KBD_I18N.modes || {}; const all=map[currentLang] || map.en || map.ja || ''; const names=all.split(/, /); const order=['standard','roman','kanji','devanagari','eastern-arabic','thai','myanmar','khmer','geez','suzhou','ol-chiki','kannada','meetei','kaktovik','toto','braille','morse']; const i=order.indexOf(mode); return i>=0 ? names[i] || mode : mode; }
 
-const NUMERIC_KBD_DEFAULTS = { width: 420, height: 360, background: '#1e1e1e', button: '#ffffff', x: null, y: null };
+const NUMERIC_KBD_DEFAULTS = { width: 420, height: 360, background: '#1e1e1e', button: '#ffffff', x: null, y: null, shrinkButtons: false };
 function loadNumericKeyboardSettings(){
   try { const raw=JSON.parse(localStorage.getItem('airplane_game_numeric_keyboard_settings')||'{}'); return {...NUMERIC_KBD_DEFAULTS,...raw}; }
   catch(e){ return {...NUMERIC_KBD_DEFAULTS}; }
@@ -4768,7 +4890,7 @@ function saveNumericKeyboardSettings(settings){
   const height=Math.max(180,Math.min(Math.max(180,window.innerHeight-8),Number(settings.height)||NUMERIC_KBD_DEFAULTS.height));
   const hasPosition=Number.isFinite(Number(settings.x)) && Number.isFinite(Number(settings.y));
   const pos=hasPosition ? clampNumericKeyboardPosition(Number(settings.x),Number(settings.y),width,height) : {x:null,y:null};
-  const normalized={ width, height, x:pos.x, y:pos.y, background: /^#[0-9a-fA-F]{6}$/.test(settings.background||'')?settings.background:NUMERIC_KBD_DEFAULTS.background, button: /^#[0-9a-fA-F]{6}$/.test(settings.button||'')?settings.button:NUMERIC_KBD_DEFAULTS.button };
+  const normalized={ width, height, x:pos.x, y:pos.y, background: /^#[0-9a-fA-F]{6}$/.test(settings.background||'')?settings.background:NUMERIC_KBD_DEFAULTS.background, button: /^#[0-9a-fA-F]{6}$/.test(settings.button||'')?settings.button:NUMERIC_KBD_DEFAULTS.button, shrinkButtons: !!settings.shrinkButtons };
   localStorage.setItem('airplane_game_numeric_keyboard_settings',JSON.stringify(normalized));
   return normalized;
 }
@@ -4786,6 +4908,8 @@ function applyNumericKeyboardSettings(kbd, settings=loadNumericKeyboardSettings(
     kbd.style.left='50%'; kbd.style.top='auto'; kbd.style.bottom='4px';
   }
   kbd.style.background=st.background;
+  kbd.classList.toggle('custom-kbd-shrink-buttons', !!st.shrinkButtons);
+  kbd.classList.toggle('custom-kbd-scroll-buttons', !st.shrinkButtons);
   kbd.querySelectorAll('.custom-kbd-btn:not(.btn-done), .morse-3d-btn.btn-space').forEach(el=>el.style.backgroundColor=st.button);
   kbd.querySelectorAll('.custom-kbd-btn:not(.btn-done)').forEach(el=>el.style.color='#111');
   return st;
@@ -4798,34 +4922,35 @@ function showNumericKeyboardSettings(){
   panel.innerHTML=`<div class="custom-kbd-setting-preview">${numericKbdText('freeResize')}</div>
     <label class="custom-kbd-setting-row"><span>${numericKbdText('width')}</span><input id="customKbdWidthInput" type="number" min="220" step="1" value="${Math.round(st.width)}"></label>
     <label class="custom-kbd-setting-row"><span>${numericKbdText('height')}</span><input id="customKbdHeightInput" type="number" min="180" step="1" value="${Math.round(st.height)}"></label>
+    <label class="custom-kbd-setting-row custom-kbd-checkbox-row"><span>${numericKbdText('shrinkButtons')}</span><input id="customKbdShrinkButtons" type="checkbox" ${st.shrinkButtons ? 'checked' : ''}></label>
     <label class="custom-kbd-setting-row"><span>${numericKbdText('background')}</span><div class="custom-kbd-setting-color"><input id="customKbdBgColor" type="color" value="${st.background}"><input id="customKbdBgHex" type="text" value="${st.background}" maxlength="7" inputmode="text"></div></label>
     <label class="custom-kbd-setting-row"><span>${numericKbdText('button')}</span><div class="custom-kbd-setting-color"><input id="customKbdBtnColor" type="color" value="${st.button}"><input id="customKbdBtnHex" type="text" value="${st.button}" maxlength="7" inputmode="text"></div></label>
     <div class="custom-kbd-setting-buttons"><button type="button" class="btn btn-outline" id="customKbdResetBtn">${numericKbdText('reset')}</button><button type="button" class="btn btn-primary" id="customKbdSaveBtn">${numericKbdText('save')}</button></div>`;
   kbd.appendChild(panel);
-  const live=()=>{ const next={width:Number(document.getElementById('customKbdWidthInput').value),height:Number(document.getElementById('customKbdHeightInput').value),background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim()}; applyNumericKeyboardSettings(kbd,next); };
-  ['customKbdWidthInput','customKbdHeightInput','customKbdBgHex','customKbdBtnHex'].forEach(id=>document.getElementById(id).addEventListener('input',live));
+  const live=()=>{ const cur=loadNumericKeyboardSettings(); const next={width:Number(document.getElementById('customKbdWidthInput').value),height:Number(document.getElementById('customKbdHeightInput').value),x:cur.x,y:cur.y,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked}; applyNumericKeyboardSettings(kbd,next); };
+  ['customKbdWidthInput','customKbdHeightInput','customKbdBgHex','customKbdBtnHex','customKbdShrinkButtons'].forEach(id=>document.getElementById(id).addEventListener('input',live));
   const bindColor=(colorId,hexId)=>document.getElementById(colorId).addEventListener('input',e=>{document.getElementById(hexId).value=e.target.value;live();});
   bindColor('customKbdBgColor','customKbdBgHex'); bindColor('customKbdBtnColor','customKbdBtnHex');
   document.getElementById('customKbdResetBtn').onclick=()=>{localStorage.removeItem('airplane_game_numeric_keyboard_settings');showNumericKeyboardSettings();};
-  document.getElementById('customKbdSaveBtn').onclick=()=>{ saveNumericKeyboardSettings({width:document.getElementById('customKbdWidthInput').value,height:document.getElementById('customKbdHeightInput').value,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim()}); openCustomNumericKeyboard(activeCustomInput); };
+  document.getElementById('customKbdSaveBtn').onclick=()=>{ saveNumericKeyboardSettings({width:document.getElementById('customKbdWidthInput').value,height:document.getElementById('customKbdHeightInput').value,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked}); openCustomNumericKeyboard(activeCustomInput); };
   applyNumericKeyboardSettings(kbd,st);
   attachNumericKeyboardResizeHandle(kbd);
 }
 function attachNumericKeyboardResizeHandle(kbd){
   let h=kbd.querySelector('.custom-kbd-resize-handle'); if(!h){h=document.createElement('div');h.className='custom-kbd-resize-handle';h.title=numericKbdText('freeResize');kbd.appendChild(h);}
   h.onpointerdown=(e)=>{ e.preventDefault(); h.setPointerCapture?.(e.pointerId); const startX=e.clientX,startY=e.clientY,st=loadNumericKeyboardSettings(); const move=ev=>{ const next={...st,width:st.width+(startX-ev.clientX)*2,height:st.height+(startY-ev.clientY)}; applyNumericKeyboardSettings(kbd,next); }; const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); h.removeEventListener('pointercancel',up); }; h.addEventListener('pointermove',move);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up); };
+  let mh=kbd.querySelector('.custom-kbd-move-handle');
+  if(!mh){ mh=document.createElement('div'); mh.className='custom-kbd-move-handle'; mh.textContent='\\'; mh.title='長押しして移動'; kbd.appendChild(mh); }
+  if(mh._moveCleanup) mh._moveCleanup();
+  let timer=null,dragging=false,dragPointerId=null;
+  const cancel=()=>{ if(timer){clearTimeout(timer);timer=null;} dragging=false; if(dragPointerId!==null){try{mh.releasePointerCapture?.(dragPointerId);}catch(e){} } dragPointerId=null; mh.removeEventListener('pointermove',move); mh.removeEventListener('pointerup',finish); mh.removeEventListener('pointercancel',finish); };
+  const finish=()=>{ if(dragging) saveNumericKeyboardSettings(loadNumericKeyboardSettings()); cancel(); };
+  const move=(ev)=>{ if(!dragging) return; const rect=kbd.getBoundingClientRect(); const st=loadNumericKeyboardSettings(); const pos=clampNumericKeyboardPosition(startLeft+(ev.clientX-startX),startTop+(ev.clientY-startY),rect.width,rect.height); applyNumericKeyboardSettings(kbd,{...st,x:pos.x,y:pos.y}); };
+  let startX=0,startY=0,startLeft=0,startTop=0;
+  const down=(e)=>{ e.preventDefault(); startX=e.clientX; startY=e.clientY; const rect=kbd.getBoundingClientRect(); startLeft=rect.left; startTop=rect.top; dragPointerId=e.pointerId; mh.setPointerCapture?.(e.pointerId); timer=setTimeout(()=>{ dragging=true; mh.addEventListener('pointermove',move); mh.addEventListener('pointerup',finish); mh.addEventListener('pointercancel',finish); },350); };
+  mh.onpointerdown=down; mh._moveCleanup=cancel;
   const header=kbd.querySelector('.custom-kbd-header');
-  if(header){
-    header.onpointerdown=(e)=>{
-      if(e.target.closest('button')) return;
-      e.preventDefault();
-      const rect=kbd.getBoundingClientRect();
-      const startX=e.clientX,startY=e.clientY,startLeft=rect.left,startTop=rect.top,st=loadNumericKeyboardSettings();
-      const move=ev=>{ const pos=clampNumericKeyboardPosition(startLeft+(ev.clientX-startX),startTop+(ev.clientY-startY),rect.width,rect.height); applyNumericKeyboardSettings(kbd,{...st,x:pos.x,y:pos.y}); };
-      const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); header.releasePointerCapture?.(e.pointerId); header.removeEventListener('pointermove',move); header.removeEventListener('pointerup',up); header.removeEventListener('pointercancel',up); };
-      header.setPointerCapture?.(e.pointerId); header.addEventListener('pointermove',move); header.addEventListener('pointerup',up); header.addEventListener('pointercancel',up);
-    };
-  }
+  if(header) header.onpointerdown=null;
 }
 
 let activeCustomInput = null;
@@ -5313,7 +5438,7 @@ function initIndexedDB() {
       if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('customFonts')) db.createObjectStore('customFonts', { keyPath: 'id' });
     };
-    req.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
+    req.onsuccess = (e) => { dbInstance = e.target.result; dbInstance.onversionchange = () => { try { dbInstance.close(); } catch (err) {} }; resolve(dbInstance); };
     req.onerror = () => resolve(null);
   });
 }
@@ -5391,7 +5516,7 @@ function showDeletionModal() {
   modal.style.display = 'flex';
 }
 
-function handleDeletionAnswer(isYes) {
+async function handleDeletionAnswer(isYes) {
   if (!isYes) {
     closeModal();
     document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
@@ -5410,14 +5535,27 @@ function handleDeletionAnswer(isYes) {
     const overlay = document.getElementById('whiteoutOverlay');
     overlay.style.opacity = '1';
     overlay.style.pointerEvents = 'all';
-
-    setTimeout(async () => {
-      localStorage.clear();
+    window.__dataDeletionInProgress = true;
+    try { localStorage.clear(); } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+    try {
+      if (dbInstance) { try { dbInstance.close(); } catch (e) {} dbInstance = null; }
       if (window.indexedDB) {
-        try { indexedDB.deleteDatabase('AirplaneGamesDB_v3'); } catch(e){}
+        let dbNames = ['AirplaneGamesDB_v3', 'AirplaneGamesDB'];
+        if (typeof indexedDB.databases === 'function') {
+          try {
+            const dbs = await indexedDB.databases();
+            dbNames = dbNames.concat((dbs || []).map(db => db?.name).filter(Boolean));
+          } catch (e) {}
+        }
+        dbNames = Array.from(new Set(dbNames));
+        for (const name of dbNames) {
+          try { await idbDeleteDatabase(name); } catch (e) { console.warn('データ削除: IndexedDB削除失敗', name, e); }
+        }
       }
-      location.reload();
-    }, 3000);
+    } catch (e) {}
+    try { if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); } } catch (e) {}
+    setTimeout(() => { try { localStorage.clear(); sessionStorage.clear(); } catch (e) {} location.replace(location.href.split('#')[0]); }, 3200);
   }
 }
 
@@ -5929,7 +6067,7 @@ function performShortcutAction(action){
   if(action==='jump'){triggerDpad('up');return;} if(action==='pause'){toggleCurrentGame();return;} if(action==='clean'&&currentGame==='blackboard'){cleanBlackboard(200,200);return;} if(action==='sound'){playClickSound();return;}
   if(action==='start'){if(!isGameRunning)startGame();return;} if(action==='stop'){if(isGameRunning)stopGame();return;}
   if(action.startsWith('game_')){const key=action.slice(5);const btn=document.querySelector(`.game-select-btn[data-game="${key}"]`);selectGame(key,btn);return;}
-  const tabs={tab_game:'gameTab',tab_settings:'settingsTab',tab_profile:'profileTab',tab_history:'historyTab',tab_data:'dataTab',tab_coin:'coinTab'}; if(tabs[action]){switchTab(tabs[action]);return;}
+  const tabs={tab_game:'gameTab',tab_settings:'settingsTab',tab_memo:'memoTab',tab_profile:'profileTab',tab_history:'historyTab',tab_data:'dataTab',tab_coin:'coinTab'}; if(tabs[action]){switchTab(tabs[action]);return;}
   if(action==='mute'){const m=document.getElementById('cfgMuteAudio');m.checked=true;updateMasterVolume();saveConfig();return;} if(action==='unmute'){const m=document.getElementById('cfgMuteAudio');m.checked=false;updateMasterVolume();saveConfig();return;}
   if(action==='fullscreen'){document.documentElement.requestFullscreen?.().catch(()=>{});return;} if(action==='reset_flight'){resetFlightTimer();return;} if(action==='myfinger'){useMyFinger();return;} if(action==='add_coin'){addCoinBalance();return;}
   if(action==='toggle_theme'){const c=document.getElementById('cfgColorTheme');c.value=c.value==='dark'?'light':'dark';applyColorTheme(c.value);saveConfig();return;} if(action==='toggle_header'){toggleHeader(document.getElementById('cfgShowHeader').checked===false);return;}
@@ -7080,7 +7218,7 @@ function openCustomFontDB() {
       if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('customFonts')) db.createObjectStore('customFonts', { keyPath: 'id' });
     };
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = () => { const db = req.result; db.onversionchange = () => { try { db.close(); } catch (e) {} }; resolve(db); };
     req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
   });
 }
@@ -7459,6 +7597,11 @@ function applyDpadSettings() {
 let flightRemainingSeconds = 6.5 * 3600;
 let flightTimerInterval = null;
 
+function saveCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) localStorage.setItem('airplane_game_cabin_announcement_memo',el.value); }
+function loadCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) el.value=localStorage.getItem('airplane_game_cabin_announcement_memo')||''; }
+function clearCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el){el.value=''; saveCabinAnnouncementMemo(); el.focus();} }
+function downloadCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(!el) return; downloadBlob(new Blob(['\uFEFF'+el.value],{type:'text/plain;charset=utf-8'}),'in-flight-announcement-memo.txt'); }
+
 function initFlightTimer() {
   const h = parseInt(document.getElementById('cfgFlightHours')?.value || '6', 10);
   const m = parseInt(document.getElementById('cfgFlightMinutes')?.value || '30', 10);
@@ -7483,9 +7626,14 @@ function resetFlightTimer() {
 }
 
 function updateFlightTimerDisplay() {
+  if (!Number.isFinite(Number(flightRemainingSeconds)) || Number(flightRemainingSeconds) < 0) {
+    const h = parseInt(document.getElementById('cfgFlightHours')?.value || '6', 10);
+    const m = parseInt(document.getElementById('cfgFlightMinutes')?.value || '30', 10);
+    flightRemainingSeconds = (Number.isFinite(h) ? Math.max(0, h) : 6) * 3600 + (Number.isFinite(m) ? Math.min(59, Math.max(0, m)) : 30) * 60;
+  }
   const hrs = Math.floor(flightRemainingSeconds / 3600);
   const mins = Math.floor((flightRemainingSeconds % 3600) / 60);
-  const secs = flightRemainingSeconds % 60;
+  const secs = Math.floor(flightRemainingSeconds % 60);
   const str = `FLIGHT: ${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
   const el = document.getElementById('flightHudClock');
   if (el) el.textContent = str;
@@ -7507,6 +7655,7 @@ function updateWorldClock() {
   }
 }
 setInterval(updateWorldClock, 1000);
+window.__airplaneSafeAddEventListener(window, 'load', () => { loadCabinAnnouncementMemo(); });
 
 /* ==========================================================================
    5. プロフィール & 経過時間 & 動画録画
@@ -8040,6 +8189,20 @@ function getScoreGameName(row) {
   return key ? t(`game_${key}`) : (row.game || '');
 }
 
+function clearScoreDateFilter() {
+  const input = document.getElementById('scoreDateInput');
+  if (input) input.value = '';
+  scorePage = 1;
+  renderScoreTable();
+}
+
+function clearCoinHistoryDateFilter() {
+  const input = document.getElementById('coinHistoryDateInput');
+  if (input) input.value = '';
+  coinHistoryPage = 1;
+  renderCoinHistoryTable();
+}
+
 function renderScoreTable() {
   const query = (document.getElementById('scoreSearchInput')?.value || '').trim().toLowerCase();
   const dateFilter = document.getElementById('scoreDateInput')?.value || '';
@@ -8277,7 +8440,7 @@ function storageRestore(storage,data){
 }
 function idbRequest(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('IndexedDB request failed'));});}
 function idbTxDone(tx){return new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error('IndexedDB transaction failed'));tx.onabort=()=>reject(tx.error||new Error('IndexedDB transaction aborted'));});}
-function idbDeleteDatabase(name){return new Promise((resolve,reject)=>{const r=indexedDB.deleteDatabase(name);r.onsuccess=()=>resolve(true);r.onerror=()=>reject(r.error||new Error('IndexedDB delete failed'));r.onblocked=()=>reject(new Error(`IndexedDB '${name}' is blocked by an open connection.`));});}
+function idbDeleteDatabase(name){return new Promise((resolve,reject)=>{if(!window.indexedDB){resolve(false);return;}let settled=false;let retryTimer=null;const finish=(fn,v)=>{if(settled)return;settled=true;if(retryTimer)clearTimeout(retryTimer);fn(v);};const attempt=()=>{let r;try{r=indexedDB.deleteDatabase(name);}catch(e){finish(reject,e);return;}r.onsuccess=()=>finish(resolve,true);r.onerror=()=>finish(reject,r.error||new Error(`IndexedDB '${name}' delete failed`));r.onblocked=()=>{try{if(dbInstance&&dbInstance.name===name){dbInstance.close();dbInstance=null;}}catch(e){} if(!settled) retryTimer=setTimeout(attempt,250);};};attempt();setTimeout(()=>{if(!settled)finish(reject,new Error(`IndexedDB '${name}' deletion is still blocked.`));},5000);});}
 function idbOpenForSnapshot(name){return new Promise((resolve,reject)=>{const r=indexedDB.open(name);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('IndexedDB open failed'));});}
 async function snapshotIndexedDB(){const out=[];if(!window.indexedDB)return out;let names=[];try{if(typeof indexedDB.databases==="function"){const a=await indexedDB.databases();names=a.map(x=>String((x&&x.name)||"")).filter(n=>n.includes("AirplaneGamesDB"));}}catch(e){console.warn("IndexedDB enumeration failed:",e);}if(!names.length)names=["AirplaneGamesDB_v3","AirplaneGamesDB"];for(const name of Array.from(new Set(names))){let db=null;try{db=await idbOpenForSnapshot(name);const stores=[];for(const sn of Array.from(db.objectStoreNames)){const tx=db.transaction(sn,"readonly"),store=tx.objectStore(sn),keys=await idbRequest(store.getAllKeys()),vals=await idbRequest(store.getAll()),records=[];for(let i=0;i<vals.length;i++){const seen=new Map();records.push({key:await encodeBackupValue(keys[i],seen),value:await encodeBackupValue(vals[i],seen)});}stores.push({name:sn,keyPath:store.keyPath===undefined?null:store.keyPath,autoIncrement:store.autoIncrement,indexes:Array.from(store.indexNames).map(n=>{const x=store.index(n);return{name:n,keyPath:x.keyPath,multiEntry:x.multiEntry,unique:x.unique};}),records});}out.push({name,version:db.version,stores});}catch(e){console.warn(`IndexedDB snapshot skipped for ${name}:`,e);}finally{try{db&&db.close();}catch(_){}}}return out;}
 async function restoreIndexedDB(snapshot){
@@ -9134,6 +9297,7 @@ window.__airplaneSafeAddEventListener(window, 'load', async () => {
     if (config.flightMinutes) document.getElementById('cfgFlightMinutes').value = config.flightMinutes;
     if (config.timezoneDiff) document.getElementById('cfgTimezoneDiff').value = config.timezoneDiff;
     if (config.coinBalanceAddAmount !== undefined) document.getElementById('coinBalanceAddAmount').value = Math.max(0, Math.floor(Number(config.coinBalanceAddAmount) || 800000));
+    if (Array.isArray(config.formState)) restoreFormState(config.formState);
   }
 
   if ('serviceWorker' in navigator) {
@@ -9505,3 +9669,4 @@ window.__airplaneSafeAddEventListener(window, 'load', () => {
 </script>
 </body>
 </html>
+
