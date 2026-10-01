@@ -905,43 +905,6 @@ html[data-script-mode="toto"] input[data-numeral-managed],
 html[data-script-mode="toto"] input[type="number"] {
   font-family: 'NotoSerifTotoEmbedded', 'Segoe UI Symbol', 'Segoe UI Historic', sans-serif !important;
 }
-/* 数字体系のUnicode文字化け防止：各体系の専用フォントを最優先し、端末の選択フォントによる欠字を防ぐ。 */
-html[data-script-mode="devanagari"] .numeral-script-token,
-html[data-script-mode="devanagari"] input[data-numeral-managed],
-html[data-script-mode="devanagari"] input[data-numeral-input] { font-family: "Noto Sans Devanagari", "Noto Sans", sans-serif !important; }
-html[data-script-mode="eastern-arabic"] .numeral-script-token,
-html[data-script-mode="eastern-arabic"] input[data-numeral-managed],
-html[data-script-mode="eastern-arabic"] input[data-numeral-input] { font-family: "Noto Sans Arabic", "Noto Sans", sans-serif !important; }
-html[data-script-mode="thai"] .numeral-script-token,
-html[data-script-mode="thai"] input[data-numeral-managed],
-html[data-script-mode="thai"] input[data-numeral-input] { font-family: "Noto Sans Thai", "Noto Sans", sans-serif !important; }
-html[data-script-mode="myanmar"] .numeral-script-token,
-html[data-script-mode="myanmar"] input[data-numeral-managed],
-html[data-script-mode="myanmar"] input[data-numeral-input] { font-family: "Noto Sans Myanmar", "Noto Sans", sans-serif !important; }
-html[data-script-mode="khmer"] .numeral-script-token,
-html[data-script-mode="khmer"] input[data-numeral-managed],
-html[data-script-mode="khmer"] input[data-numeral-input] { font-family: "Noto Sans Khmer", "Noto Sans", sans-serif !important; }
-html[data-script-mode="geez"] .numeral-script-token,
-html[data-script-mode="geez"] input[data-numeral-managed],
-html[data-script-mode="geez"] input[data-numeral-input] { font-family: "Noto Sans Ethiopic", "Noto Sans", sans-serif !important; }
-html[data-script-mode="ol-chiki"] .numeral-script-token,
-html[data-script-mode="ol-chiki"] input[data-numeral-managed],
-html[data-script-mode="ol-chiki"] input[data-numeral-input] { font-family: "Noto Sans Ol Chiki", "Noto Sans", sans-serif !important; }
-html[data-script-mode="kannada"] .numeral-script-token,
-html[data-script-mode="kannada"] input[data-numeral-managed],
-html[data-script-mode="kannada"] input[data-numeral-input] { font-family: "Noto Sans Kannada", "Noto Sans", sans-serif !important; }
-html[data-script-mode="meetei"] .numeral-script-token,
-html[data-script-mode="meetei"] input[data-numeral-managed],
-html[data-script-mode="meetei"] input[data-numeral-input] { font-family: "Noto Sans Meetei Mayek", "Noto Sans", sans-serif !important; }
-html[data-script-mode="suzhou"] .numeral-script-token,
-html[data-script-mode="suzhou"] input[data-numeral-managed],
-html[data-script-mode="suzhou"] input[data-numeral-input] { font-family: "Noto Sans Symbols 2", "Noto Sans CJK JP", sans-serif !important; }
-html[data-script-mode="braille"] .numeral-script-token,
-html[data-script-mode="braille"] input[data-numeral-managed],
-html[data-script-mode="braille"] input[data-numeral-input] { font-family: "Noto Sans Symbols 2", "Segoe UI Symbol", sans-serif !important; }
-html[data-script-mode="morse"] .numeral-script-token,
-html[data-script-mode="morse"] input[data-numeral-managed],
-html[data-script-mode="morse"] input[data-numeral-input] { font-family: "Noto Sans Mono", monospace !important; }
 html[data-script-mode="mayan"] .mayan-script-rendered {
   text-shadow: 0 0 1px rgba(0,0,0,0.4);
 }
@@ -1133,6 +1096,68 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-header,
 html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
 #customNumericKeyboard .custom-kbd-header span { min-width: 0; overflow-wrap: anywhere; }
 #customNumericKeyboard .custom-kbd-btn, #customNumericKeyboard .morse-3d-btn { overflow-wrap: anywhere; white-space: normal; }
+.custom-kbd-mapping-panel {
+  flex:1; min-height:0; height:calc(100% - 42px); overflow:hidden; display:flex; flex-direction:column; gap:8px; color:#fff; box-sizing:border-box;
+}
+.custom-kbd-visible-tabbar {
+  display:flex;
+  width:100%;
+  box-sizing:border-box;
+  margin:0 0 7px;
+  gap:6px;
+  flex:0 0 auto;
+}
+.custom-kbd-visible-mapping-tab {
+  width:100%;
+  min-height:34px;
+  box-sizing:border-box;
+  font-weight:bold;
+  touch-action:manipulation;
+}
+.custom-kbd-mapping-panel {
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+#customNumericKeyboard.custom-kbd-mapping-open {
+  display:flex !important;
+  flex-direction:column;
+  min-height:180px;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel {
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-scroll {
+  flex:1 1 auto;
+  min-height:70px;
+  overflow:auto;
+  display:block;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table {
+  display:table;
+}
+
+.custom-kbd-mapping-tabs { display:flex; gap:6px; flex-wrap:wrap; }
+.custom-kbd-mapping-tabs .btn { padding:4px 9px; font-size:12px; }
+.custom-kbd-mapping-scroll { flex:1; min-height:90px; overflow:auto; border:1px solid rgba(255,255,255,.2); border-radius:8px; }
+.custom-kbd-mapping-table { border-collapse:collapse; width:max-content; min-width:100%; }
+.custom-kbd-mapping-table th, .custom-kbd-mapping-table td { border:1px solid rgba(255,255,255,.18); padding:7px 9px; text-align:center; white-space:nowrap; }
+.custom-kbd-mapping-table th { position:sticky; top:0; background:#292929; z-index:1; }
+.custom-kbd-mapping-cell { cursor:pointer; user-select:none; font-weight:bold; }
+.custom-kbd-mapping-cell:hover { background:rgba(255,255,255,.12); }
+.custom-kbd-mapping-copy { padding:3px 7px !important; font-size:11px !important; }
+.custom-kbd-mapping-form { display:grid; grid-template-columns:minmax(100px,1fr) minmax(120px,1fr); gap:7px; }
+.custom-kbd-mapping-form input, .custom-kbd-mapping-form select { min-width:0; box-sizing:border-box; padding:7px; border-radius:7px; border:1px solid #777; }
+.custom-kbd-mapping-output { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.custom-kbd-mapping-output input { flex:1 1 180px; min-width:0; box-sizing:border-box; padding:7px; border-radius:7px; border:1px solid #777; }
+.custom-kbd-mapping-note { font-size:12px; opacity:.8; line-height:1.45; }
+.custom-kbd-mapping-status { font-size:12px; min-height:18px; opacity:.85; }
+@media (max-width:600px){ .custom-kbd-mapping-form { grid-template-columns:1fr; } .custom-kbd-mapping-table th, .custom-kbd-mapping-table td { padding:6px 7px; } }
+
 .custom-kbd-header {
   display: flex;
   justify-content: space-between;
@@ -1162,6 +1187,16 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
 #customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-grid { min-width:0; overflow:hidden; }
 #customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn { font-size:clamp(10px, calc(var(--custom-kbd-width,420px) / 24), 20px); padding:clamp(4px, calc(var(--custom-kbd-height,360px) / 38), 12px) 2px; }
 #customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn.btn-action { font-size:clamp(9px, calc(var(--custom-kbd-width,420px) / 32), 14px); }
+
+/* スマホ用電卓：左下の\を長押ししたときだけ移動する。 */
+#airplaneMiniCalculator { position:fixed; left:18px; bottom:18px; width:250px; max-width:calc(100vw - 36px); z-index:2147483600; background:rgba(25,25,25,.97); color:#fff; border:2px solid var(--accent-pink,#ff4081); border-radius:14px; box-shadow:0 8px 30px rgba(0,0,0,.4); overflow:hidden; touch-action:none; }
+#airplaneMiniCalculator .calc-display { width:100%; box-sizing:border-box; padding:12px; font-size:22px; text-align:right; background:#111; color:#fff; border:0; outline:0; }
+#airplaneMiniCalculator .calc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:7px; }
+#airplaneMiniCalculator .calc-grid button { min-height:42px; font-size:16px; border-radius:8px; border:1px solid #666; background:#eee; color:#111; user-select:none; }
+#airplaneMiniCalculator .calc-move-handle { position:absolute; left:0; bottom:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff; background:#444; border-radius:0 8px 0 0; user-select:none; touch-action:none; }
+#airplaneMiniCalculator.calc-moving { opacity:.9; }
+@media (min-width:601px){ #airplaneMiniCalculator{ display:none; } }
+@media (max-width:600px){ #airplaneMiniCalculator{ width:220px; } #airplaneMiniCalculator .calc-grid button{min-height:38px;} }
 
 /* カクトビックのキーボードボタンにも埋め込み専用フォントを適用する。 */
 #customNumericKeyboard.kaktovik-mode .custom-kbd-btn:not(.btn-action) {
@@ -1244,28 +1279,6 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
   opacity: .8;
   z-index: 3;
 }
-.custom-kbd-move-handle {
-  position: absolute;
-  left: 3px;
-  bottom: 3px;
-  width: 34px;
-  height: 34px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255,255,255,.9);
-  background: rgba(255,255,255,.08);
-  font-size: 22px;
-  line-height: 1;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  z-index: 4;
-}
-.custom-kbd-move-handle:active { cursor: grabbing; }
-
 .custom-kbd-settings {
   display: flex;
   flex-direction: column;
@@ -1380,10 +1393,120 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
   font-style: normal;
   vertical-align: middle;
 }
+
+/* 対応表表示領域をキーボード本体から独立して確保する */
+#customNumericKeyboard.custom-kbd-mapping-open {
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-header {
+  display:none !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  padding:10px 8px 24px !important;
+  overflow:hidden !important;
+  display:flex !important;
+  flex-direction:column !important;
+  box-sizing:border-box !important;
+  background:rgba(30,30,30,.98) !important;
+  z-index:2 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-tabs,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-note,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-status,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-form,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-output,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-downloads {
+  flex:0 0 auto !important;
+  min-height:0 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-scroll {
+  flex:1 1 0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:60px !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:auto !important;
+  box-sizing:border-box !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table {
+  width:max-content !important;
+  min-width:100% !important;
+  height:auto !important;
+  display:table !important;
+}
+</style>
+
+<style id="numeric-mapping-force-fix">
+#customNumericKeyboard.custom-kbd-mapping-open {
+  display:block !important;
+  position:fixed !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel {
+  position:absolute !important;
+  inset:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  height:100% !important;
+  margin:0 !important;
+  padding:10px 8px 24px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  background:rgba(30,30,30,.98) !important;
+  color:#fff !important;
+  z-index:999999 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel > .custom-kbd-header {
+  display:flex !important;
+  flex:0 0 auto !important;
+  min-height:34px !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  color:#fff !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-tabs,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-note,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-status,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-form,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-output {
+  flex:0 0 auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-scroll {
+  display:block !important;
+  flex:1 1 0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:80px !important;
+  height:0 !important;
+  max-height:none !important;
+  overflow:auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table {
+  display:table !important;
+  width:max-content !important;
+  min-width:100% !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
 </style>
 </head>
 <body>
-<div id="whiteoutOverlay" aria-hidden="true"></div>
 <div id="mouseStalker">★</div>
 <!-- 画面最上部に表示される救済案内バー -->
 <div id="rescueNoticeBar" class="rescue-notice-bar" style="display: none;">
@@ -1457,12 +1580,25 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
       <option value="braille" data-i18n="script_braille">15. 点字数字</option>
       <option value="morse" data-i18n="script_morse">16. モールス信号</option>
     </select>
+    <button type="button" id="customKeyboardHeaderShowButton" class="btn btn-outline" style="display:none;" onclick="showHeaderNumericKeyboard()"></button>
   </nav>
 </header>
 
 <main>
   <!-- 1. ゲームタブ -->
-  <section id="gameTab" class="tab-content active">
+  <div id="airplaneMiniCalculator" aria-label="Calculator">
+  <input id="miniCalcDisplay" class="calc-display" value="0" readonly>
+  <div class="calc-grid">
+    <button type="button" onclick="miniCalcPress('C')">C</button><button type="button" onclick="miniCalcPress('⌫')">⌫</button><button type="button" onclick="miniCalcPress('/')">÷</button><button type="button" onclick="miniCalcPress('*')">×</button>
+    <button type="button" onclick="miniCalcPress('7')">7</button><button type="button" onclick="miniCalcPress('8')">8</button><button type="button" onclick="miniCalcPress('9')">9</button><button type="button" onclick="miniCalcPress('-')">−</button>
+    <button type="button" onclick="miniCalcPress('4')">4</button><button type="button" onclick="miniCalcPress('5')">5</button><button type="button" onclick="miniCalcPress('6')">6</button><button type="button" onclick="miniCalcPress('+')">+</button>
+    <button type="button" onclick="miniCalcPress('1')">1</button><button type="button" onclick="miniCalcPress('2')">2</button><button type="button" onclick="miniCalcPress('3')">3</button><button type="button" onclick="miniCalcPress('=')">=</button>
+    <button type="button" onclick="miniCalcPress('0')" style="grid-column:span 2;">0</button><button type="button" onclick="miniCalcPress('.')">.</button>
+  </div>
+  <div id="miniCalcMoveHandle" class="calc-move-handle" aria-label="">\</div>
+</div>
+
+<section id="gameTab" class="tab-content active">
     <div class="game-controls-bar">
       <input type="text" id="gameSearchInput" class="search-input" data-i18n-ph="ph_search_game" placeholder="ゲームを検索..." oninput="filterGames()">
       <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -1696,6 +1832,7 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
           <option value="device" data-i18n="val_device">端末設定に従う</option>
         </select>
       </div>
+
       <!-- 機内特化設定 -->
       <div class="config-item">
         <label data-i18n="cfg_night_flight">🌙 機内消灯モード (超低輝度・漆黒)</label>
@@ -1778,8 +1915,8 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
       <div class="config-item">
         <label data-i18n="cfg_flight_timer">⏱️ フライトタイマー (到着カウントダウン)</label>
         <div style="display:flex; gap:6px; align-items:center;">
-          <input type="number" id="cfgFlightHours" data-i18n-ph="ph_hours" placeholder="時間" min="0" max="24" value="6" style="width:65px;" oninput="initFlightTimer(); saveConfig();" onchange="initFlightTimer(); saveConfig();"> 時間
-          <input type="number" id="cfgFlightMinutes" data-i18n-ph="ph_minutes" placeholder="分" min="0" max="59" value="30" style="width:65px;" oninput="initFlightTimer(); saveConfig();" onchange="initFlightTimer(); saveConfig();"> 分
+          <input type="number" id="cfgFlightHours" data-i18n-ph="ph_hours" placeholder="時間" min="0" max="24" value="6" style="width:65px;" onchange="initFlightTimer(); saveConfig();"> 時間
+          <input type="number" id="cfgFlightMinutes" data-i18n-ph="ph_minutes" placeholder="分" min="0" max="59" value="30" style="width:65px;" onchange="initFlightTimer(); saveConfig();"> 分
           <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="resetFlightTimer()" data-i18n="btn_timer_reset">リセット</button>
         </div>
       </div>
@@ -2063,9 +2200,6 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
       <button class="btn btn-danger" onclick="startDataDeletionProcess()" data-i18n="btn_delete_all_data">データを削除</button>
       <button class="btn btn-outline" id="clearCacheBtn" data-i18n="btn_clear_cache">キャッシュをクリア</button>
     </div>
-
-    <button class="btn btn-danger" onclick="startDataDeletionProcess()" data-i18n="btn_delete_all_data">データを削除</button>
-    <button class="btn btn-outline" id="clearCacheBtn" data-i18n="btn_clear_cache">キャッシュをクリア</button>
   </section>
 
   <!-- 8. コインタブ -->
@@ -2654,32 +2788,29 @@ const AUTHOR_NAMES = {
 
 
 const KOUSHIN_DATA = [
+  { pinned:false, date:'2026/10/01 21:23', desc:{
+    ja:'数字キーボードの対応表タブを追加しました。選択中の数字プリセットに応じて通常数字との対応表を自動更新でき、横スクロール、セル選択による入力候補、コピー、通常数字から選択した数字形式への変換、入力欄への打ち込み、CSV・TSV・JSON・HTML・TXT形式でのダウンロード、多言語表示に対応しました。',
+    en:'Added a Mapping Table tab to the numeric keyboard. The table automatically updates to match the selected numeral preset, supports horizontal scrolling, selecting cells as input candidates, copying, converting standard digits to the selected numeral format, inserting into input fields, downloading as CSV, TSV, JSON, HTML, or TXT, and multilingual display.',
+    hira:'すうじ きーぼーどの たいおうひょう たぶを ついかしました。せんたくちゅうの すうじ ぷりせっとに おうじて つうじょう すうじとの たいおうひょうを じどう こうしんでき、よこ すくろーる、せる せんたくによる にゅうりょく こうほ、こぴー、つうじょう すうじから せんたくした すうじ けいしきへの へんかん、にゅうりょくらんへの うちこみ、CSV・TSV・JSON・HTML・TXT けいしきでの だうんろーど、たげんご ひょうじに たいおうしました。',
+    ko:'숫자 키보드에 대응표 탭을 추가했습니다. 선택한 숫자 프리셋에 따라 일반 숫자와의 대응표가 자동으로 갱신되며, 가로 스크롤, 셀 선택을 통한 입력 후보, 복사, 일반 숫자에서 선택한 숫자 형식으로 변환, 입력란에 입력, CSV·TSV·JSON·HTML·TXT 형식 다운로드, 다국어 표시를 지원합니다.',
+    'zh-CN':'新增数字键盘对应表标签页。对应表会根据当前选择的数字预设自动更新，支持横向滚动、点击单元格作为输入候选、复制、将普通数字转换为所选数字格式、插入输入框，以及CSV、TSV、JSON、HTML、TXT格式下载和多语言显示。',
+    'zh-TW':'新增數字鍵盤對應表分頁。對應表會依目前選擇的數字預設自動更新，支援橫向捲動、點擊儲存格作為輸入候選、複製、將一般數字轉換為所選數字格式、插入輸入欄，以及CSV、TSV、JSON、HTML、TXT格式下載與多語言顯示。',
+    ar:'تمت إضافة علامة تبويب لجدول مطابقة الأرقام إلى لوحة الأرقام. يتم تحديث الجدول تلقائياً وفق نظام الأرقام المحدد، مع دعم التمرير الأفقي واختيار الخلايا كمرشحات إدخال والنسخ والتحويل من الأرقام القياسية إلى النظام المحدد والإدراج في حقول الإدخال والتنزيل بصيغ CSV وTSV وJSON وHTML وTXT والعرض متعدد اللغات.',
+    eo:'Aldonis langeton de korespondtabelo al la nombra klavaro. La tabelo aŭtomate ĝisdatigas laŭ la elektita nombrosistemo kaj subtenas horizontalan rulumadon, ĉelan elekton kiel eniga kandidato, kopiadon, konvertadon de normaj ciferoj al la elektita formato, enmeton en enigkampojn, elŝuton en CSV, TSV, JSON, HTML kaj TXT, kaj plurlingvan montradon.',
+    mam:'Added a Mapping Table tab to the numeric keyboard with automatic updates for the selected numeral preset, horizontal scrolling, cell selection for input, copying, numeral conversion, input insertion, multiple download formats, and multilingual display.',
+    th:'เพิ่มแท็บตารางเทียบในแป้นพิมพ์ตัวเลข ตารางจะอัปเดตตามรูปแบบตัวเลขที่เลือกโดยอัตโนมัติ รองรับการเลื่อนแนวนอน การเลือกเซลล์เพื่อเตรียมป้อนข้อมูล การคัดลอก การแปลงตัวเลขมาตรฐาน การแทรกลงช่องป้อนข้อมูล การดาวน์โหลด CSV, TSV, JSON, HTML และ TXT และการแสดงหลายภาษา',
+    sw:'Imeongeza kichupo cha jedwali la ulinganifu kwenye kibodi ya nambari. Jedwali husasishwa kulingana na mfumo wa nambari uliochaguliwa na linaunga mkono kusogeza mlalo, kuchagua seli kwa ajili ya kuingiza, kunakili, kubadilisha nambari, kuingiza kwenye sehemu za kuingiza, kupakua CSV, TSV, JSON, HTML na TXT, na lugha nyingi.',
+    es:'Se añadió una pestaña de tabla de correspondencias al teclado numérico. La tabla se actualiza automáticamente según el sistema numérico seleccionado y admite desplazamiento horizontal, selección de celdas como candidatos de entrada, copia, conversión de dígitos estándar, inserción en campos, descarga en CSV, TSV, JSON, HTML y TXT y visualización multilingüe.',
+    fr:'Ajout d’un onglet de table de correspondance au clavier numérique. Le tableau se met automatiquement à jour selon le système choisi et prend en charge le défilement horizontal, la sélection de cellules pour la saisie, la copie, la conversion des chiffres standard, l’insertion dans les champs, le téléchargement CSV, TSV, JSON, HTML et TXT et l’affichage multilingue.',
+    de:'Dem Ziffernblock wurde ein Reiter für eine Zuordnungstabelle hinzugefügt. Die Tabelle aktualisiert sich automatisch nach dem gewählten Zahlensystem und unterstützt horizontales Scrollen, Zellenauswahl als Eingabekandidat, Kopieren, Umwandlung von Standardziffern, Einfügen in Eingabefelder, Downloads als CSV, TSV, JSON, HTML und TXT sowie mehrsprachige Anzeige.',
+    pt:'Foi adicionada uma aba de tabela de correspondência ao teclado numérico. A tabela é atualizada automaticamente conforme o sistema numérico selecionado e oferece rolagem horizontal, seleção de células como candidatos de entrada, cópia, conversão de dígitos padrão, inserção em campos, download em CSV, TSV, JSON, HTML e TXT e exibição multilíngue.',
+    hi:'संख्या कीबोर्ड में रूपांतरण तालिका टैब जोड़ा गया। चुने गए संख्या प्रीसेट के अनुसार तालिका अपने आप अपडेट होती है और क्षैतिज स्क्रॉल, सेल चयन द्वारा इनपुट उम्मीदवार, कॉपी, मानक अंकों से चुने गए प्रारूप में रूपांतरण, इनपुट फ़ील्ड में प्रविष्टि, CSV, TSV, JSON, HTML और TXT डाउनलोड तथा बहुभाषी प्रदर्शन का समर्थन करती है।',
+    id:'Menambahkan tab Tabel Korespondensi pada keyboard angka. Tabel diperbarui otomatis sesuai preset angka yang dipilih dan mendukung gulir horizontal, pemilihan sel sebagai kandidat input, penyalinan, konversi angka standar ke format yang dipilih, penyisipan ke kolom input, unduhan CSV, TSV, JSON, HTML, dan TXT, serta tampilan multibahasa.',
+    vi:'Đã thêm tab Bảng đối chiếu vào bàn phím số. Bảng tự động cập nhật theo hệ số đã chọn và hỗ trợ cuộn ngang, chọn ô làm nội dung chờ nhập, sao chép, chuyển chữ số chuẩn sang định dạng đã chọn, chèn vào ô nhập, tải xuống CSV, TSV, JSON, HTML và TXT, cùng hiển thị đa ngôn ngữ.',
+    ru:'В цифровую клавиатуру добавлена вкладка таблицы соответствий. Таблица автоматически обновляется в соответствии с выбранной системой чисел и поддерживает горизонтальную прокрутку, выбор ячейки как кандидата для ввода, копирование, преобразование обычных цифр в выбранный формат, вставку в поля ввода, загрузку в CSV, TSV, JSON, HTML и TXT, а также многоязычное отображение.'
+  } },
+  { pinned:false, date:'2026/10/01 19:02', desc:{ ja:'すべての日付検索の選択解除、数字キーボードのサイズ・ボタン縮小設定と画面内配置、スマホ操作の安定化、フライトタイマーの表示不具合修正、メモタブの機内アナウンス聞き取りメモ、データ削除処理を追加・修正しました。', en:'Added date-selection clear buttons to all date searches, keyboard size/button scaling and in-screen positioning, stabilized mobile operation, fixed the flight timer display, added an in-flight announcement memo pad to the Memo tab, and fixed data deletion.', hira:'すべての ひづけ けんさくの せんたく かいじょ、すうじ きーぼーどの さいず・ぼたん しゅくしょう せっていと がめんない はいち、すまほ そうさの あんていか、ふらいと たいまーの ひょうじ ふぐあい しゅうせい、めも たぶの きない あんない ききとり めも、でーた さくじょ しょりを ついか・しゅうせいしました.' } },
 {
-  pinned:false,
-  date:'2026/10/01 19:02',
-  desc:{
-    ja:'すべての日付検索の選択解除、数字キーボードのサイズ・ボタン縮小設定と画面内配置、スマホ操作の安定化、フライトタイマーの表示不具合修正、メモタブの機内アナウンス聞き取りメモ、データ削除処理を追加・修正しました。',
-    en:'Added clear-selection controls to all date searches, numeric keyboard size/button scaling and in-screen positioning, stabilized mobile operation, fixed the flight timer display issue, added an in-flight announcement listening memo to the Memo tab, and added and fixed data deletion processing.',
-    hira:'すべての ひづけ けんさくの せんたく かいじょ、すうじ きーぼーどの さいず・ぼたん しゅくしょう せっていと がめんない はいち、すまほ そうさの あんていか、ふらいと たいまーの ひょうじ ふぐあい しゅうせい、めも たぶの きない あんない ききとり めも、でーた さくじょ しょりを ついか・しゅうせいしました。',
-    ko:'모든 날짜 검색의 선택 해제, 숫자 키보드 크기 및 버튼 축소 설정과 화면 내 배치, 스마트폰 조작 안정화, 비행 타이머 표시 오류 수정, 메모 탭에 기내 안내방송 듣기 메모 추가, 데이터 삭제 처리를 추가 및 수정했습니다.',
-    'zh-CN':'新增所有日期搜索的取消选择功能、数字键盘大小和按钮缩放设置及屏幕内位置调整，提升了手机操作的稳定性，修复了飞行计时器显示问题，在备忘录标签中加入了机内广播听写备忘录，并新增和修复了数据删除处理。',
-    'zh-TW':'新增所有日期搜尋的取消選取功能、數字鍵盤大小與按鈕縮放設定及螢幕內位置調整，提升了手機操作的穩定性，修正了飛行計時器顯示問題，在備忘錄分頁中加入了機內廣播聽寫備忘錄，並新增與修正了資料刪除處理。',
-    ar:'تمت إضافة إلغاء تحديد جميع عمليات البحث عن التواريخ، وإعدادات حجم لوحة الأرقام وتصغير الأزرار ووضعها داخل الشاشة، وتحسين استقرار التشغيل على الهاتف، وإصلاح مشكلة عرض مؤقت الرحلة، وإضافة مذكرة للاستماع إلى إعلانات الطائرة في تبويب المذكرات، وإضافة وإصلاح معالجة حذف البيانات.',
-    eo:'Aldonis nuligadon de elektado por ĉiuj datserĉoj, agordojn por la grandeco de la numera klavaro kaj ŝrumpigo de butonoj kaj ilia poziciigo en la ekrano, stabiligis funkciadon ĉe saĝtelefonoj, riparis la ekranan problemon de la flugtempigilo, aldonis aŭskultan noton pri flugilaj anoncoj al la Memoriga langeto, kaj aldonis kaj riparis datumforigan traktadon.',
-    mam:'Added clear-selection controls to all date searches, numeric keyboard size and button scaling settings and in-screen positioning, stabilized smartphone operation, fixed the flight timer display issue, added an in-flight announcement listening memo to the Memo tab, and added and fixed data deletion processing.',
-    th:'เพิ่มการยกเลิกการเลือกในการค้นหาวันที่ทั้งหมด เพิ่มการตั้งค่าขนาดแป้นพิมพ์ตัวเลข การย่อปุ่ม และการจัดตำแหน่งภายในหน้าจอ ปรับปรุงความเสถียรในการใช้งานบนสมาร์ตโฟน แก้ไขปัญหาการแสดงผลตัวจับเวลาเที่ยวบิน เพิ่มบันทึกการฟังประกาศบนเครื่องบินในแท็บบันทึก และเพิ่มและแก้ไขการจัดการลบข้อมูล',
-    sw:'Imeongeza kuondoa uteuzi katika utafutaji wote wa tarehe, mipangilio ya ukubwa wa kibodi ya nambari na kupunguza vitufe pamoja na uwekaji wake ndani ya skrini, imeimarisha uendeshaji kwenye simu mahiri, imerekebisha tatizo la kuonyesha kipima muda cha safari ya ndege, imeongeza kumbukumbu ya kusikiliza matangazo ya ndani ya ndege kwenye kichupo cha Memo, na imeongeza na kurekebisha uchakataji wa kufuta data.',
-    es:'Se añadieron controles para cancelar la selección en todas las búsquedas de fechas, ajustes del tamaño del teclado numérico y reducción de botones con posicionamiento dentro de la pantalla, se estabilizó el funcionamiento en smartphones, se corrigió el problema de visualización del temporizador de vuelo, se añadió una nota para escuchar los anuncios a bordo en la pestaña de notas y se añadió y corrigió el procesamiento de eliminación de datos.',
-    fr:'Ajout de la désélection dans toutes les recherches de dates, des réglages de taille du clavier numérique et de réduction des boutons avec positionnement dans l’écran, amélioration de la stabilité sur smartphone, correction du problème d’affichage du minuteur de vol, ajout d’une note d’écoute des annonces à bord dans l’onglet Mémo, ainsi qu’ajout et correction du traitement de suppression des données.',
-    de:'Auswahlaufhebung für alle Datumssuchen, Einstellungen für die Größe der Zahlentastatur und die Verkleinerung der Schaltflächen sowie deren Positionierung auf dem Bildschirm hinzugefügt, die Bedienung auf Smartphones stabilisiert, ein Anzeigeproblem des Flugtimers behoben, eine Notiz zum Anhören von Bordansagen im Memo-Tab hinzugefügt sowie die Datenlöschung ergänzt und korrigiert.',
-    pt:'Foram adicionados o cancelamento da seleção em todas as pesquisas de datas, configurações de tamanho do teclado numérico e redução dos botões com posicionamento na tela, a operação em smartphones foi estabilizada, o problema de exibição do temporizador de voo foi corrigido, foi adicionada uma anotação para ouvir anúncios a bordo na aba de Memo e o processamento de exclusão de dados foi adicionado e corrigido.',
-    hi:'सभी तारीख खोजों में चयन हटाने की सुविधा, संख्यात्मक कीबोर्ड के आकार और बटन छोटे करने की सेटिंग तथा स्क्रीन के अंदर स्थिति निर्धारित करने की सुविधा जोड़ी गई, स्मार्टफोन संचालन को अधिक स्थिर किया गया, फ्लाइट टाइमर की प्रदर्शन समस्या ठीक की गई, मेमो टैब में विमान के अंदर की घोषणाएँ सुनने के लिए मेमो जोड़ा गया तथा डेटा हटाने की प्रक्रिया जोड़ी और ठीक की गई।',
-    id:'Menambahkan pembatalan pilihan pada semua pencarian tanggal, pengaturan ukuran keyboard angka dan pengecilan tombol serta penempatannya di dalam layar, menstabilkan pengoperasian pada ponsel cerdas, memperbaiki masalah tampilan pengatur waktu penerbangan, menambahkan memo untuk mendengarkan pengumuman di dalam pesawat pada tab Memo, serta menambahkan dan memperbaiki proses penghapusan data.',
-    vi:'Đã thêm chức năng bỏ chọn cho tất cả tìm kiếm ngày tháng, cài đặt kích thước bàn phím số và thu nhỏ nút cùng với khả năng định vị trong màn hình, ổn định thao tác trên điện thoại thông minh, sửa lỗi hiển thị bộ hẹn giờ chuyến bay, thêm ghi chú nghe thông báo trên máy bay vào tab Ghi chú, đồng thời thêm và sửa chức năng xử lý xóa dữ liệu.',
-    ru:'Добавлено снятие выбора во всех поисках по датам, настройки размера цифровой клавиатуры и уменьшения кнопок с возможностью размещения внутри экрана, повышена стабильность работы на смартфонах, исправлена проблема отображения таймера полёта, добавлена заметка для прослушивания объявлений на борту во вкладке «Заметки», а также добавлена и исправлена обработка удаления данных.'
-  }
-},
-  {
     pinned: false,
     date: '2026/09/30 14:50',
     desc: {
@@ -3685,8 +3816,7 @@ function saveAllConfig() {
     flightHours: getVal('cfgFlightHours', '6'),
     flightMinutes: getVal('cfgFlightMinutes', '30'),
     timezoneDiff: getVal('cfgTimezoneDiff', '-7'),
-    coinBalanceAddAmount: typeof getCoinBalanceAddAmount === 'function' ? getCoinBalanceAddAmount() : 800000,
-    formState: typeof snapshotFormState === 'function' ? snapshotFormState() : []
+    coinBalanceAddAmount: typeof getCoinBalanceAddAmount === 'function' ? getCoinBalanceAddAmount() : 800000
   };
 
   try {
@@ -4206,6 +4336,66 @@ function exportCoinHistory(format) {
   if(format==='html'){
     const html=`<!DOCTYPE html><html lang="${currentLang}"><head><meta charset="UTF-8"><title>${escapeHtml(t('coin_history_title'))}</title>
 <style>body{background:#fce4ec;color:#333;font-family:sans-serif;padding:30px;}.card{background:#fff;padding:25px;border-radius:15px;max-width:900px;margin:auto;border:2px solid #ff80ab;}h2{color:#ff4081;}table{width:100%;border-collapse:collapse;margin-top:15px;}th,td{border:1px solid #ccc;padding:8px;text-align:left;}</style>
+
+<style id="numeric-mapping-force-fix">
+#customNumericKeyboard.custom-kbd-mapping-open {
+  display:block !important;
+  position:fixed !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel {
+  position:absolute !important;
+  inset:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  height:100% !important;
+  margin:0 !important;
+  padding:10px 8px 24px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  background:rgba(30,30,30,.98) !important;
+  color:#fff !important;
+  z-index:999999 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel > .custom-kbd-header {
+  display:flex !important;
+  flex:0 0 auto !important;
+  min-height:34px !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  color:#fff !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-tabs,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-note,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-status,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-form,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-output {
+  flex:0 0 auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-scroll {
+  display:block !important;
+  flex:1 1 0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:80px !important;
+  height:0 !important;
+  max-height:none !important;
+  overflow:auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table {
+  display:table !important;
+  width:max-content !important;
+  min-width:100% !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+</style>
 </head><body><div class="card"><h2>${escapeHtml(t('coin_history_title'))}</h2><table><thead><tr><th>${escapeHtml(t('coin_th_date'))}</th><th>${escapeHtml(t('coin_th_action'))}</th><th>${escapeHtml(t('coin_th_amount'))}</th><th>${escapeHtml(t('coin_th_balance'))}</th></tr></thead><tbody>${rows}</tbody></table></div></body></html>`;
     downloadBlob(new Blob([html],{type:'text/html;charset=utf-8'}),'coin-history.html');
   } else {
@@ -4854,6 +5044,8 @@ const NUMERIC_KBD_I18N = {
   back: {ja:'キーボードへ戻る',en:'Back to keyboard',hira:'きーぼーどへ もどる',ko:'키보드로 돌아가기','zh-CN':'返回键盘','zh-TW':'返回鍵盤',ar:'العودة إلى لوحة المفاتيح',eo:'Reiri al klavaro',mam:'Tzajb’ila teclado',th:'กลับไปยังแป้นพิมพ์',sw:'Rudi kwenye kibodi',es:'Volver al teclado',fr:'Retour au clavier',de:'Zur Tastatur',pt:'Voltar ao teclado',hi:'कीबोर्ड पर लौटें',id:'Kembali ke keyboard',vi:'Quay lại bàn phím',ru:'Вернуться к клавиатуре'},
   width: {ja:'幅',en:'Width',hira:'はば',ko:'너비','zh-CN':'宽度','zh-TW':'寬度',ar:'العرض',eo:'Larĝo',mam:'Width',th:'ความกว้าง',sw:'Upana',es:'Ancho',fr:'Largeur',de:'Breite',pt:'Largura',hi:'चौड़ाई',id:'Lebar',vi:'Chiều rộng',ru:'Ширина'},
   height: {ja:'高さ',en:'Height',hira:'たかさ',ko:'높이','zh-CN':'高度','zh-TW':'高度',ar:'الارتفاع',eo:'Alteco',mam:'Height',th:'ความสูง',sw:'Urefu',es:'Alto',fr:'Hauteur',de:'Höhe',pt:'Altura',hi:'ऊंचाई',id:'Tinggi',vi:'Chiều cao',ru:'Высота'},
+  noKeyboard: {ja:'キーボードにならないようにする',en:'Do not show the keyboard automatically',hira:'きーぼーどに ならないようにする',ko:'키보드를 자동으로 표시하지 않기','zh-CN':'不自动显示键盘','zh-TW':'不要自動顯示鍵盤',ar:'عدم إظهار لوحة المفاتيح تلقائياً',eo:'Ne montri la klavaron aŭtomate',mam:'Do not show keyboard automatically',th:'ไม่แสดงแป้นพิมพ์อัตโนมัติ',sw:'Usionyeshe kibodi kiotomatiki',es:'No mostrar el teclado automáticamente',fr:'Ne pas afficher automatiquement le clavier',de:'Tastatur nicht automatisch anzeigen',pt:'Não mostrar o teclado automaticamente',hi:'कीबोर्ड अपने आप न दिखाएँ',id:'Jangan tampilkan keyboard otomatis',vi:'Không tự động hiển thị bàn phím',ru:'Не показывать клавиатуру автоматически'},
+  showKeyboard: {ja:'キーボード表示',en:'Show keyboard',hira:'きーぼーど ひょうじ',ko:'키보드 표시','zh-CN':'显示键盘','zh-TW':'顯示鍵盤',ar:'إظهار لوحة المفاتيح',eo:'Montri klavaron',mam:'Show keyboard',th:'แสดงแป้นพิมพ์',sw:'Onyesha kibodi',es:'Mostrar teclado',fr:'Afficher le clavier',de:'Tastatur anzeigen',pt:'Mostrar teclado',hi:'कीबोर्ड दिखाएँ',id:'Tampilkan keyboard',vi:'Hiển thị bàn phím',ru:'Показать клавиатуру'},
   shrinkButtons: {ja:'ボタンをキーボードサイズに合わせて縮小',en:'Shrink buttons with keyboard size',hira:'ぼたんを きーぼーど さいずに あわせて しゅくしょう',ko:'키보드를 줄일 때 버튼도 축소', 'zh-CN':'按钮随键盘尺寸缩小', 'zh-TW':'按鈕隨鍵盤尺寸縮小', ar:'تصغير الأزرار مع حجم لوحة المفاتيح', eo:'Malgrandigi butonojn kun la klavaro', mam:'Shrink buttons with keyboard size', th:'ย่อปุ่มตามขนาดแป้นพิมพ์', sw:'Punguza vitufe pamoja na kibodi', es:'Reducir botones con el teclado', fr:'Réduire les boutons avec le clavier', de:'Tasten mit der Tastatur verkleinern', pt:'Reduzir botões com o teclado', hi:'कीबोर्ड के साथ बटन छोटे करें', id:'Perkecil tombol bersama keyboard', vi:'Thu nhỏ nút theo kích thước bàn phím', ru:'Уменьшать кнопки вместе с клавиатурой'},
   background: {ja:'背景色',en:'Background color',hira:'はいけいしょく',ko:'배경색','zh-CN':'背景色','zh-TW':'背景色',ar:'لون الخلفية',eo:'Fona koloro',mam:'Background color',th:'สีพื้นหลัง',sw:'Rangi ya usuli',es:'Color de fondo',fr:'Couleur de fond',de:'Hintergrundfarbe',pt:'Cor de fundo',hi:'पृष्ठभूमि रंग',id:'Warna latar',vi:'Màu nền',ru:'Цвет фона'},
   button: {ja:'ボタン色',en:'Button color',hira:'ぼたんしょく',ko:'버튼 색상','zh-CN':'按钮颜色','zh-TW':'按鈕顏色',ar:'لون الأزرار',eo:'Butona koloro',mam:'Button color',th:'สีปุ่ม',sw:'Rangi ya vitufe',es:'Color de botones',fr:'Couleur des boutons',de:'Tastenfarbe',pt:'Cor dos botões',hi:'बटन रंग',id:'Warna tombol',vi:'Màu nút',ru:'Цвет кнопок'},
@@ -4870,12 +5062,25 @@ const NUMERIC_KBD_I18N = {
   morseDone: {ja:'決定',en:'Done',hira:'けってい',ko:'완료','zh-CN':'完成','zh-TW':'完成',ar:'تم',eo:'Fini',mam:'B’an',th:'เสร็จสิ้น',sw:'Imekamilika',es:'Listo',fr:'Terminé',de:'Fertig',pt:'Concluído',hi:'पूर्ण',id:'Selesai',vi:'Xong',ru:'Готово'},
   morsePlaceholder: {ja:'・ / － を入力',en:'Enter ・ / －',hira:'・ / － を にゅうりょく',ko:'・ / － 입력','zh-CN':'输入 ・ / －','zh-TW':'輸入 ・ / －',ar:'أدخل ・ / －',eo:'Enigu ・ / －',mam:'Tz’ib’en ・ / －',th:'ป้อน ・ / －',sw:'Ingiza ・ / －',es:'Introducir ・ / －',fr:'Entrer ・ / －',de:'・ / － eingeben',pt:'Digite ・ / －',hi:'・ / － दर्ज करें',id:'Masukkan ・ / －',vi:'Nhập ・ / －',ru:'Введите ・ / －'},
   morseComplete: {ja:'確定完了！次を入力',en:'Committed! Enter the next one',hira:'かくてい かんりょう！つぎを にゅうりょく',ko:'확정 완료! 다음을 입력하세요','zh-CN':'已确定！请输入下一个','zh-TW':'已確定！請輸入下一個',ar:'تم التأكيد! أدخل التالي',eo:'Konfirmita! Enigu la sekvan',mam:'¡Tz’aqsa! Tz’ib’en junx',th:'ยืนยันแล้ว! ป้อนตัวถัดไป',sw:'Imethibitishwa! Ingiza inayofuata',es:'¡Confirmado! Introduce el siguiente',fr:'Validé ! Entrez le suivant',de:'Bestätigt! Nächstes eingeben',pt:'Confirmado! Digite o próximo',hi:'पुष्टि हुई! अगला दर्ज करें',id:'Terkonfirmasi! Masukkan berikutnya',vi:'Đã xác nhận! Nhập ký tự tiếp theo',ru:'Подтверждено! Введите следующий'},
+  mappingTab: {ja:'対応表',en:'Mapping Table',hira:'たいおうひょう',ko:'대응표','zh-CN':'对应表','zh-TW':'對應表',ar:'جدول المطابقة',eo:'Korespondtabelo',mam:'Mapping Table',th:'ตารางเทียบ',sw:'Jedwali la ulinganifu',es:'Tabla de correspondencias',fr:'Table de correspondance',de:'Zuordnungstabelle',pt:'Tabela de correspondência',hi:'रूपांतरण तालिका',id:'Tabel Korespondensi',vi:'Bảng đối chiếu',ru:'Таблица соответствий'},
+  mappingTitle: {ja:'数字対応表',en:'Numeral Mapping Table',hira:'すうじ たいおうひょう',ko:'숫자 대응표','zh-CN':'数字对应表','zh-TW':'數字對應表',ar:'جدول مطابقة الأرقام',eo:'Nombra korespondtabelo',mam:'Numeral Mapping Table',th:'ตารางเทียบตัวเลข',sw:'Jedwali la kulinganisha nambari',es:'Tabla de correspondencia numérica',fr:'Table de correspondance des chiffres',de:'Ziffern-Zuordnungstabelle',pt:'Tabela de correspondência numérica',hi:'संख्या रूपांतरण तालिका',id:'Tabel korespondensi angka',vi:'Bảng đối chiếu chữ số',ru:'Таблица соответствия цифр'},
+  mappingNote: {ja:'セルをタップすると入力候補になります。入力欄をタップするとその場所へ入力できます。コピーもできます。',en:'Tap a cell to prepare it for input. Tap an input field to insert it there. You can also copy it.',hira:'せるを たっぷすると にゅうりょく こうほに なります。にゅうりょくらんを たっぷすると その ばしょへ にゅうりょくできます。こぴーも できます。',ko:'셀을 탭하면 입력할 수 있도록 준비됩니다. 입력란을 탭하면 그 위치에 입력됩니다. 복사도 가능합니다.','zh-CN':'点击单元格可准备输入；再点击输入框即可插入，也可以复制。','zh-TW':'點擊儲存格可準備輸入；再點擊輸入欄即可插入，也可以複製。',ar:'اضغط على خلية لتجهيزها للإدخال، ثم اضغط على حقل الإدخال لإدراجها هناك. ويمكنك نسخها أيضًا.',eo:'Frapu ĉelon por prepari ĝin por enigo. Frapu enigkampon por enmeti ĝin tie. Vi ankaŭ povas kopii ĝin.',mam:'Tap a cell to prepare it for input. Tap an input field to insert it there. You can also copy it.',th:'แตะเซลล์เพื่อเตรียมใส่ข้อมูล แล้วแตะช่องป้อนข้อมูลเพื่อแทรก ณ ตำแหน่งนั้น และสามารถคัดลอกได้',sw:'Gusa seli kuiandaa kwa kuingiza. Gusa sehemu ya kuingiza ili kuiweka hapo. Unaweza pia kunakili.',es:'Toca una celda para prepararla para la entrada. Toca un campo para insertarla allí. También puedes copiarla.',fr:'Touchez une cellule pour la préparer à la saisie. Touchez un champ pour l’insérer à cet endroit. Vous pouvez aussi la copier.',de:'Tippe auf eine Zelle, um sie für die Eingabe vorzubereiten. Tippe auf ein Eingabefeld, um sie dort einzufügen. Du kannst sie auch kopieren.',pt:'Toque em uma célula para prepará-la para entrada. Toque em um campo para inseri-la ali. Também é possível copiar.',hi:'इनपुट के लिए किसी सेल को टैप करें। फिर इनपुट फ़ील्ड को टैप करके वहीं डालें। कॉपी भी कर सकते हैं।',id:'Ketuk sel untuk menyiapkannya sebagai input. Ketuk kolom input untuk memasukkannya di sana. Anda juga dapat menyalinnya.',vi:'Chạm vào ô để chuẩn bị nhập. Chạm vào ô nhập để chèn tại đó. Bạn cũng có thể sao chép.',ru:'Нажмите ячейку, чтобы подготовить её к вводу. Нажмите поле ввода, чтобы вставить туда. Также можно копировать.'},
+  mappingStandard: {ja:'通常数字',en:'Standard digits',hira:'つうじょう すうじ',ko:'일반 숫자','zh-CN':'普通数字','zh-TW':'一般數字',ar:'الأرقام القياسية',eo:'Normaj ciferoj',mam:'Standard digits',th:'ตัวเลขมาตรฐาน',sw:'Nambari za kawaida',es:'Dígitos estándar',fr:'Chiffres standard',de:'Standardziffern',pt:'Dígitos padrão',hi:'मानक अंक',id:'Angka standar',vi:'Chữ số chuẩn',ru:'Обычные цифры'},
+  mappingCopy: {ja:'コピー',en:'Copy',hira:'こぴー',ko:'복사','zh-CN':'复制','zh-TW':'複製',ar:'نسخ',eo:'Kopii',mam:'Copy',th:'คัดลอก',sw:'Nakili',es:'Copiar',fr:'Copier',de:'Kopieren',pt:'Copiar',hi:'कॉपी',id:'Salin',vi:'Sao chép',ru:'Копировать'},
+  mappingCopied: {ja:'コピーしました',en:'Copied',hira:'こぴーしました',ko:'복사했습니다','zh-CN':'已复制','zh-TW':'已複製',ar:'تم النسخ',eo:'Kopiita',mam:'Copied',th:'คัดลอกแล้ว',sw:'Imenakili',es:'Copiado',fr:'Copié',de:'Kopiert',pt:'Copiado',hi:'कॉपी किया गया',id:'Tersalin',vi:'Đã sao chép',ru:'Скопировано'},
+  mappingInput: {ja:'通常数字の打ち込み',en:'Enter standard digits',hira:'つうじょう すうじの うちこみ',ko:'일반 숫자 입력','zh-CN':'输入普通数字','zh-TW':'輸入一般數字',ar:'إدخال الأرقام القياسية',eo:'Enigu normajn ciferojn',mam:'Enter standard digits',th:'ป้อนตัวเลขมาตรฐาน',sw:'Ingiza nambari za kawaida',es:'Introducir dígitos estándar',fr:'Saisir les chiffres standard',de:'Standardziffern eingeben',pt:'Digite os dígitos padrão',hi:'मानक अंक दर्ज करें',id:'Masukkan angka standar',vi:'Nhập chữ số chuẩn',ru:'Введите обычные цифры'},
+  mappingFormat: {ja:'変換する数字形式',en:'Numeral format to convert to',hira:'へんかんする すうじ けいしき',ko:'변환할 숫자 형식','zh-CN':'要转换的数字格式','zh-TW':'要轉換的數字格式',ar:'نظام الأرقام للتحويل',eo:'Nombra formato por konverti',mam:'Numeral format to convert to',th:'รูปแบบตัวเลขสำหรับแปลง',sw:'Muundo wa nambari wa kubadilisha',es:'Formato numérico de destino',fr:'Format numérique cible',de:'Zielformat für Zahlen',pt:'Formato numérico de destino',hi:'परिवर्तन के लिए संख्या प्रारूप',id:'Format angka tujuan',vi:'Định dạng số đích',ru:'Цифровой формат для преобразования'},
+  mappingOutput: {ja:'変換結果',en:'Converted result',hira:'へんかん けっか',ko:'변환 결과','zh-CN':'转换结果','zh-TW':'轉換結果',ar:'نتيجة التحويل',eo:'Konvertita rezulto',mam:'Converted result',th:'ผลการแปลง',sw:'Matokeo ya ubadilishaji',es:'Resultado convertido',fr:'Résultat converti',de:'Konvertiertes Ergebnis',pt:'Resultado convertido',hi:'परिवर्तित परिणाम',id:'Hasil konversi',vi:'Kết quả chuyển đổi',ru:'Результат преобразования'},
+  mappingDownloadFormat: {ja:'ダウンロード形式',en:'Download format',hira:'だうんろーど けいしき',ko:'다운로드 형식','zh-CN':'下载格式','zh-TW':'下載格式',ar:'صيغة التنزيل',eo:'Elŝuta formato',mam:'Download format',th:'รูปแบบดาวน์โหลด',sw:'Muundo wa kupakua',es:'Formato de descarga',fr:'Format de téléchargement',de:'Download-Format',pt:'Formato de download',hi:'डाउनलोड प्रारूप',id:'Format unduhan',vi:'Định dạng tải xuống',ru:'Формат загрузки'},
+  mappingDownload: {ja:'表をダウンロード',en:'Download table',hira:'ひょうを だうんろーど',ko:'표 다운로드','zh-CN':'下载表格','zh-TW':'下載表格',ar:'تنزيل الجدول',eo:'Elŝuti tabelon',mam:'Download table',th:'ดาวน์โหลดตาราง',sw:'Pakua jedwali',es:'Descargar tabla',fr:'Télécharger le tableau',de:'Tabelle herunterladen',pt:'Baixar tabela',hi:'तालिका डाउनलोड करें',id:'Unduh tabel',vi:'Tải bảng',ru:'Скачать таблицу'},
+  mappingToInput: {ja:'入力欄へ打ち込む',en:'Insert into input',hira:'にゅうりょくらんへ うちこむ',ko:'입력란에 입력','zh-CN':'插入输入框','zh-TW':'插入輸入欄',ar:'إدراج في حقل الإدخال',eo:'Enmeti en enigkampon',mam:'Insert into input',th:'แทรกลงช่องป้อนข้อมูล',sw:'Weka kwenye sehemu ya kuingiza',es:'Insertar en el campo',fr:'Insérer dans le champ',de:'In Eingabefeld einfügen',pt:'Inserir no campo',hi:'इनपुट में डालें',id:'Masukkan ke input',vi:'Chèn vào ô nhập',ru:'Вставить в поле'},
+  mappingPending: {ja:'入力候補を選択中：入力先をタップしてください',en:'Input candidate selected: tap a target field',hira:'にゅうりょく こうほを せんたくちゅう：にゅうりょくさきを たっぷしてください',ko:'입력 후보 선택됨: 대상 입력란을 탭하세요','zh-CN':'已选择输入内容：请点击目标输入框','zh-TW':'已選擇輸入內容：請點擊目標輸入欄',ar:'تم اختيار الإدخال: اضغط حقل الهدف',eo:'Eniga kandidato elektita: frapu celan kampon',mam:'Input candidate selected: tap a target field',th:'เลือกข้อมูลสำหรับป้อนแล้ว: แตะช่องเป้าหมาย',sw:'Kipengee cha kuingiza kimechaguliwa: gusa sehemu lengwa',es:'Candidato seleccionado: toca el campo de destino',fr:'Candidat sélectionné : touchez le champ cible',de:'Eingabekandidat gewählt: Zielfeld antippen',pt:'Candidato selecionado: toque o campo de destino',hi:'इनपुट चुना गया: लक्ष्य फ़ील्ड टैप करें',id:'Kandidat input dipilih: ketuk kolom tujuan',vi:'Đã chọn nội dung nhập: chạm ô đích',ru:'Выбран ввод: нажмите целевое поле'},
   modes: {ja:'標準:標準数字, roman:ローマ数字, kanji:漢数字, devanagari:デーヴァナーガリー, eastern-arabic:東アラビア数字, thai:タイ数字, myanmar:ミャンマー数字, khmer:クメール数字, geez:ゲエズ数字, suzhou:蘇州号碼, ol-chiki:オルチキ数字, kannada:カンナダ数字, meetei:メイテイ数字, kaktovik:カクトビック数字, toto:トト数字, braille:点字数字, morse:モールス信号',en:'Standard, Roman, Kanji, Devanagari, Eastern Arabic, Thai, Myanmar, Khmer, Ge’ez, Suzhou, Ol Chiki, Kannada, Meetei, Kaktovik, Toto, Braille, Morse',hira:'ひょうじゅん、ろーま、かんじ、でーゔぁなーがりー、ひがしあらびあ、たい、みゃんまー、くめーる、げえず、そしゅう、おるちき、かんなだ、めいてい、かくとびっく、とと、てんじ、もーるす'}
 };
 function numericKbdText(key){ const map=NUMERIC_KBD_I18N[key]; if(!map) return key; return map[currentLang] || map.en || map.ja || key; }
 function numericKbdModeText(mode){ const map=NUMERIC_KBD_I18N.modes || {}; const all=map[currentLang] || map.en || map.ja || ''; const names=all.split(/, /); const order=['standard','roman','kanji','devanagari','eastern-arabic','thai','myanmar','khmer','geez','suzhou','ol-chiki','kannada','meetei','kaktovik','toto','braille','morse']; const i=order.indexOf(mode); return i>=0 ? names[i] || mode : mode; }
 
-const NUMERIC_KBD_DEFAULTS = { width: 420, height: 360, background: '#1e1e1e', button: '#ffffff', x: null, y: null, shrinkButtons: false };
+const NUMERIC_KBD_DEFAULTS = { width: 420, height: 360, background: '#1e1e1e', button: '#ffffff', x: null, y: null, shrinkButtons: false, noKeyboard: false };
 function loadNumericKeyboardSettings(){
   try { const raw=JSON.parse(localStorage.getItem('airplane_game_numeric_keyboard_settings')||'{}'); return {...NUMERIC_KBD_DEFAULTS,...raw}; }
   catch(e){ return {...NUMERIC_KBD_DEFAULTS}; }
@@ -4890,7 +5095,7 @@ function saveNumericKeyboardSettings(settings){
   const height=Math.max(180,Math.min(Math.max(180,window.innerHeight-8),Number(settings.height)||NUMERIC_KBD_DEFAULTS.height));
   const hasPosition=Number.isFinite(Number(settings.x)) && Number.isFinite(Number(settings.y));
   const pos=hasPosition ? clampNumericKeyboardPosition(Number(settings.x),Number(settings.y),width,height) : {x:null,y:null};
-  const normalized={ width, height, x:pos.x, y:pos.y, background: /^#[0-9a-fA-F]{6}$/.test(settings.background||'')?settings.background:NUMERIC_KBD_DEFAULTS.background, button: /^#[0-9a-fA-F]{6}$/.test(settings.button||'')?settings.button:NUMERIC_KBD_DEFAULTS.button, shrinkButtons: !!settings.shrinkButtons };
+  const normalized={ width, height, x:pos.x, y:pos.y, background: /^#[0-9a-fA-F]{6}$/.test(settings.background||'')?settings.background:NUMERIC_KBD_DEFAULTS.background, button: /^#[0-9a-fA-F]{6}$/.test(settings.button||'')?settings.button:NUMERIC_KBD_DEFAULTS.button, shrinkButtons: !!settings.shrinkButtons, noKeyboard: !!settings.noKeyboard };
   localStorage.setItem('airplane_game_numeric_keyboard_settings',JSON.stringify(normalized));
   return normalized;
 }
@@ -4910,6 +5115,7 @@ function applyNumericKeyboardSettings(kbd, settings=loadNumericKeyboardSettings(
   kbd.style.background=st.background;
   kbd.classList.toggle('custom-kbd-shrink-buttons', !!st.shrinkButtons);
   kbd.classList.toggle('custom-kbd-scroll-buttons', !st.shrinkButtons);
+  updateNumericKeyboardNoAutoShowUI();
   kbd.querySelectorAll('.custom-kbd-btn:not(.btn-done), .morse-3d-btn.btn-space').forEach(el=>el.style.backgroundColor=st.button);
   kbd.querySelectorAll('.custom-kbd-btn:not(.btn-done)').forEach(el=>el.style.color='#111');
   return st;
@@ -4923,34 +5129,35 @@ function showNumericKeyboardSettings(){
     <label class="custom-kbd-setting-row"><span>${numericKbdText('width')}</span><input id="customKbdWidthInput" type="number" min="220" step="1" value="${Math.round(st.width)}"></label>
     <label class="custom-kbd-setting-row"><span>${numericKbdText('height')}</span><input id="customKbdHeightInput" type="number" min="180" step="1" value="${Math.round(st.height)}"></label>
     <label class="custom-kbd-setting-row custom-kbd-checkbox-row"><span>${numericKbdText('shrinkButtons')}</span><input id="customKbdShrinkButtons" type="checkbox" ${st.shrinkButtons ? 'checked' : ''}></label>
+    <label class="custom-kbd-setting-row custom-kbd-checkbox-row"><span>${numericKbdText('noKeyboard')}</span><input id="customKbdNoKeyboard" type="checkbox" ${st.noKeyboard ? 'checked' : ''}></label>
     <label class="custom-kbd-setting-row"><span>${numericKbdText('background')}</span><div class="custom-kbd-setting-color"><input id="customKbdBgColor" type="color" value="${st.background}"><input id="customKbdBgHex" type="text" value="${st.background}" maxlength="7" inputmode="text"></div></label>
     <label class="custom-kbd-setting-row"><span>${numericKbdText('button')}</span><div class="custom-kbd-setting-color"><input id="customKbdBtnColor" type="color" value="${st.button}"><input id="customKbdBtnHex" type="text" value="${st.button}" maxlength="7" inputmode="text"></div></label>
     <div class="custom-kbd-setting-buttons"><button type="button" class="btn btn-outline" id="customKbdResetBtn">${numericKbdText('reset')}</button><button type="button" class="btn btn-primary" id="customKbdSaveBtn">${numericKbdText('save')}</button></div>`;
   kbd.appendChild(panel);
-  const live=()=>{ const cur=loadNumericKeyboardSettings(); const next={width:Number(document.getElementById('customKbdWidthInput').value),height:Number(document.getElementById('customKbdHeightInput').value),x:cur.x,y:cur.y,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked}; applyNumericKeyboardSettings(kbd,next); };
-  ['customKbdWidthInput','customKbdHeightInput','customKbdBgHex','customKbdBtnHex','customKbdShrinkButtons'].forEach(id=>document.getElementById(id).addEventListener('input',live));
+  const live=()=>{ const cur=loadNumericKeyboardSettings(); const next={width:Number(document.getElementById('customKbdWidthInput').value),height:Number(document.getElementById('customKbdHeightInput').value),x:cur.x,y:cur.y,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked,noKeyboard:document.getElementById('customKbdNoKeyboard').checked}; applyNumericKeyboardSettings(kbd,next); };
+  ['customKbdWidthInput','customKbdHeightInput','customKbdBgHex','customKbdBtnHex','customKbdShrinkButtons','customKbdNoKeyboard'].forEach(id=>document.getElementById(id).addEventListener('input',live));
   const bindColor=(colorId,hexId)=>document.getElementById(colorId).addEventListener('input',e=>{document.getElementById(hexId).value=e.target.value;live();});
   bindColor('customKbdBgColor','customKbdBgHex'); bindColor('customKbdBtnColor','customKbdBtnHex');
   document.getElementById('customKbdResetBtn').onclick=()=>{localStorage.removeItem('airplane_game_numeric_keyboard_settings');showNumericKeyboardSettings();};
-  document.getElementById('customKbdSaveBtn').onclick=()=>{ saveNumericKeyboardSettings({width:document.getElementById('customKbdWidthInput').value,height:document.getElementById('customKbdHeightInput').value,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked}); openCustomNumericKeyboard(activeCustomInput); };
+  document.getElementById('customKbdSaveBtn').onclick=()=>{ saveNumericKeyboardSettings({width:document.getElementById('customKbdWidthInput').value,height:document.getElementById('customKbdHeightInput').value,background:document.getElementById('customKbdBgHex').value.trim(),button:document.getElementById('customKbdBtnHex').value.trim(),shrinkButtons:document.getElementById('customKbdShrinkButtons').checked,noKeyboard:document.getElementById('customKbdNoKeyboard').checked}); updateNumericKeyboardNoAutoShowUI(); openCustomNumericKeyboard(activeCustomInput); };
   applyNumericKeyboardSettings(kbd,st);
   attachNumericKeyboardResizeHandle(kbd);
 }
 function attachNumericKeyboardResizeHandle(kbd){
   let h=kbd.querySelector('.custom-kbd-resize-handle'); if(!h){h=document.createElement('div');h.className='custom-kbd-resize-handle';h.title=numericKbdText('freeResize');kbd.appendChild(h);}
   h.onpointerdown=(e)=>{ e.preventDefault(); h.setPointerCapture?.(e.pointerId); const startX=e.clientX,startY=e.clientY,st=loadNumericKeyboardSettings(); const move=ev=>{ const next={...st,width:st.width+(startX-ev.clientX)*2,height:st.height+(startY-ev.clientY)}; applyNumericKeyboardSettings(kbd,next); }; const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); h.removeEventListener('pointercancel',up); }; h.addEventListener('pointermove',move);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up); };
-  let mh=kbd.querySelector('.custom-kbd-move-handle');
-  if(!mh){ mh=document.createElement('div'); mh.className='custom-kbd-move-handle'; mh.textContent='\\'; mh.title='長押しして移動'; kbd.appendChild(mh); }
-  if(mh._moveCleanup) mh._moveCleanup();
-  let timer=null,dragging=false,dragPointerId=null;
-  const cancel=()=>{ if(timer){clearTimeout(timer);timer=null;} dragging=false; if(dragPointerId!==null){try{mh.releasePointerCapture?.(dragPointerId);}catch(e){} } dragPointerId=null; mh.removeEventListener('pointermove',move); mh.removeEventListener('pointerup',finish); mh.removeEventListener('pointercancel',finish); };
-  const finish=()=>{ if(dragging) saveNumericKeyboardSettings(loadNumericKeyboardSettings()); cancel(); };
-  const move=(ev)=>{ if(!dragging) return; const rect=kbd.getBoundingClientRect(); const st=loadNumericKeyboardSettings(); const pos=clampNumericKeyboardPosition(startLeft+(ev.clientX-startX),startTop+(ev.clientY-startY),rect.width,rect.height); applyNumericKeyboardSettings(kbd,{...st,x:pos.x,y:pos.y}); };
-  let startX=0,startY=0,startLeft=0,startTop=0;
-  const down=(e)=>{ e.preventDefault(); startX=e.clientX; startY=e.clientY; const rect=kbd.getBoundingClientRect(); startLeft=rect.left; startTop=rect.top; dragPointerId=e.pointerId; mh.setPointerCapture?.(e.pointerId); timer=setTimeout(()=>{ dragging=true; mh.addEventListener('pointermove',move); mh.addEventListener('pointerup',finish); mh.addEventListener('pointercancel',finish); },350); };
-  mh.onpointerdown=down; mh._moveCleanup=cancel;
   const header=kbd.querySelector('.custom-kbd-header');
-  if(header) header.onpointerdown=null;
+  if(header){
+    header.onpointerdown=(e)=>{
+      if(e.target.closest('button')) return;
+      e.preventDefault();
+      const rect=kbd.getBoundingClientRect();
+      const startX=e.clientX,startY=e.clientY,startLeft=rect.left,startTop=rect.top,st=loadNumericKeyboardSettings();
+      const move=ev=>{ const pos=clampNumericKeyboardPosition(startLeft+(ev.clientX-startX),startTop+(ev.clientY-startY),rect.width,rect.height); applyNumericKeyboardSettings(kbd,{...st,x:pos.x,y:pos.y}); };
+      const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); header.releasePointerCapture?.(e.pointerId); header.removeEventListener('pointermove',move); header.removeEventListener('pointerup',up); header.removeEventListener('pointercancel',up); };
+      header.setPointerCapture?.(e.pointerId); header.addEventListener('pointermove',move); header.addEventListener('pointerup',up); header.addEventListener('pointercancel',up);
+    };
+  }
 }
 
 let activeCustomInput = null;
@@ -4982,8 +5189,21 @@ function setupDynamicNumericInputs() {
       input.value = input.getAttribute('data-std-val') || input.value;
       input.removeAttribute('inputmode');
     }
+    if (loadNumericKeyboardSettings().noKeyboard) input.setAttribute('inputmode','none');
 
-    input.onfocus = () => openCustomNumericKeyboard(input);
+    input.onfocus = () => {
+      activeCustomInput = input;
+      const st = loadNumericKeyboardSettings();
+      const hadPending = !!numericMappingPendingText;
+      consumeNumericMappingPending(input);
+      if (st.noKeyboard) {
+        input.setAttribute('inputmode','none');
+        if (hadPending) setTimeout(() => { if (document.activeElement === input) input.blur(); }, 0);
+        updateNumericKeyboardNoAutoShowUI();
+        return;
+      }
+      openCustomNumericKeyboard(input);
+    };
     input.oninput = () => {
       const typed = input.value;
       const std = readNumberAsStandard(typed, currentScriptMode);
@@ -4996,9 +5216,145 @@ function setupDynamicNumericInputs() {
   });
 }
 
+// 数字対応表・変換入力
+const NUMERIC_MAPPING_STATE_KEY = 'airplane_game_numeric_mapping_state';
+function loadNumericMappingState(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(NUMERIC_MAPPING_STATE_KEY) || '{}');
+    return { input:'', mode:currentScriptMode || 'standard', format:'csv', ...(raw && typeof raw === 'object' ? raw : {}) };
+  } catch (_) { return { input:'', mode:currentScriptMode || 'standard', format:'csv' }; }
+}
+function saveNumericMappingState(state){
+  try { localStorage.setItem(NUMERIC_MAPPING_STATE_KEY, JSON.stringify({ input:String(state.input ?? ''), mode:String(state.mode || currentScriptMode || 'standard'), format:String(state.format || 'csv') })); } catch (_) {}
+}
+let numericMappingPendingText = '';
+
+function numericMappingModes(){
+  return ['standard','roman','kanji','devanagari','eastern-arabic','thai','myanmar','khmer','geez','suzhou','ol-chiki','kannada','meetei','kaktovik','toto','braille','morse'];
+}
+function numericMappingModeLabel(mode){ const key='script_'+mode; return typeof t==='function' ? t(key, numericKbdModeText(mode)) : numericKbdModeText(mode); }
+function copyNumericMappingText(text, statusEl){
+  const value=String(text ?? '');
+  const done=()=>{ if(statusEl) statusEl.textContent=numericKbdText('mappingCopied'); };
+  if(navigator.clipboard?.writeText) navigator.clipboard.writeText(value).then(done).catch(()=>{ fallbackCopyNumericMapping(value); done(); });
+  else { fallbackCopyNumericMapping(value); done(); }
+}
+function fallbackCopyNumericMapping(value){
+  const ta=document.createElement('textarea'); ta.value=value; ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove();
+}
+function setNumericMappingPending(text, statusEl){
+  numericMappingPendingText=String(text ?? '');
+  if(activeCustomInput && document.activeElement===activeCustomInput) activeCustomInput.blur();
+  if(statusEl) statusEl.textContent=numericKbdText('mappingPending');
+}
+function insertNumericMappingText(text, input){
+  const el=input || activeCustomInput;
+  if(!el) return false;
+  const value=String(text ?? '');
+  if(!value) return false;
+  let std=el.getAttribute('data-std-val') || readNumberAsStandard(el.value || '', currentScriptMode) || '';
+  const mode=currentScriptMode;
+  const convertedStd=mode==='standard' ? value : readNumberAsStandard(value, mode);
+  const appendValue=convertedStd || value;
+  if(mode==='kaktovik' && /^\d+$/.test(appendValue)) std += appendValue;
+  else std += appendValue;
+  el.setAttribute('data-std-val', std);
+  el.value=convertValueToScript(std, mode);
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  el.dispatchEvent(new Event('change',{bubbles:true}));
+  return true;
+}
+function consumeNumericMappingPending(input){
+  if(!numericMappingPendingText) return;
+  const value=numericMappingPendingText;
+  numericMappingPendingText='';
+  insertNumericMappingText(value,input);
+}
+function buildNumericMappingRows(mode){
+  const table=NUMERAL_SYSTEMS[mode];
+  const count=table ? table.length : 10;
+  return Array.from({length:count},(_,i)=>({standard:String(i), numeral:convertSingleDigitToScript(i,mode)}));
+}
+function updateNumericKeyboardNoAutoShowUI(){
+  const btn=document.getElementById('customKeyboardHeaderShowButton');
+  if(!btn) return;
+  const st=loadNumericKeyboardSettings();
+  btn.style.display=st.noKeyboard ? 'inline-flex' : 'none';
+  btn.textContent='⌨️ '+numericKbdText('showKeyboard');
+}
+function showHeaderNumericKeyboard(){
+  const st=loadNumericKeyboardSettings();
+  if(!st.noKeyboard) return;
+  let target=activeCustomInput;
+  if(!target || !document.contains(target)) target=document.querySelector('input[data-numeral-managed], input.time-select, input[type=number]');
+  if(target) openCustomNumericKeyboard(target);
+}
+function showNumericKeyboardMapping(){
+  const kbd=document.getElementById('customNumericKeyboard'); if(!kbd) return;
+  const savedMapping=loadNumericMappingState();
+  const mode=currentScriptMode || 'standard';
+  kbd.dataset.numericMappingOpen='1';
+  kbd.classList.add('custom-kbd-mapping-open');
+  kbd.innerHTML='';
+  const header=document.createElement('div'); header.className='custom-kbd-header';
+  header.innerHTML=`<span>📊 ${numericKbdText('mappingTitle')} — ${numericMappingModeLabel(mode)}</span><span style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="openCustomNumericKeyboard(activeCustomInput)">⌨️ ${numericKbdText('back')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="showNumericKeyboardSettings()">⚙️ ${numericKbdText('settings')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="closeCustomNumericKeyboard()">✕ ${numericKbdText('close')}</button></span>`;
+  const panel=document.createElement('div'); panel.className='custom-kbd-mapping-panel';
+  panel.appendChild(header);
+  const tabs=document.createElement('div'); tabs.className='custom-kbd-mapping-tabs';
+  const tableBtn=document.createElement('button'); tableBtn.type='button'; tableBtn.className='btn btn-primary'; tableBtn.textContent=numericKbdText('mappingTab');
+  tabs.appendChild(tableBtn);
+  const note=document.createElement('div'); note.className='custom-kbd-mapping-note'; note.textContent=numericKbdText('mappingNote'); panel.appendChild(tabs); panel.appendChild(note);
+  const status=document.createElement('div'); status.className='custom-kbd-mapping-status'; panel.appendChild(status);
+  const scroll=document.createElement('div'); scroll.className='custom-kbd-mapping-scroll';
+  const tableEl=document.createElement('table'); tableEl.className='custom-kbd-mapping-table';
+  const thead=document.createElement('thead'); thead.innerHTML=`<tr><th>${numericKbdText('mappingStandard')}</th><th>${numericMappingModeLabel(mode)}</th><th>${numericKbdText('mappingCopy')}</th></tr>`; tableEl.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  buildNumericMappingRows(mode).forEach(row=>{
+    const tr=document.createElement('tr');
+    const tdStd=document.createElement('td'); tdStd.textContent=row.standard;
+    const tdNum=document.createElement('td'); tdNum.className='custom-kbd-mapping-cell'; tdNum.textContent=row.numeral; tdNum.title=numericKbdText('mappingToInput'); tdNum.onclick=()=>setNumericMappingPending(row.numeral,status);
+    const tdCopy=document.createElement('td'); const copy=document.createElement('button'); copy.type='button'; copy.className='btn btn-outline custom-kbd-mapping-copy'; copy.textContent=numericKbdText('mappingCopy'); copy.onclick=()=>copyNumericMappingText(row.numeral,status); tdCopy.appendChild(copy);
+    tr.append(tdStd,tdNum,tdCopy); tbody.appendChild(tr);
+  });
+  tableEl.appendChild(tbody); scroll.appendChild(tableEl); panel.appendChild(scroll);
+
+  const form=document.createElement('div'); form.className='custom-kbd-mapping-form';
+  const input=document.createElement('input'); input.type='text'; input.inputMode='numeric'; input.placeholder=numericKbdText('mappingInput'); input.value=String(savedMapping.input || '');
+  const select=document.createElement('select'); numericMappingModes().forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=numericMappingModeLabel(m);if(m===String(savedMapping.mode || mode))o.selected=true;select.appendChild(o);});
+  form.append(input,select); panel.appendChild(form);
+  const outputWrap=document.createElement('div'); outputWrap.className='custom-kbd-mapping-output';
+  const output=document.createElement('input'); output.type='text'; output.readOnly=true; output.placeholder=numericKbdText('mappingOutput');
+  const copyOut=document.createElement('button'); copyOut.type='button'; copyOut.className='btn btn-outline'; copyOut.textContent=numericKbdText('mappingCopy');
+  const inputOut=document.createElement('button'); inputOut.type='button'; inputOut.className='btn btn-primary'; inputOut.textContent=numericKbdText('mappingToInput');
+  outputWrap.append(output,copyOut,inputOut); panel.appendChild(outputWrap);
+  const dlRow=document.createElement('div'); dlRow.className='custom-kbd-mapping-output';
+  const dlSelect=document.createElement('select'); [['csv','CSV'],['tsv','TSV'],['json','JSON'],['html','HTML'],['txt','TXT']].forEach(([v,l])=>{const o=document.createElement('option');o.value=v;o.textContent=l;if(v===String(savedMapping.format || 'csv'))o.selected=true;dlSelect.appendChild(o);});
+  const dl=document.createElement('button'); dl.type='button'; dl.className='btn btn-outline'; dl.textContent=numericKbdText('mappingDownload');
+  dlRow.append(dlSelect,dl); panel.appendChild(dlRow);
+  kbd.appendChild(panel);
+
+  const refreshOutput=()=>{ output.value=convertValueToScript(input.value.trim(),select.value); saveNumericMappingState({input:input.value,mode:select.value,format:dlSelect.value}); };
+  input.addEventListener('input',refreshOutput); select.addEventListener('change',refreshOutput); dlSelect.addEventListener('change',()=>saveNumericMappingState({input:input.value,mode:select.value,format:dlSelect.value}));
+  refreshOutput();
+  copyOut.onclick=()=>copyNumericMappingText(output.value,status);
+  inputOut.onclick=()=>{ if(output.value) setNumericMappingPending(output.value,status); };
+  dl.onclick=()=>downloadNumericMappingTable(mode,dlSelect.value);
+  applyNumericKeyboardSettings(kbd); attachNumericKeyboardResizeHandle(kbd); kbd.style.display='block';
+}
+function downloadNumericMappingTable(mode,format){
+  const rows=buildNumericMappingRows(mode), name=`numeric-mapping-${mode}`; let content='', mime='text/plain;charset=utf-8', ext=format;
+  if(format==='csv'){ content='Standard,Numeral\n'+rows.map(r=>`${JSON.stringify(r.standard)},${JSON.stringify(r.numeral)}`).join('\n'); mime='text/csv;charset=utf-8'; }
+  else if(format==='tsv'){ content='Standard\tNumeral\n'+rows.map(r=>`${r.standard}\t${r.numeral}`).join('\n'); mime='text/tab-separated-values;charset=utf-8'; }
+  else if(format==='json'){ content=JSON.stringify({mode,rows},null,2); mime='application/json;charset=utf-8'; }
+  else if(format==='html'){ content=`<!doctype html><html><meta charset="utf-8"><title>${numericKbdText('mappingTitle')}</title><table border="1"><tr><th>${numericKbdText('mappingStandard')}</th><th>${numericMappingModeLabel(mode)}</th></tr>${rows.map(r=>`<tr><td>${r.standard}</td><td>${r.numeral}</td></tr>`).join('')}</table></html>`; mime='text/html;charset=utf-8'; }
+  else { content=rows.map(r=>`${r.standard}\t${r.numeral}`).join('\n'); }
+  const blob=new Blob([content],{type:mime}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${name}.${ext}`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+}
+
 // 専用キーボードの生成と表示
 function openCustomNumericKeyboard(input) {
   activeCustomInput = input;
+  consumeNumericMappingPending(input);
   let kbd = document.getElementById('customNumericKeyboard');
   if (!kbd) {
     kbd = document.createElement('div');
@@ -5006,7 +5362,9 @@ function openCustomNumericKeyboard(input) {
     document.body.appendChild(kbd);
   }
 
+  kbd.classList.remove('custom-kbd-mapping-open');
   kbd.innerHTML = '';
+  kbd.dataset.numericMappingOpen='0';
   const mode = currentScriptMode;
   kbd.classList.remove('kaktovik-mode','toto-mode');
   if (mode === 'kaktovik') kbd.classList.add('kaktovik-mode');
@@ -5014,8 +5372,18 @@ function openCustomNumericKeyboard(input) {
 
   const header = document.createElement('div');
   header.className = 'custom-kbd-header';
-  header.innerHTML = `<span>⌨️ ${numericKbdText('title')} — ${numericKbdModeText(mode)}</span><span style="display:flex;gap:6px;"><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="showNumericKeyboardSettings()">⚙️ ${numericKbdText('settings')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="closeCustomNumericKeyboard()">✕ ${numericKbdText('close')}</button></span>`;
+  header.innerHTML = `<span>⌨️ ${numericKbdText('title')} — ${numericKbdModeText(mode)}</span><span style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="showNumericKeyboardMapping()">📊 ${numericKbdText('mappingTab')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="showNumericKeyboardSettings()">⚙️ ${numericKbdText('settings')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="closeCustomNumericKeyboard()">✕ ${numericKbdText('close')}</button></span>`;
   kbd.appendChild(header);
+
+  const mappingTabBar = document.createElement('div');
+  mappingTabBar.className = 'custom-kbd-visible-tabbar';
+  const mappingTabButton = document.createElement('button');
+  mappingTabButton.type = 'button';
+  mappingTabButton.className = 'btn btn-outline custom-kbd-visible-mapping-tab';
+  mappingTabButton.textContent = `📊 ${numericKbdText('mappingTab')}`;
+  mappingTabButton.onclick = () => showNumericKeyboardMapping();
+  mappingTabBar.appendChild(mappingTabButton);
+  kbd.appendChild(mappingTabBar);
 
   if (mode === 'morse') {
     // ── モールス信号：立体3Dキーボード ──
@@ -5186,7 +5554,8 @@ function clearCustomKbdInput() {
 function closeCustomNumericKeyboard() {
   const kbd = document.getElementById('customNumericKeyboard');
   if (kbd) kbd.style.display = 'none';
-  activeCustomInput = null;
+  if (!loadNumericKeyboardSettings().noKeyboard) activeCustomInput = null;
+  updateNumericKeyboardNoAutoShowUI();
 }
 
 /* ==========================================================================
@@ -5227,7 +5596,11 @@ function changeScriptMode(mode) {
   // 画面内の全入力欄の数値を一括変換
   setupDynamicNumericInputs();
 
-  if (activeCustomInput) openCustomNumericKeyboard(activeCustomInput);
+  if (activeCustomInput) {
+    const kbd=document.getElementById('customNumericKeyboard');
+    if (kbd && kbd.dataset.numericMappingOpen==='1') showNumericKeyboardMapping();
+    else openCustomNumericKeyboard(activeCustomInput);
+  }
 }
 function initializeScriptMode(){
   const el = document.getElementById('scriptModeSelector');
@@ -5438,7 +5811,7 @@ function initIndexedDB() {
       if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('customFonts')) db.createObjectStore('customFonts', { keyPath: 'id' });
     };
-    req.onsuccess = (e) => { dbInstance = e.target.result; dbInstance.onversionchange = () => { try { dbInstance.close(); } catch (err) {} }; resolve(dbInstance); };
+    req.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
     req.onerror = () => resolve(null);
   });
 }
@@ -5541,16 +5914,17 @@ async function handleDeletionAnswer(isYes) {
     try {
       if (dbInstance) { try { dbInstance.close(); } catch (e) {} dbInstance = null; }
       if (window.indexedDB) {
-        let dbNames = ['AirplaneGamesDB_v3', 'AirplaneGamesDB'];
         if (typeof indexedDB.databases === 'function') {
-          try {
-            const dbs = await indexedDB.databases();
-            dbNames = dbNames.concat((dbs || []).map(db => db?.name).filter(Boolean));
-          } catch (e) {}
-        }
-        dbNames = Array.from(new Set(dbNames));
-        for (const name of dbNames) {
-          try { await idbDeleteDatabase(name); } catch (e) { console.warn('データ削除: IndexedDB削除失敗', name, e); }
+          const dbs = await indexedDB.databases();
+          await Promise.all((dbs || []).map(db => db?.name ? new Promise(resolve => {
+            const req = indexedDB.deleteDatabase(db.name);
+            req.onsuccess = req.onerror = req.onblocked = () => resolve();
+          }) : Promise.resolve()));
+        } else {
+          await new Promise(resolve => {
+            const req = indexedDB.deleteDatabase('AirplaneGamesDB_v3');
+            req.onsuccess = req.onerror = req.onblocked = () => resolve();
+          });
         }
       }
     } catch (e) {}
@@ -7218,7 +7592,7 @@ function openCustomFontDB() {
       if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('customFonts')) db.createObjectStore('customFonts', { keyPath: 'id' });
     };
-    req.onsuccess = () => { const db = req.result; db.onversionchange = () => { try { db.close(); } catch (e) {} }; resolve(db); };
+    req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
   });
 }
@@ -7597,6 +7971,32 @@ function applyDpadSettings() {
 let flightRemainingSeconds = 6.5 * 3600;
 let flightTimerInterval = null;
 
+let miniCalcExpression='';
+function miniCalcPress(key){
+  const d=document.getElementById('miniCalcDisplay'); if(!d) return;
+  if(key==='C'){miniCalcExpression=''; d.value='0'; return;}
+  if(key==='⌫'){miniCalcExpression=miniCalcExpression.slice(0,-1); d.value=miniCalcExpression||'0'; return;}
+  if(key==='='){
+    try { if(!/^[0-9+\-*/.() ]+$/.test(miniCalcExpression)) throw new Error('invalid'); const result=Function('"use strict";return ('+miniCalcExpression+')')(); if(!Number.isFinite(result)) throw new Error('invalid'); miniCalcExpression=String(result); d.value=miniCalcExpression; } catch(e){ d.value='Error'; miniCalcExpression=''; }
+    return;
+  }
+  miniCalcExpression += key; d.value=miniCalcExpression;
+}
+function initMiniCalculatorDrag(){
+  const panel=document.getElementById('airplaneMiniCalculator'), handle=document.getElementById('miniCalcMoveHandle'); if(!panel||!handle) return;
+  let timer=null, dragging=false, startX=0,startY=0,startL=0,startT=0;
+  const begin=e=>{
+    if(!window.matchMedia('(max-width: 600px)').matches) return;
+    e.preventDefault(); e.stopPropagation();
+    timer=setTimeout(()=>{ dragging=true; panel.classList.add('calc-moving'); const r=panel.getBoundingClientRect(); startX=e.clientX??e.touches?.[0]?.clientX??0; startY=e.clientY??e.touches?.[0]?.clientY??0; startL=r.left; startT=r.top; },550);
+  };
+  const move=e=>{ if(!dragging) return; e.preventDefault(); e.stopPropagation(); const x=e.clientX??e.touches?.[0]?.clientX??0,y=e.clientY??e.touches?.[0]?.clientY??0; const maxL=Math.max(4,innerWidth-panel.offsetWidth-4),maxT=Math.max(4,innerHeight-panel.offsetHeight-4); panel.style.left=Math.max(4,Math.min(maxL,startL+x-startX))+'px'; panel.style.top=Math.max(4,Math.min(maxT,startT+y-startY))+'px'; panel.style.right='auto'; panel.style.bottom='auto'; };
+  const end=e=>{ if(timer){clearTimeout(timer);timer=null;} if(dragging){e.preventDefault();e.stopPropagation();dragging=false;panel.classList.remove('calc-moving');} };
+  ['pointerdown','touchstart'].forEach(ev=>handle.addEventListener(ev,begin,{passive:false}));
+  ['pointermove','touchmove'].forEach(ev=>handle.addEventListener(ev,move,{passive:false}));
+  ['pointerup','pointercancel','touchend','touchcancel'].forEach(ev=>handle.addEventListener(ev,end,{passive:false}));
+}
+
 function saveCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) localStorage.setItem('airplane_game_cabin_announcement_memo',el.value); }
 function loadCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) el.value=localStorage.getItem('airplane_game_cabin_announcement_memo')||''; }
 function clearCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el){el.value=''; saveCabinAnnouncementMemo(); el.focus();} }
@@ -7655,7 +8055,7 @@ function updateWorldClock() {
   }
 }
 setInterval(updateWorldClock, 1000);
-window.__airplaneSafeAddEventListener(window, 'load', () => { loadCabinAnnouncementMemo(); });
+window.__airplaneSafeAddEventListener(window, 'load', () => { loadCabinAnnouncementMemo(); initMiniCalculatorDrag(); });
 
 /* ==========================================================================
    5. プロフィール & 経過時間 & 動画録画
@@ -7743,6 +8143,66 @@ function exportProfileCard(format) {
   if (format === 'html') {
     const htmlContent = `<!DOCTYPE html><html lang="${currentLang}"><head><meta charset="UTF-8"><title>${escapeHtml(p.name)}</title>
 <style>body{background:#fce4ec;color:#333;font-family:sans-serif;padding:30px;}.card{background:#fff;padding:25px;border-radius:15px;max-width:500px;margin:auto;border:2px solid #ff80ab;}</style>
+
+<style id="numeric-mapping-force-fix">
+#customNumericKeyboard.custom-kbd-mapping-open {
+  display:block !important;
+  position:fixed !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel {
+  position:absolute !important;
+  inset:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  height:100% !important;
+  margin:0 !important;
+  padding:10px 8px 24px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  background:rgba(30,30,30,.98) !important;
+  color:#fff !important;
+  z-index:999999 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel > .custom-kbd-header {
+  display:flex !important;
+  flex:0 0 auto !important;
+  min-height:34px !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  color:#fff !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-tabs,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-note,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-status,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-form,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-output {
+  flex:0 0 auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-scroll {
+  display:block !important;
+  flex:1 1 0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:80px !important;
+  height:0 !important;
+  max-height:none !important;
+  overflow:auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table {
+  display:table !important;
+  width:max-content !important;
+  min-width:100% !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+</style>
 </head><body><div class="card"><h2 style="color:#ff4081;">${p.name}</h2><p><strong>${t('my_birth')}:</strong> ${escapeHtml(p.birth)}</p><p><strong>${t('my_gender')}:</strong> ${escapeHtml(p.gender)}</p><p><strong>${t('my_origin')}:</strong> ${escapeHtml(p.location)}</p><p><strong>${t('my_hobby')}:</strong> ${escapeHtml(p.hobby)}</p><p><strong>${t('my_quote')}:</strong> ${escapeHtml(p.quote)}</p><p><strong>${t('my_msg')}:</strong> ${escapeHtml(p.message)}</p></div></body></html>`;
     downloadBlob(new Blob([htmlContent], { type: 'text/html;charset=utf-8' }), 'profile.html');
     return;
@@ -7990,7 +8450,67 @@ async function downloadQuestionsHTML(mode){
   const L=labels[currentLang]||labels.ja;
   const localized=source.map((x,i)=>{const q=String(x?.q??x?.[0]??''),a=String(x?.a??x?.[1]??'');return {n:i+1,q:questionLocalizedText(q,currentLang),a:a?questionLocalizedText(a,currentLang):''};});
   const payload=JSON.stringify(localized).replace(/</g,'\\u003c');
-  const html=`<!doctype html><html lang="${escapeHtml(currentLang)}" dir="${currentLang==='ar'?'rtl':'ltr'}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>:root{color-scheme:light}html,body{margin:0!important;background:#fce4ec!important;color:#222!important;-webkit-text-fill-color:#222!important;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;forced-color-adjust:none}body,body *{color:#222!important;-webkit-text-fill-color:#222!important}body{padding:24px}.page-shell{max-width:980px;margin:0 auto;background:#fff!important;color:#222!important;border:2px solid #c2185b;border-radius:18px;padding:22px}.page-shell h1{color:#c2185b!important;-webkit-text-fill-color:#c2185b!important}.subtitle,.footer{color:#555!important;-webkit-text-fill-color:#555!important}.question-card{background:#fff!important;color:#222!important;-webkit-text-fill-color:#222!important;border:1px solid #ddd;border-left:6px solid #c2185b;border-radius:12px;padding:14px 16px;margin:10px 0}.question-card h2{color:#c2185b!important;-webkit-text-fill-color:#c2185b!important}.label{color:#555!important;-webkit-text-fill-color:#555!important;font-weight:700}.answer{color:#222!important;-webkit-text-fill-color:#222!important;white-space:pre-wrap;overflow-wrap:anywhere}.empty{color:#777!important;-webkit-text-fill-color:#777!important}.pagination{display:flex;gap:7px;overflow-x:auto;padding:12px 2px 4px}.pagination button{color:#222!important;-webkit-text-fill-color:#222!important;background:#fff!important;border:1px solid #aaa}.pagination button.active{color:#fff!important;-webkit-text-fill-color:#fff!important;background:#c2185b!important}</style></head><body><main class="page-shell" style="color:#222!important;-webkit-text-fill-color:#222!important"><h1 style="color:#c2185b!important;-webkit-text-fill-color:#c2185b!important">${escapeHtml(L.title)} — ${escapeHtml(mode==='admin'?L.admin:L.custom)}</h1><p class="subtitle" style="color:#555!important;-webkit-text-fill-color:#555!important">${escapeHtml(L.page)} 1 / 10</p><div id="questions"></div><nav class="pagination" id="nav" aria-label="${escapeHtml(L.page)}"></nav><div class="footer" style="color:#666!important;-webkit-text-fill-color:#666!important">${escapeHtml(mode==='custom'?L.custom:L.admin)}</div></main><script>const data=${payload};const labels=${JSON.stringify(L)};let page=1;const per=10;function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c));}function render(){const total=Math.max(1,Math.ceil(data.length/per));page=Math.min(page,total);document.querySelector('.subtitle').textContent=labels.page+' '+page+' / '+total;document.getElementById('questions').innerHTML=data.slice((page-1)*per,page*per).map(x=>'<article class="question-card" style="background:#fff!important;color:#222!important;-webkit-text-fill-color:#222!important"><h2 style="color:#c2185b!important;-webkit-text-fill-color:#c2185b!important">'+esc(x.n)+'. '+esc(x.q)+'</h2><div class="label" style="color:#555!important;-webkit-text-fill-color:#555!important">'+esc(labels.answer)+'</div><div class="answer '+(x.a?'':'empty')+'" style="color:'+(x.a?'#222':'#777')+'!important;-webkit-text-fill-color:'+(x.a?'#222':'#777')+'!important">'+esc(x.a||'—')+'</div></article>').join('');document.getElementById('nav').innerHTML=Array.from({length:total},(_,i)=>'<button style="color:'+(i+1===page?'#fff':'#222')+'!important;-webkit-text-fill-color:'+(i+1===page?'#fff':'#222')+'!important;background:'+(i+1===page?'#c2185b':'#fff')+'!important" onclick="page='+(i+1)+';render()">'+(i+1)+'</button>').join('')}render();<\/script></body></html>`;
+  const html=`<!doctype html><html lang="${escapeHtml(currentLang)}" dir="${currentLang==='ar'?'rtl':'ltr'}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>:root{color-scheme:light}html,body{margin:0!important;background:#fce4ec!important;color:#222!important;-webkit-text-fill-color:#222!important;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;forced-color-adjust:none}body,body *{color:#222!important;-webkit-text-fill-color:#222!important}body{padding:24px}.page-shell{max-width:980px;margin:0 auto;background:#fff!important;color:#222!important;border:2px solid #c2185b;border-radius:18px;padding:22px}.page-shell h1{color:#c2185b!important;-webkit-text-fill-color:#c2185b!important}.subtitle,.footer{color:#555!important;-webkit-text-fill-color:#555!important}.question-card{background:#fff!important;color:#222!important;-webkit-text-fill-color:#222!important;border:1px solid #ddd;border-left:6px solid #c2185b;border-radius:12px;padding:14px 16px;margin:10px 0}.question-card h2{color:#c2185b!important;-webkit-text-fill-color:#c2185b!important}.label{color:#555!important;-webkit-text-fill-color:#555!important;font-weight:700}.answer{color:#222!important;-webkit-text-fill-color:#222!important;white-space:pre-wrap;overflow-wrap:anywhere}.empty{color:#777!important;-webkit-text-fill-color:#777!important}.pagination{display:flex;gap:7px;overflow-x:auto;padding:12px 2px 4px}.pagination button{color:#222!important;-webkit-text-fill-color:#222!important;background:#fff!important;border:1px solid #aaa}.pagination button.active{color:#fff!important;-webkit-text-fill-color:#fff!important;background:#c2185b!important}</style>
+<style id="numeric-mapping-force-fix">
+#customNumericKeyboard.custom-kbd-mapping-open {
+  display:block !important;
+  position:fixed !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel {
+  position:absolute !important;
+  inset:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  height:100% !important;
+  margin:0 !important;
+  padding:10px 8px 24px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  background:rgba(30,30,30,.98) !important;
+  color:#fff !important;
+  z-index:999999 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel > .custom-kbd-header {
+  display:flex !important;
+  flex:0 0 auto !important;
+  min-height:34px !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  color:#fff !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-tabs,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-note,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-status,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-form,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-output {
+  flex:0 0 auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-scroll {
+  display:block !important;
+  flex:1 1 0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:80px !important;
+  height:0 !important;
+  max-height:none !important;
+  overflow:auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table {
+  display:table !important;
+  width:max-content !important;
+  min-width:100% !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+</style>
+</head><body><main class="page-shell" style="color:#222!important;-webkit-text-fill-color:#222!important"><h1 style="color:#c2185b!important;-webkit-text-fill-color:#c2185b!important">${escapeHtml(L.title)} — ${escapeHtml(mode==='admin'?L.admin:L.custom)}</h1><p class="subtitle" style="color:#555!important;-webkit-text-fill-color:#555!important">${escapeHtml(L.page)} 1 / 10</p><div id="questions"></div><nav class="pagination" id="nav" aria-label="${escapeHtml(L.page)}"></nav><div class="footer" style="color:#666!important;-webkit-text-fill-color:#666!important">${escapeHtml(mode==='custom'?L.custom:L.admin)}</div></main><script>const data=${payload};const labels=${JSON.stringify(L)};let page=1;const per=10;function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c));}function render(){const total=Math.max(1,Math.ceil(data.length/per));page=Math.min(page,total);document.querySelector('.subtitle').textContent=labels.page+' '+page+' / '+total;document.getElementById('questions').innerHTML=data.slice((page-1)*per,page*per).map(x=>'<article class="question-card" style="background:#fff!important;color:#222!important;-webkit-text-fill-color:#222!important"><h2 style="color:#c2185b!important;-webkit-text-fill-color:#c2185b!important">'+esc(x.n)+'. '+esc(x.q)+'</h2><div class="label" style="color:#555!important;-webkit-text-fill-color:#555!important">'+esc(labels.answer)+'</div><div class="answer '+(x.a?'':'empty')+'" style="color:'+(x.a?'#222':'#777')+'!important;-webkit-text-fill-color:'+(x.a?'#222':'#777')+'!important">'+esc(x.a||'—')+'</div></article>').join('');document.getElementById('nav').innerHTML=Array.from({length:total},(_,i)=>'<button style="color:'+(i+1===page?'#fff':'#222')+'!important;-webkit-text-fill-color:'+(i+1===page?'#fff':'#222')+'!important;background:'+(i+1===page?'#c2185b':'#fff')+'!important" onclick="page='+(i+1)+';render()">'+(i+1)+'</button>').join('')}render();<\/script></body></html>`;
   downloadBlob(new Blob([html],{type:'text/html;charset=utf-8'}),`${mode==='custom'?'custom-final':'admin'}-100-questions.html`);
 }
 
@@ -8289,7 +8809,67 @@ function buildScoreRowsHtml(rows) {
 function buildScoreHtmlPage(rows, page, totalPages) {
   const exportRows = rows.map(r => ({...r, game: getScoreGameName(r)}));
   const payload = JSON.stringify(exportRows);
-  return `<!DOCTYPE html><html lang="${currentLang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(t('data_table_h'))}</title><style>body{background:#fce4ec;font-family:sans-serif;padding:20px;color:#333}.card{background:#fff;padding:20px;border-radius:12px;max-width:1100px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px}th{background:#ffe0ec}.pages{display:flex;gap:5px;overflow-x:auto;margin-top:15px;padding-bottom:6px}.pages button{flex:0 0 auto;padding:6px 10px}</style></head><body><div class="card"><h2>${escapeHtml(t('data_table_h'))}</h2><table><thead><tr><th>${escapeHtml(t('th_game'))}</th><th>${escapeHtml(t('th_date'))}</th><th>${escapeHtml(t('th_timelimit'))}</th><th>${escapeHtml(t('th_score'))}</th><th>${escapeHtml(t('th_diff'))}</th></tr></thead><tbody id="scoreBody"></tbody></table><div id="scorePages" class="pages"></div></div><script>const rows=${payload};const per=10;let page=1;function esc(s){return String(s??'').replace(/[&<>\\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;',"'":'&#39;'}[c]||c));}function render(){const total=Math.max(1,Math.ceil(rows.length/per));page=Math.min(page,total);document.getElementById('scoreBody').innerHTML=rows.slice((page-1)*per,page*per).map(r=>'<tr><td>'+esc(r.game||r.gameKey||'')+'</td><td>'+esc(r.date||'')+'</td><td>'+esc(r.limit||'')+'</td><td>'+esc(r.score??'')+'</td><td>'+esc(r.diff||'')+'</td></tr>').join('');document.getElementById('scorePages').innerHTML=Array.from({length:total},(_,i)=>'<button onclick="page='+(i+1)+';render()">'+(i+1)+'</button>').join('');}render();<\/script></body></html>`;
+  return `<!DOCTYPE html><html lang="${currentLang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(t('data_table_h'))}</title><style>body{background:#fce4ec;font-family:sans-serif;padding:20px;color:#333}.card{background:#fff;padding:20px;border-radius:12px;max-width:1100px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px}th{background:#ffe0ec}.pages{display:flex;gap:5px;overflow-x:auto;margin-top:15px;padding-bottom:6px}.pages button{flex:0 0 auto;padding:6px 10px}</style>
+<style id="numeric-mapping-force-fix">
+#customNumericKeyboard.custom-kbd-mapping-open {
+  display:block !important;
+  position:fixed !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel {
+  position:absolute !important;
+  inset:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  height:100% !important;
+  margin:0 !important;
+  padding:10px 8px 24px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  background:rgba(30,30,30,.98) !important;
+  color:#fff !important;
+  z-index:999999 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open > .custom-kbd-mapping-panel > .custom-kbd-header {
+  display:flex !important;
+  flex:0 0 auto !important;
+  min-height:34px !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  color:#fff !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-tabs,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-note,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-status,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-form,
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-output {
+  flex:0 0 auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-scroll {
+  display:block !important;
+  flex:1 1 0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:80px !important;
+  height:0 !important;
+  max-height:none !important;
+  overflow:auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#customNumericKeyboard.custom-kbd-mapping-open .custom-kbd-mapping-table {
+  display:table !important;
+  width:max-content !important;
+  min-width:100% !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+</style>
+</head><body><div class="card"><h2>${escapeHtml(t('data_table_h'))}</h2><table><thead><tr><th>${escapeHtml(t('th_game'))}</th><th>${escapeHtml(t('th_date'))}</th><th>${escapeHtml(t('th_timelimit'))}</th><th>${escapeHtml(t('th_score'))}</th><th>${escapeHtml(t('th_diff'))}</th></tr></thead><tbody id="scoreBody"></tbody></table><div id="scorePages" class="pages"></div></div><script>const rows=${payload};const per=10;let page=1;function esc(s){return String(s??'').replace(/[&<>\\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;',"'":'&#39;'}[c]||c));}function render(){const total=Math.max(1,Math.ceil(rows.length/per));page=Math.min(page,total);document.getElementById('scoreBody').innerHTML=rows.slice((page-1)*per,page*per).map(r=>'<tr><td>'+esc(r.game||r.gameKey||'')+'</td><td>'+esc(r.date||'')+'</td><td>'+esc(r.limit||'')+'</td><td>'+esc(r.score??'')+'</td><td>'+esc(r.diff||'')+'</td></tr>').join('');document.getElementById('scorePages').innerHTML=Array.from({length:total},(_,i)=>'<button onclick="page='+(i+1)+';render()">'+(i+1)+'</button>').join('');}render();<\/script></body></html>`;
 }
 
 function canvasForScoreRows(rows, page, totalPages, format) {
@@ -8440,7 +9020,7 @@ function storageRestore(storage,data){
 }
 function idbRequest(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('IndexedDB request failed'));});}
 function idbTxDone(tx){return new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error('IndexedDB transaction failed'));tx.onabort=()=>reject(tx.error||new Error('IndexedDB transaction aborted'));});}
-function idbDeleteDatabase(name){return new Promise((resolve,reject)=>{if(!window.indexedDB){resolve(false);return;}let settled=false;let retryTimer=null;const finish=(fn,v)=>{if(settled)return;settled=true;if(retryTimer)clearTimeout(retryTimer);fn(v);};const attempt=()=>{let r;try{r=indexedDB.deleteDatabase(name);}catch(e){finish(reject,e);return;}r.onsuccess=()=>finish(resolve,true);r.onerror=()=>finish(reject,r.error||new Error(`IndexedDB '${name}' delete failed`));r.onblocked=()=>{try{if(dbInstance&&dbInstance.name===name){dbInstance.close();dbInstance=null;}}catch(e){} if(!settled) retryTimer=setTimeout(attempt,250);};};attempt();setTimeout(()=>{if(!settled)finish(reject,new Error(`IndexedDB '${name}' deletion is still blocked.`));},5000);});}
+function idbDeleteDatabase(name){return new Promise((resolve,reject)=>{const r=indexedDB.deleteDatabase(name);r.onsuccess=()=>resolve(true);r.onerror=()=>reject(r.error||new Error('IndexedDB delete failed'));r.onblocked=()=>reject(new Error(`IndexedDB '${name}' is blocked by an open connection.`));});}
 function idbOpenForSnapshot(name){return new Promise((resolve,reject)=>{const r=indexedDB.open(name);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('IndexedDB open failed'));});}
 async function snapshotIndexedDB(){const out=[];if(!window.indexedDB)return out;let names=[];try{if(typeof indexedDB.databases==="function"){const a=await indexedDB.databases();names=a.map(x=>String((x&&x.name)||"")).filter(n=>n.includes("AirplaneGamesDB"));}}catch(e){console.warn("IndexedDB enumeration failed:",e);}if(!names.length)names=["AirplaneGamesDB_v3","AirplaneGamesDB"];for(const name of Array.from(new Set(names))){let db=null;try{db=await idbOpenForSnapshot(name);const stores=[];for(const sn of Array.from(db.objectStoreNames)){const tx=db.transaction(sn,"readonly"),store=tx.objectStore(sn),keys=await idbRequest(store.getAllKeys()),vals=await idbRequest(store.getAll()),records=[];for(let i=0;i<vals.length;i++){const seen=new Map();records.push({key:await encodeBackupValue(keys[i],seen),value:await encodeBackupValue(vals[i],seen)});}stores.push({name:sn,keyPath:store.keyPath===undefined?null:store.keyPath,autoIncrement:store.autoIncrement,indexes:Array.from(store.indexNames).map(n=>{const x=store.index(n);return{name:n,keyPath:x.keyPath,multiEntry:x.multiEntry,unique:x.unique};}),records});}out.push({name,version:db.version,stores});}catch(e){console.warn(`IndexedDB snapshot skipped for ${name}:`,e);}finally{try{db&&db.close();}catch(_){}}}return out;}
 async function restoreIndexedDB(snapshot){
@@ -9297,7 +9877,6 @@ window.__airplaneSafeAddEventListener(window, 'load', async () => {
     if (config.flightMinutes) document.getElementById('cfgFlightMinutes').value = config.flightMinutes;
     if (config.timezoneDiff) document.getElementById('cfgTimezoneDiff').value = config.timezoneDiff;
     if (config.coinBalanceAddAmount !== undefined) document.getElementById('coinBalanceAddAmount').value = Math.max(0, Math.floor(Number(config.coinBalanceAddAmount) || 800000));
-    if (Array.isArray(config.formState)) restoreFormState(config.formState);
   }
 
   if ('serviceWorker' in navigator) {
@@ -9612,6 +10191,7 @@ window.__airplaneSafeAddEventListener(window, 'DOMContentLoaded', () => {
 
   // 既存の初期化処理を継続
   initializeScriptMode();
+updateNumericKeyboardNoAutoShowUI();
   relocateGameSettings();
   showQuestionsPage('admin');
   renderQuestions();
@@ -9669,4 +10249,3 @@ window.__airplaneSafeAddEventListener(window, 'load', () => {
 </script>
 </body>
 </html>
-
