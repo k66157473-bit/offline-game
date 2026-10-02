@@ -1189,6 +1189,14 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
 #customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn.btn-action { font-size:clamp(9px, calc(var(--custom-kbd-width,420px) / 32), 14px); }
 
 /* スマホ用電卓：左下の\を長押ししたときだけ移動する。 */
+#airplaneMiniCalculator { position:fixed; left:18px; bottom:18px; width:250px; max-width:calc(100vw - 36px); z-index:2147483600; background:rgba(25,25,25,.97); color:#fff; border:2px solid var(--accent-pink,#ff4081); border-radius:14px; box-shadow:0 8px 30px rgba(0,0,0,.4); overflow:hidden; touch-action:none; }
+#airplaneMiniCalculator .calc-display { width:100%; box-sizing:border-box; padding:12px; font-size:22px; text-align:right; background:#111; color:#fff; border:0; outline:0; }
+#airplaneMiniCalculator .calc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:7px; }
+#airplaneMiniCalculator .calc-grid button { min-height:42px; font-size:16px; border-radius:8px; border:1px solid #666; background:#eee; color:#111; user-select:none; }
+#airplaneMiniCalculator .calc-move-handle { position:absolute; left:0; bottom:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff; background:#444; border-radius:0 8px 0 0; user-select:none; touch-action:none; }
+#airplaneMiniCalculator.calc-moving { opacity:.9; }
+@media (min-width:601px){ #airplaneMiniCalculator{ display:none; } }
+@media (max-width:600px){ #airplaneMiniCalculator{ width:220px; } #airplaneMiniCalculator .calc-grid button{min-height:38px;} }
 
 /* カクトビックのキーボードボタンにも埋め込み専用フォントを適用する。 */
 #customNumericKeyboard.kaktovik-mode .custom-kbd-btn:not(.btn-action) {
@@ -1674,6 +1682,17 @@ html[data-script-mode="cuneiform"] #customNumericKeyboard .custom-kbd-mapping-ta
 
 <main>
   <!-- 1. ゲームタブ -->
+  <div id="airplaneMiniCalculator" aria-label="Calculator">
+  <input id="miniCalcDisplay" class="calc-display" value="0" readonly>
+  <div class="calc-grid">
+    <button type="button" onclick="miniCalcPress('C')">C</button><button type="button" onclick="miniCalcPress('⌫')">⌫</button><button type="button" onclick="miniCalcPress('/')">÷</button><button type="button" onclick="miniCalcPress('*')">×</button>
+    <button type="button" onclick="miniCalcPress('7')">7</button><button type="button" onclick="miniCalcPress('8')">8</button><button type="button" onclick="miniCalcPress('9')">9</button><button type="button" onclick="miniCalcPress('-')">−</button>
+    <button type="button" onclick="miniCalcPress('4')">4</button><button type="button" onclick="miniCalcPress('5')">5</button><button type="button" onclick="miniCalcPress('6')">6</button><button type="button" onclick="miniCalcPress('+')">+</button>
+    <button type="button" onclick="miniCalcPress('1')">1</button><button type="button" onclick="miniCalcPress('2')">2</button><button type="button" onclick="miniCalcPress('3')">3</button><button type="button" onclick="miniCalcPress('=')">=</button>
+    <button type="button" onclick="miniCalcPress('0')" style="grid-column:span 2;">0</button><button type="button" onclick="miniCalcPress('.')">.</button>
+  </div>
+  <div id="miniCalcMoveHandle" class="calc-move-handle" aria-label="">\</div>
+</div>
 
 <section id="gameTab" class="tab-content active">
     <div class="game-controls-bar">
@@ -8296,6 +8315,105 @@ function applyDpadSettings() {
 let flightRemainingSeconds = 6.5 * 3600;
 let flightTimerInterval = null;
 
+let miniCalcExpression='';
+function miniCalcPress(key){
+  const d=document.getElementById('miniCalcDisplay'); if(!d) return;
+  if(key==='C'){miniCalcExpression=''; d.value='0'; return;}
+  if(key==='⌫'){miniCalcExpression=miniCalcExpression.slice(0,-1); d.value=miniCalcExpression||'0'; return;}
+  if(key==='='){
+    try { if(!/^[0-9+\-*/.() ]+$/.test(miniCalcExpression)) throw new Error('invalid'); const result=Function('"use strict";return ('+miniCalcExpression+')')(); if(!Number.isFinite(result)) throw new Error('invalid'); miniCalcExpression=String(result); d.value=miniCalcExpression; } catch(e){ d.value='Error'; miniCalcExpression=''; }
+    return;
+  }
+  miniCalcExpression += key; d.value=miniCalcExpression;
+}
+function initMiniCalculatorDrag(){
+  const panel=document.getElementById('airplaneMiniCalculator'), handle=document.getElementById('miniCalcMoveHandle'); if(!panel||!handle) return;
+  let timer=null, dragging=false, startX=0,startY=0,startL=0,startT=0;
+  const begin=e=>{
+    if(!window.matchMedia('(max-width: 600px)').matches) return;
+    e.preventDefault(); e.stopPropagation();
+    timer=setTimeout(()=>{ dragging=true; panel.classList.add('calc-moving'); const r=panel.getBoundingClientRect(); startX=e.clientX??e.touches?.[0]?.clientX??0; startY=e.clientY??e.touches?.[0]?.clientY??0; startL=r.left; startT=r.top; },550);
+  };
+  const move=e=>{ if(!dragging) return; e.preventDefault(); e.stopPropagation(); const x=e.clientX??e.touches?.[0]?.clientX??0,y=e.clientY??e.touches?.[0]?.clientY??0; const maxL=Math.max(4,innerWidth-panel.offsetWidth-4),maxT=Math.max(4,innerHeight-panel.offsetHeight-4); panel.style.left=Math.max(4,Math.min(maxL,startL+x-startX))+'px'; panel.style.top=Math.max(4,Math.min(maxT,startT+y-startY))+'px'; panel.style.right='auto'; panel.style.bottom='auto'; };
+  const end=e=>{ if(timer){clearTimeout(timer);timer=null;} if(dragging){e.preventDefault();e.stopPropagation();dragging=false;panel.classList.remove('calc-moving');} };
+  ['pointerdown','touchstart'].forEach(ev=>handle.addEventListener(ev,begin,{passive:false}));
+  ['pointermove','touchmove'].forEach(ev=>handle.addEventListener(ev,move,{passive:false}));
+  ['pointerup','pointercancel','touchend','touchcancel'].forEach(ev=>handle.addEventListener(ev,end,{passive:false}));
+}
+
+function saveEntryCustomsDraft(){const ids=['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'];const data={};ids.forEach(id=>{const el=document.getElementById(id);if(el)data[id]=el.value;});try{localStorage.setItem('airplane_game_entry_customs_draft',JSON.stringify(data));}catch(_){} }
+function loadEntryCustomsDraft(){try{const data=JSON.parse(localStorage.getItem('airplane_game_entry_customs_draft')||'{}');Object.keys(data).forEach(id=>{const el=document.getElementById(id);if(el&&typeof data[id]==='string')el.value=data[id];});}catch(_){} }
+function clearEntryCustomsDraft(){['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});saveEntryCustomsDraft();}
+function downloadEntryCustomsDraft(){saveEntryCustomsDraft();const labels=[['パスポート番号','entryPassportNumber'],['便名','entryFlightNumber'],['滞在先ホテル','entryHotel'],['滞在先住所','entryAddress'],['渡航目的','entryPurpose']];const lines=labels.map(([label,id])=>`${label}: ${document.getElementById(id)?.value||''}`);lines.push('','その他:',document.getElementById('entryCustomsDraft')?.value||'');downloadBlob(new Blob(['\uFEFF'+lines.join('\n')],{type:'text/plain;charset=utf-8'}),'entry-customs-draft.txt');}
+function updateJetlagGuide(){const offset=Number(document.getElementById('jetlagOffset')?.value||0);const now=new Date();const japanFormatter=new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',hour12:false});const parts=japanFormatter.formatToParts(now);let baseH=Number(parts.find(p=>p.type==='hour')?.value||0);const baseM=Number(parts.find(p=>p.type==='minute')?.value||0);const totalMinutes=((baseH*60+baseM)+(offset*60))%(24*60);const normalized=totalMinutes<0?totalMinutes+24*60:totalMinutes;const h=Math.floor(normalized/60);const mm=String(Math.floor(normalized%60)).padStart(2,'0');let title,advice;if(h<6){title='今は睡眠時間帯';advice='目的地では深夜〜早朝です。睡眠を優先する時間帯です。';}else if(h<9){title='起床・朝の時間帯';advice='目的地では朝です。起きて光を浴び、現地の朝へ切り替える時間帯です。';}else if(h<18){title='活動時間帯';advice='目的地では日中です。通常の活動時間として過ごす時間帯です。';}else if(h<22){title='就寝準備の時間帯';advice='目的地では夜です。強い光や画面を控えめにし、就寝へ向けて落ち着く時間帯です。';}else{title='夜の時間帯';advice='目的地では夜遅めです。眠気があれば睡眠を優先し、現地時間へ合わせていく時間帯です。';}const el=document.getElementById('jetlagGuideResult');if(el)el.textContent=`${title}（日本時間 ${String(baseH).padStart(2,'0')}:${String(baseM).padStart(2,'0')} → 目的地 ${String(h).padStart(2,'0')}:${mm}） — ${advice}`;}
+
+function saveCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) { try{ localStorage.setItem('airplane_game_cabin_announcement_memo',el.value); }catch(_){} } }
+function loadCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) { try{ el.value=localStorage.getItem('airplane_game_cabin_announcement_memo')||''; }catch(_){} } }
+function saveMemoDrafts(){ saveCabinAnnouncementMemo(); saveEntryCustomsDraft(); }
+function loadMemoDrafts(){ loadCabinAnnouncementMemo(); loadEntryCustomsDraft(); }
+function clearCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el){el.value=''; saveCabinAnnouncementMemo(); el.focus();} }
+function downloadCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(!el) return; downloadBlob(new Blob(['\uFEFF'+el.value],{type:'text/plain;charset=utf-8'}),'in-flight-announcement-memo.txt'); }
+
+function initFlightTimer() {
+  const h = parseInt(document.getElementById('cfgFlightHours')?.value || '6', 10);
+  const m = parseInt(document.getElementById('cfgFlightMinutes')?.value || '30', 10);
+  flightRemainingSeconds = h * 3600 + m * 60;
+  if (!flightTimerInterval) {
+    flightTimerInterval = setInterval(() => {
+      if (flightRemainingSeconds > 0) flightRemainingSeconds--;
+      updateFlightTimerDisplay();
+    }, 1000);
+  }
+  updateFlightTimerDisplay();
+}
+
+function resetFlightTimer() {
+  const hoursControl=document.getElementById('cfgFlightHours');
+  const minutesControl=document.getElementById('cfgFlightMinutes');
+  if(hoursControl) hoursControl.value='6';
+  if(minutesControl) minutesControl.value='30';
+  flightRemainingSeconds=6*3600+30*60;
+  updateFlightTimerDisplay();
+  saveAllConfig();
+}
+
+function updateFlightTimerDisplay() {
+  if (!Number.isFinite(Number(flightRemainingSeconds)) || Number(flightRemainingSeconds) < 0) {
+    const h = parseInt(document.getElementById('cfgFlightHours')?.value || '6', 10);
+    const m = parseInt(document.getElementById('cfgFlightMinutes')?.value || '30', 10);
+    flightRemainingSeconds = (Number.isFinite(h) ? Math.max(0, h) : 6) * 3600 + (Number.isFinite(m) ? Math.min(59, Math.max(0, m)) : 30) * 60;
+  }
+  const hrs = Math.floor(flightRemainingSeconds / 3600);
+  const mins = Math.floor((flightRemainingSeconds % 3600) / 60);
+  const secs = Math.floor(flightRemainingSeconds % 60);
+  const str = `FLIGHT: ${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  const el = document.getElementById('flightHudClock');
+  if (el) el.textContent = str;
+}
+
+function updateWorldClock() {
+  const diff = parseInt(document.getElementById('cfgTimezoneDiff')?.value || '-7', 10);
+  const now = new Date();
+  const jstHrs = now.getHours();
+  const jstMins = now.getMinutes();
+
+  const destDate = new Date(now.getTime() + diff * 3600 * 1000);
+  const destHrs = destDate.getHours();
+  const destMins = destDate.getMinutes();
+
+  const el = document.getElementById('worldClockDisplay');
+  if (el) {
+    el.textContent = `${t('world_clock_now')}: ${String(jstHrs).padStart(2,'0')}:${String(jstMins).padStart(2,'0')} | ${t('world_clock_local')}: ${String(destHrs).padStart(2,'0')}:${String(destMins).padStart(2,'0')} (${diff >= 0 ? '+' : ''}${diff}h)`;
+  }
+}
+setInterval(updateWorldClock, 1000);
+window.__airplaneSafeAddEventListener(window, 'load', () => { loadMemoDrafts();
+  ['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'].forEach(id=>document.getElementById(id)?.addEventListener('input',saveEntryCustomsDraft));
+  document.getElementById('cabinAnnouncementMemo')?.addEventListener('change',saveCabinAnnouncementMemo);
+  window.__airplaneSafeAddEventListener(window,'pagehide',saveMemoDrafts);
+  window.__airplaneSafeAddEventListener(window,'beforeunload',saveMemoDrafts);
+  initMiniCalculatorDrag(); });
+
 /* ==========================================================================
    5. プロフィール & 経過時間 & 動画録画
    ========================================================================== */
@@ -9542,6 +9660,18 @@ async function buildCompleteBackupPayload(){
       sessionStorage: storageSession
     },
     formState: snapshotFormState(),
+    // メモ系は通常リロードでも確実に復元できるよう、フォーム全体とは別に明示保存する。
+    memoData: {
+      cabinAnnouncementMemo: document.getElementById('cabinAnnouncementMemo')?.value || '',
+      entryCustomsDraft: {
+        entryPassportNumber: document.getElementById('entryPassportNumber')?.value || '',
+        entryFlightNumber: document.getElementById('entryFlightNumber')?.value || '',
+        entryHotel: document.getElementById('entryHotel')?.value || '',
+        entryAddress: document.getElementById('entryAddress')?.value || '',
+        entryPurpose: document.getElementById('entryPurpose')?.value || '',
+        entryCustomsDraft: document.getElementById('entryCustomsDraft')?.value || ''
+      }
+    },
     uiState: { scrollX: window.scrollX, scrollY: window.scrollY },
     indexedDB: await snapshotIndexedDB(), // フォントやDBスコアなど全DB・全Storeを完全に網羅
     updateHistory: KOUSHIN_DATA.map(k => ({ date: k.date, desc: k.desc, pinned: !!k.pinned }))
@@ -9830,8 +9960,9 @@ async function handleRestoreFile(e) {
         const idbKey = Object.keys(zipFiles).find(k => k.toLowerCase().endsWith('.indexeddb') || k.toLowerCase().includes('indexeddb'));
 
         if (itsmeKey && zipFiles[itsmeKey]) {
-          const parsedItsme = JSON.parse(zipFiles[itsmeKey]);
-          mainData = parsedItsme.data || parsedItsme;
+          const itsmeText = String(zipFiles[itsmeKey]).replace(/^\uFEFF/, '').trim();
+          const parsedItsme = JSON.parse(itsmeText);
+          mainData = (typeof validateBackupPayload === 'function') ? validateBackupPayload(parsedItsme) : (parsedItsme.data || parsedItsme);
         }
 
         if (idbKey && zipFiles[idbKey]) {
@@ -9847,7 +9978,12 @@ async function handleRestoreFile(e) {
       } else {
         // 単体ファイル (.itsme, .indexeddb, .json) の場合
         const rawText = await file.text();
-        const parsed = JSON.parse(rawText);
+        // .itsme/.json の先頭BOMや末尾空白があっても復元できるようにする。
+        const cleanedText = String(rawText).replace(/^\uFEFF/, '').trim();
+        let parsed;
+        try { parsed = JSON.parse(cleanedText); }
+        catch (jsonError) { throw new Error(`バックアップJSONを読み込めませんでした: ${jsonError.message}`); }
+        parsed = (typeof validateBackupPayload === 'function') ? validateBackupPayload(parsed) : parsed;
         
         if (file.name.toLowerCase().endsWith('.indexeddb') || parsed.store === 'indexeddb') {
           extraIndexedDb = parsed.indexedDB || parsed;
@@ -9970,6 +10106,34 @@ async function handleRestoreFile(e) {
 
       restoreFormState(data.formState);
 
+      // メモ系は formState に加えて専用保存領域からも確実に復元する。
+      if (data.memoData && typeof data.memoData === 'object') {
+        try {
+          const memo = data.memoData;
+          if (typeof memo.cabinAnnouncementMemo === 'string') {
+            localStorage.setItem('airplane_game_cabin_announcement_memo', memo.cabinAnnouncementMemo);
+            const el = document.getElementById('cabinAnnouncementMemo');
+            if (el) el.value = memo.cabinAnnouncementMemo;
+          }
+          if (memo.entryCustomsDraft && typeof memo.entryCustomsDraft === 'object') {
+            const draft = memo.entryCustomsDraft;
+            const ids = ['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'];
+            const saved = {};
+            ids.forEach(id => {
+              if (typeof draft[id] === 'string') {
+                saved[id] = draft[id];
+                const el = document.getElementById(id);
+                if (el) el.value = draft[id];
+              }
+            });
+            localStorage.setItem('airplane_game_entry_customs_draft', JSON.stringify(saved));
+          }
+        } catch (_) {}
+      } else {
+        // 旧バックアップとの互換性：storage/formState側から読み直す。
+        try { loadMemoDrafts(); } catch (_) {}
+      }
+
       if (data.language) changeLanguage(data.language);
       if (data.scriptMode) changeScriptMode(data.scriptMode);
 
@@ -9978,11 +10142,17 @@ async function handleRestoreFile(e) {
         ? extraIndexedDb
         : (Array.isArray(data.indexedDB) ? data.indexedDB : null);
 
+      let indexedDbRestoreWarnings = [];
       if (targetIdbData) {
-        await restoreIndexedDB(targetIdbData);
+        try {
+          const idbResult = await restoreIndexedDB(targetIdbData);
+          if (idbResult && Array.isArray(idbResult.errors) && idbResult.errors.length) indexedDbRestoreWarnings = idbResult.errors.slice();
+        } catch (idbError) {
+          indexedDbRestoreWarnings = [String(idbError?.message || idbError)];
+        }
       }
-      await initIndexedDB();
-      await loadCustomFontFromIndexedDB();
+      try { await initIndexedDB(); } catch (_) {}
+      try { await loadCustomFontFromIndexedDB(); } catch (_) {}
 
       // スコアの IndexedDB への確実な書き込み
       if (Array.isArray(data.scores) && dbInstance && document.getElementById('cfgUseIndexedDB')?.checked) {
@@ -10024,12 +10194,17 @@ async function handleRestoreFile(e) {
         switchTab(data.activeTab);
       }
 
+      // 復元処理の最後にもメモを再適用し、後段のUI再描画で消されないようにする。
+      try { loadMemoDrafts(); } catch (_) {}
       setRestoreBusy(false);
       try { if (input) input.value = ''; } catch (_) {}
 
+      const restoreMessage = indexedDbRestoreWarnings.length
+        ? `基本データは復元しました。IndexedDBの一部は復元できませんでした。<br><small>${escapeHtml(indexedDbRestoreWarnings.join(' / '))}</small>`
+        : 'ZIP内の <b>.itsme</b> と <b>.indexeddb</b> を自動検知し、全データを完全復元しました！';
       showRestoreModal(
         '復元完了',
-        'ZIP内の <b>.itsme</b> と <b>.indexeddb</b> を自動検知し、全データを完全復元しました！',
+        restoreMessage,
         `<button class="btn" onclick="closeModal();">${t('btn_done')}</button> <button class="btn btn-outline" onclick="location.reload();">${t('btn_reload')}</button>`
       );
     } catch (err) {
