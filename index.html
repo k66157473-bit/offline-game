@@ -1188,15 +1188,9 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
 #customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn { font-size:clamp(10px, calc(var(--custom-kbd-width,420px) / 24), 20px); padding:clamp(4px, calc(var(--custom-kbd-height,360px) / 38), 12px) 2px; }
 #customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn.btn-action { font-size:clamp(9px, calc(var(--custom-kbd-width,420px) / 32), 14px); }
 
-/* スマホ用電卓：左下の\を長押ししたときだけ移動する。 */
-#airplaneMiniCalculator { position:fixed; left:18px; bottom:18px; width:250px; max-width:calc(100vw - 36px); z-index:2147483600; background:rgba(25,25,25,.97); color:#fff; border:2px solid var(--accent-pink,#ff4081); border-radius:14px; box-shadow:0 8px 30px rgba(0,0,0,.4); overflow:hidden; touch-action:none; }
-#airplaneMiniCalculator .calc-display { width:100%; box-sizing:border-box; padding:12px; font-size:22px; text-align:right; background:#111; color:#fff; border:0; outline:0; }
-#airplaneMiniCalculator .calc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:7px; }
-#airplaneMiniCalculator .calc-grid button { min-height:42px; font-size:16px; border-radius:8px; border:1px solid #666; background:#eee; color:#111; user-select:none; }
-#airplaneMiniCalculator .calc-move-handle { position:absolute; left:0; bottom:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff; background:#444; border-radius:0 8px 0 0; user-select:none; touch-action:none; }
-#airplaneMiniCalculator.calc-moving { opacity:.9; }
-@media (min-width:601px){ #airplaneMiniCalculator{ display:none; } }
-@media (max-width:600px){ #airplaneMiniCalculator{ width:220px; } #airplaneMiniCalculator .calc-grid button{min-height:38px;} }
+
+
+ #airplaneMiniCalculator .calc-grid button{min-height:38px;} }
 
 /* カクトビックのキーボードボタンにも埋め込み専用フォントを適用する。 */
 #customNumericKeyboard.kaktovik-mode .custom-kbd-btn:not(.btn-action) {
@@ -1682,8 +1676,7 @@ html[data-script-mode="cuneiform"] #customNumericKeyboard .custom-kbd-mapping-ta
 
 <main>
   <!-- 1. ゲームタブ -->
-  <div id="airplaneMiniCalculator" aria-label="Calculator">
-
+  
 
 <section id="gameTab" class="tab-content active">
     <div class="game-controls-bar">
@@ -8306,31 +8299,7 @@ function applyDpadSettings() {
 let flightRemainingSeconds = 6.5 * 3600;
 let flightTimerInterval = null;
 
-let miniCalcExpression='';
-function miniCalcPress(key){
-  const d=document.getElementById('miniCalcDisplay'); if(!d) return;
-  if(key==='C'){miniCalcExpression=''; d.value='0'; return;}
-  if(key==='⌫'){miniCalcExpression=miniCalcExpression.slice(0,-1); d.value=miniCalcExpression||'0'; return;}
-  if(key==='='){
-    try { if(!/^[0-9+\-*/.() ]+$/.test(miniCalcExpression)) throw new Error('invalid'); const result=Function('"use strict";return ('+miniCalcExpression+')')(); if(!Number.isFinite(result)) throw new Error('invalid'); miniCalcExpression=String(result); d.value=miniCalcExpression; } catch(e){ d.value='Error'; miniCalcExpression=''; }
-    return;
-  }
-  miniCalcExpression += key; d.value=miniCalcExpression;
-}
-function initMiniCalculatorDrag(){
-  const panel=document.getElementById('airplaneMiniCalculator'), handle=document.getElementById('miniCalcMoveHandle'); if(!panel||!handle) return;
-  let timer=null, dragging=false, startX=0,startY=0,startL=0,startT=0;
-  const begin=e=>{
-    if(!window.matchMedia('(max-width: 600px)').matches) return;
-    e.preventDefault(); e.stopPropagation();
-    timer=setTimeout(()=>{ dragging=true; panel.classList.add('calc-moving'); const r=panel.getBoundingClientRect(); startX=e.clientX??e.touches?.[0]?.clientX??0; startY=e.clientY??e.touches?.[0]?.clientY??0; startL=r.left; startT=r.top; },550);
-  };
-  const move=e=>{ if(!dragging) return; e.preventDefault(); e.stopPropagation(); const x=e.clientX??e.touches?.[0]?.clientX??0,y=e.clientY??e.touches?.[0]?.clientY??0; const maxL=Math.max(4,innerWidth-panel.offsetWidth-4),maxT=Math.max(4,innerHeight-panel.offsetHeight-4); panel.style.left=Math.max(4,Math.min(maxL,startL+x-startX))+'px'; panel.style.top=Math.max(4,Math.min(maxT,startT+y-startY))+'px'; panel.style.right='auto'; panel.style.bottom='auto'; };
-  const end=e=>{ if(timer){clearTimeout(timer);timer=null;} if(dragging){e.preventDefault();e.stopPropagation();dragging=false;panel.classList.remove('calc-moving');} };
-  ['pointerdown','touchstart'].forEach(ev=>handle.addEventListener(ev,begin,{passive:false}));
-  ['pointermove','touchmove'].forEach(ev=>handle.addEventListener(ev,move,{passive:false}));
-  ['pointerup','pointercancel','touchend','touchcancel'].forEach(ev=>handle.addEventListener(ev,end,{passive:false}));
-}
+
 
 function saveEntryCustomsDraft(){const ids=['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'];const data={};ids.forEach(id=>{const el=document.getElementById(id);if(el)data[id]=el.value;});try{localStorage.setItem('airplane_game_entry_customs_draft',JSON.stringify(data));}catch(_){} }
 function loadEntryCustomsDraft(){try{const data=JSON.parse(localStorage.getItem('airplane_game_entry_customs_draft')||'{}');Object.keys(data).forEach(id=>{const el=document.getElementById(id);if(el&&typeof data[id]==='string')el.value=data[id];});}catch(_){} }
@@ -8402,8 +8371,7 @@ window.__airplaneSafeAddEventListener(window, 'load', () => { loadMemoDrafts();
   ['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'].forEach(id=>document.getElementById(id)?.addEventListener('input',saveEntryCustomsDraft));
   document.getElementById('cabinAnnouncementMemo')?.addEventListener('change',saveCabinAnnouncementMemo);
   window.__airplaneSafeAddEventListener(window,'pagehide',saveMemoDrafts);
-  window.__airplaneSafeAddEventListener(window,'beforeunload',saveMemoDrafts);
-  initMiniCalculatorDrag(); });
+  window.__airplaneSafeAddEventListener(window,'beforeunload',saveMemoDrafts); });
 
 /* ==========================================================================
    5. プロフィール & 経過時間 & 動画録画
