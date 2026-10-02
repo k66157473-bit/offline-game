@@ -1601,6 +1601,8 @@ html[data-script-mode="cuneiform"] #customNumericKeyboard .custom-kbd-mapping-ta
 </style>
 </head>
 <body>
+<!-- データ完全削除時のホワイトアウト -->
+<div id="whiteoutOverlay" aria-hidden="true"></div>
 <div id="mouseStalker">★</div>
 <!-- 画面最上部に表示される救済案内バー -->
 <div id="rescueNoticeBar" class="rescue-notice-bar" style="display: none;">
@@ -3843,6 +3845,79 @@ let memoryStore = {
 })();
 
 let dbInstance = null;
+// IndexedDBの全接続を一元管理。削除・更新時のblocked競合を防ぐ。
+const activeIndexedDBConnections = new Set();
+function trackIndexedDBConnection(db){
+  if(!db) return db;
+  activeIndexedDBConnections.add(db);
+  try{ db.onversionchange = () => { try{ db.close(); }catch(e){} activeIndexedDBConnections.delete(db); if(dbInstance===db) dbInstance=null; }; }catch(e){}
+  return db;
+}
+function closeAllIndexedDBConnections(){
+  try{ if(dbInstance) activeIndexedDBConnections.add(dbInstance); }catch(e){}
+  for(const db of Array.from(activeIndexedDBConnections)){
+    try{ db.close(); }catch(e){}
+    activeIndexedDBConnections.delete(db);
+  }
+  dbInstance=null;
+}
+
+// 削除モード中は新しいIndexedDB接続を開始させない。
+// すでに開始済みのopenリクエストについても、success時に即closeして再接続を防ぐ。
+function guardedIndexedDBOpen(name, version){
+  if (window.__dataDeletionInProgress) {
+    throw new DOMException('IndexedDB is locked for data deletion.', 'AbortError');
+  }
+  const req = (version === undefined) ? indexedDB.open(name) : indexedDB.open(name, version);
+  const originalSuccess = req.onsuccess;
+  req.addEventListener('success', function(event){
+    if (window.__dataDeletionInProgress) {
+      try { event.target.result && event.target.result.close(); } catch (_) {}
+    }
+  }, true);
+  return req;
+}
+
+// 同一オリジンの別タブ/PWAウィンドウにも削除準備を通知する。
+// IndexedDBのdeleteDatabase()は、他の開いている接続が閉じるまで完了しないため、
+// 各タブが保有する接続を自発的に閉じてもらう。
+let indexedDBCloseChannel = null;
+try {
+  if (typeof BroadcastChannel === 'function') {
+    indexedDBCloseChannel = new BroadcastChannel('airplane-games-idb-control');
+    indexedDBCloseChannel.onmessage = (event) => {
+      if (event && event.data && event.data.type === 'close-indexeddb-connections') {
+        closeAllIndexedDBConnections();
+      }
+    };
+  }
+} catch (_) {}
+
+function requestOtherTabsToCloseIndexedDBConnections(){
+  try {
+    if (indexedDBCloseChannel) {
+      indexedDBCloseChannel.postMessage({type:'close-indexeddb-connections', time:Date.now()});
+    }
+  } catch (_) {}
+  // 古いタブにも通知できる場合があるようstorage eventも併用する。
+  try {
+    const key='airplane_game_idb_close_request';
+    localStorage.setItem(key, String(Date.now()));
+    localStorage.removeItem(key);
+  } catch (_) {}
+}
+
+try {
+  window.addEventListener('storage', (event) => {
+    if (event && event.key === 'airplane_game_idb_close_request') closeAllIndexedDBConnections();
+  });
+} catch (_) {}
+
+async function closeAndWaitForIndexedDBConnections(waitMs=1200){
+  requestOtherTabsToCloseIndexedDBConnections();
+  closeAllIndexedDBConnections();
+  await new Promise(resolve => setTimeout(resolve, Math.max(100, Number(waitMs)||1200)));
+}
 
 let shortcutData = [
   { key: 'Space', action: 'jump' },
@@ -5970,16 +6045,17 @@ function changeLanguage(lang) {
 
 function initIndexedDB() {
   return new Promise((resolve) => {
+    if (window.__dataDeletionInProgress || window.__dataDeletionAbortOpenRequests) { resolve(null); return; }
     if (!window.indexedDB || !document.getElementById('cfgUseIndexedDB').checked) {
       resolve(null); return;
     }
-    const req = indexedDB.open('AirplaneGamesDB_v3', 2);
+    const req = guardedIndexedDBOpen('AirplaneGamesDB_v3', 2);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('customFonts')) db.createObjectStore('customFonts', { keyPath: 'id' });
     };
-    req.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
+    req.onsuccess = (e) => { dbInstance = trackIndexedDBConnection(e.target.result); resolve(dbInstance); };
     req.onerror = () => resolve(null);
   });
 }
@@ -6005,6 +6081,7 @@ function loadScoresFromIndexedDB() {
 }
 
 function saveScoreRecord(gameKey, timeLimit, score) {
+  if (window.__dataDeletionInProgress || window.__dataDeletionAutoSaveStopped) return;
   if (!document.getElementById('cfgSaveScore').checked) return;
   const stableKey = I18N_DICTIONARY[`game_${gameKey}`] ? gameKey : (['stick','block','konjac','blackboard','flag','vs'].find(k => Object.values(I18N_DICTIONARY[`game_${k}`] || {}).includes(gameKey)) || gameKey);
   const allScores = memoryStore.scores.filter(s => getScoreGameKey(s) === stableKey);
@@ -6068,36 +6145,154 @@ async function handleDeletionAnswer(isYes) {
   if (deletionStep < 5) {
     deletionStep++;
     showDeletionModal();
-  } else {
-    closeModal();
-    document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
-    deletionStep = 0;
+    return;
+  }
 
-    const overlay = document.getElementById('whiteoutOverlay');
-    overlay.style.opacity = '1';
-    overlay.style.pointerEvents = 'all';
-    window.__dataDeletionInProgress = true;
-    try { localStorage.clear(); } catch (e) {}
-    try { sessionStorage.clear(); } catch (e) {}
-    try {
-      if (dbInstance) { try { dbInstance.close(); } catch (e) {} dbInstance = null; }
-      if (window.indexedDB) {
+  closeModal();
+  document.getElementById('modalDefaultCloseBtn').style.display = 'inline-block';
+  deletionStep = 0;
+
+  const overlay = document.getElementById('whiteoutOverlay');
+  if (!overlay) {
+    throw new Error('whiteoutOverlay を作成できませんでした。');
+  }
+  overlay.style.transition = 'none';
+  overlay.style.opacity = '1';
+  overlay.style.pointerEvents = 'all';
+  overlay.setAttribute('aria-hidden', 'false');
+
+  // ================================================================
+  // 完全削除シーケンス
+  // 1. 削除モードON
+  // 2. 自動保存停止
+  // 3. IndexedDBの新規openを禁止
+  // 4. 別タブへ接続終了要求
+  // 5. 現在の接続を全部close
+  // 6. 少し待つ
+  // 7. deleteDatabase
+  // 8. blockedなら再通知・再試行
+  // 9. successを確認
+  // 10. localStorage/sessionStorage削除
+  // 11. Cache削除
+  // 12. 最後にリロード
+  // ================================================================
+  window.__dataDeletionInProgress = true;
+  window.__dataDeletionStartedAt = Date.now();
+  window.__dataDeletionAbortOpenRequests = true;
+  window.__dataDeletionAutoSaveStopped = true;
+
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const deletionErrors = [];
+
+  try {
+    // まず別タブへ通知し、現在ページの保存処理・DB接続を停止する。
+    requestOtherTabsToCloseIndexedDBConnections();
+    closeAllIndexedDBConnections();
+    await sleep(250);
+
+    if (window.indexedDB) {
+      const names = new Set(['AirplaneGamesDB_v3', 'AirplaneGamesDB']);
+      try {
         if (typeof indexedDB.databases === 'function') {
           const dbs = await indexedDB.databases();
-          await Promise.all((dbs || []).map(db => db?.name ? new Promise(resolve => {
-            const req = indexedDB.deleteDatabase(db.name);
-            req.onsuccess = req.onerror = req.onblocked = () => resolve();
-          }) : Promise.resolve()));
-        } else {
-          await new Promise(resolve => {
-            const req = indexedDB.deleteDatabase('AirplaneGamesDB_v3');
-            req.onsuccess = req.onerror = req.onblocked = () => resolve();
+          (dbs || []).forEach(db => {
+            if (db && db.name && String(db.name).includes('AirplaneGamesDB')) {
+              names.add(String(db.name));
+            }
           });
         }
+      } catch (e) {
+        console.warn('[削除] IndexedDB一覧取得をスキップ:', e);
       }
-    } catch (e) {}
-    try { if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); } } catch (e) {}
-    setTimeout(() => { try { localStorage.clear(); sessionStorage.clear(); } catch (e) {} location.replace(location.href.split('#')[0]); }, 3200);
+
+      // blocked時は最大8回まで、別タブへの通知→close→待機→削除を繰り返す。
+      for (const name of Array.from(names)) {
+        if (!name) continue;
+        let deleted = false;
+        let lastError = null;
+
+        for (let attempt = 1; attempt <= 8 && !deleted; attempt++) {
+          try {
+            requestOtherTabsToCloseIndexedDBConnections();
+            closeAllIndexedDBConnections();
+            await sleep(200 + attempt * 100);
+
+            const result = await new Promise((resolve, reject) => {
+              let settled = false;
+              let timer = null;
+              const finish = (ok, value) => {
+                if (settled) return;
+                settled = true;
+                if (timer) clearTimeout(timer);
+                ok ? resolve(value) : reject(value);
+              };
+
+              let req;
+              try {
+                req = indexedDB.deleteDatabase(name);
+              } catch (e) {
+                finish(false, e);
+                return;
+              }
+
+              req.onsuccess = () => finish(true, true);
+              req.onerror = () => finish(false, req.error || new Error(`IndexedDB '${name}' の削除に失敗しました。`));
+              req.onblocked = () => {
+                // blockedは成功ではない。別接続が閉じるまで待って再試行する。
+                requestOtherTabsToCloseIndexedDBConnections();
+                closeAllIndexedDBConnections();
+              };
+              timer = setTimeout(() => {
+                finish(false, new Error(`IndexedDB '${name}' の削除がブロックされています。`));
+              }, 1800);
+            });
+
+            deleted = result === true;
+          } catch (e) {
+            lastError = e;
+            console.warn(`[削除] ${name} attempt ${attempt}/8:`, e);
+            await sleep(300);
+          }
+        }
+
+        if (!deleted) {
+          deletionErrors.push(lastError || new Error(`IndexedDB '${name}' を削除できませんでした。`));
+        }
+      }
+    }
+
+    if (deletionErrors.length) {
+      throw new Error('IndexedDBの削除を完了できませんでした。別のタブ・ウィンドウでAirplaneGamesを開いている場合は閉じてから、もう一度データ削除を実行してください。');
+    }
+
+    // IndexedDBのsuccess確認後に初めてWeb Storageを削除する。
+    try { localStorage.clear(); } catch (e) { console.warn('[削除] localStorage:', e); }
+    try { sessionStorage.clear(); } catch (e) { console.warn('[削除] sessionStorage:', e); }
+
+    // 最後にCache Storageを削除する。
+    try {
+      if (window.caches) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(key => caches.delete(key)));
+      }
+    } catch (e) {
+      console.warn('[削除] Cache Storage:', e);
+    }
+
+    // すべての削除処理が完了してからリロードする。
+    await sleep(500);
+    location.replace(location.href.split('#')[0]);
+  } catch (e) {
+    console.error('[全データ削除] 完了できませんでした:', e);
+    window.__dataDeletionInProgress = false;
+    if (overlay) {
+      overlay.style.opacity = '0';
+      overlay.style.pointerEvents = 'none';
+      overlay.style.transition = '';
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+    const message = String(e && e.message ? e.message : e).replace(/[<>&"']/g, '');
+    showRestoreModal('データ削除を完了できませんでした', message);
   }
 }
 
@@ -7735,13 +7930,13 @@ function applyColorsText() {
 function openCustomFontDB() {
   return new Promise((resolve, reject) => {
     if (!window.indexedDB) { reject(new Error('IndexedDB is unavailable')); return; }
-    const req = indexedDB.open('AirplaneGamesDB_v3', 2);
+    const req = guardedIndexedDBOpen('AirplaneGamesDB_v3', 2);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('scores')) db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('customFonts')) db.createObjectStore('customFonts', { keyPath: 'id' });
     };
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = () => resolve(trackIndexedDBConnection(req.result));
     req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
   });
 }
@@ -8150,7 +8345,7 @@ function saveEntryCustomsDraft(){const ids=['entryPassportNumber','entryFlightNu
 function loadEntryCustomsDraft(){try{const data=JSON.parse(localStorage.getItem('airplane_game_entry_customs_draft')||'{}');Object.keys(data).forEach(id=>{const el=document.getElementById(id);if(el&&typeof data[id]==='string')el.value=data[id];});}catch(_){} }
 function clearEntryCustomsDraft(){['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});saveEntryCustomsDraft();}
 function downloadEntryCustomsDraft(){saveEntryCustomsDraft();const labels=[['パスポート番号','entryPassportNumber'],['便名','entryFlightNumber'],['滞在先ホテル','entryHotel'],['滞在先住所','entryAddress'],['渡航目的','entryPurpose']];const lines=labels.map(([label,id])=>`${label}: ${document.getElementById(id)?.value||''}`);lines.push('','その他:',document.getElementById('entryCustomsDraft')?.value||'');downloadBlob(new Blob(['\uFEFF'+lines.join('\n')],{type:'text/plain;charset=utf-8'}),'entry-customs-draft.txt');}
-function updateJetlagGuide(){const offset=Number(document.getElementById('jetlagOffset')?.value||0);const d=new Date(Date.now()+offset*3600000);const h=d.getUTCHours(),mm=String(d.getUTCMinutes()).padStart(2,'0');let title,advice;if(h<6){title='今は睡眠時間帯';advice='目的地では深夜〜早朝です。睡眠を優先する時間帯です。';}else if(h<9){title='起床・朝の時間帯';advice='目的地では朝です。起きて光を浴び、現地の朝へ切り替える時間帯です。';}else if(h<18){title='活動時間帯';advice='目的地では日中です。通常の活動時間として過ごす時間帯です。';}else if(h<22){title='就寝準備の時間帯';advice='目的地では夜です。強い光や画面を控えめにし、就寝へ向けて落ち着く時間帯です。';}else{title='夜の時間帯';advice='目的地では夜遅めです。眠気があれば睡眠を優先し、現地時間へ合わせていく時間帯です。';}const el=document.getElementById('jetlagGuideResult');if(el)el.textContent=`${title}（目的地 ${String(h).padStart(2,'0')}:${mm}） — ${advice}`;}
+function updateJetlagGuide(){const offset=Number(document.getElementById('jetlagOffset')?.value||0);const now=new Date();const japanFormatter=new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',hour12:false});const parts=japanFormatter.formatToParts(now);let baseH=Number(parts.find(p=>p.type==='hour')?.value||0);const baseM=Number(parts.find(p=>p.type==='minute')?.value||0);const totalMinutes=((baseH*60+baseM)+(offset*60))%(24*60);const normalized=totalMinutes<0?totalMinutes+24*60:totalMinutes;const h=Math.floor(normalized/60);const mm=String(Math.floor(normalized%60)).padStart(2,'0');let title,advice;if(h<6){title='今は睡眠時間帯';advice='目的地では深夜〜早朝です。睡眠を優先する時間帯です。';}else if(h<9){title='起床・朝の時間帯';advice='目的地では朝です。起きて光を浴び、現地の朝へ切り替える時間帯です。';}else if(h<18){title='活動時間帯';advice='目的地では日中です。通常の活動時間として過ごす時間帯です。';}else if(h<22){title='就寝準備の時間帯';advice='目的地では夜です。強い光や画面を控えめにし、就寝へ向けて落ち着く時間帯です。';}else{title='夜の時間帯';advice='目的地では夜遅めです。眠気があれば睡眠を優先し、現地時間へ合わせていく時間帯です。';}const el=document.getElementById('jetlagGuideResult');if(el)el.textContent=`${title}（日本時間 ${String(baseH).padStart(2,'0')}:${String(baseM).padStart(2,'0')} → 目的地 ${String(h).padStart(2,'0')}:${mm}） — ${advice}`;}
 
 function saveCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) localStorage.setItem('airplane_game_cabin_announcement_memo',el.value); }
 function loadCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) el.value=localStorage.getItem('airplane_game_cabin_announcement_memo')||''; }
@@ -9177,8 +9372,39 @@ function storageRestore(storage,data){
 }
 function idbRequest(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('IndexedDB request failed'));});}
 function idbTxDone(tx){return new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error('IndexedDB transaction failed'));tx.onabort=()=>reject(tx.error||new Error('IndexedDB transaction aborted'));});}
-function idbDeleteDatabase(name){return new Promise((resolve,reject)=>{const r=indexedDB.deleteDatabase(name);r.onsuccess=()=>resolve(true);r.onerror=()=>reject(r.error||new Error('IndexedDB delete failed'));r.onblocked=()=>reject(new Error(`IndexedDB '${name}' is blocked by an open connection.`));});}
-function idbOpenForSnapshot(name){return new Promise((resolve,reject)=>{const r=indexedDB.open(name);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('IndexedDB open failed'));});}
+function idbDeleteDatabase(name, options={}){
+  return new Promise(async (resolve,reject)=>{
+    if(!window.indexedDB){ resolve(true); return; }
+    const timeoutMs=Number(options.timeoutMs)||8000;
+    const broadcast=options.broadcast!==false;
+    let settled=false;
+    let timer=null;
+    const finish=(ok,err)=>{
+      if(settled)return;
+      settled=true;
+      if(timer)clearTimeout(timer);
+      ok?resolve(true):reject(err||new Error(`IndexedDB '${name}' の削除に失敗しました。`));
+    };
+    try{
+      if(broadcast) requestOtherTabsToCloseIndexedDBConnections();
+      closeAllIndexedDBConnections();
+      await new Promise(r=>setTimeout(r,150));
+      const r=indexedDB.deleteDatabase(name);
+      r.onsuccess=()=>finish(true);
+      r.onerror=()=>finish(false,r.error||new Error(`IndexedDB '${name}' の削除に失敗しました。`));
+      r.onblocked=()=>{
+        // blockedは成功ではない。別接続が閉じるまでrequestはpendingのまま。
+        if(broadcast) requestOtherTabsToCloseIndexedDBConnections();
+        closeAllIndexedDBConnections();
+      };
+      timer=setTimeout(()=>finish(false,new Error(`IndexedDB '${name}' の削除が別の接続によってブロックされています。`)),timeoutMs);
+    }catch(e){
+      finish(false,e);
+    }
+  });
+}
+
+function idbOpenForSnapshot(name){return new Promise((resolve,reject)=>{const r=guardedIndexedDBOpen(name);r.onsuccess=()=>resolve(trackIndexedDBConnection(r.result));r.onerror=()=>reject(r.error||new Error('IndexedDB open failed'));});}
 async function snapshotIndexedDB(){const out=[];if(!window.indexedDB)return out;let names=[];try{if(typeof indexedDB.databases==="function"){const a=await indexedDB.databases();names=a.map(x=>String((x&&x.name)||"")).filter(n=>n.includes("AirplaneGamesDB"));}}catch(e){console.warn("IndexedDB enumeration failed:",e);}if(!names.length)names=["AirplaneGamesDB_v3","AirplaneGamesDB"];for(const name of Array.from(new Set(names))){let db=null;try{db=await idbOpenForSnapshot(name);const stores=[];for(const sn of Array.from(db.objectStoreNames)){const tx=db.transaction(sn,"readonly"),store=tx.objectStore(sn),keys=await idbRequest(store.getAllKeys()),vals=await idbRequest(store.getAll()),records=[];for(let i=0;i<vals.length;i++){const seen=new Map();records.push({key:await encodeBackupValue(keys[i],seen),value:await encodeBackupValue(vals[i],seen)});}stores.push({name:sn,keyPath:store.keyPath===undefined?null:store.keyPath,autoIncrement:store.autoIncrement,indexes:Array.from(store.indexNames).map(n=>{const x=store.index(n);return{name:n,keyPath:x.keyPath,multiEntry:x.multiEntry,unique:x.unique};}),records});}out.push({name,version:db.version,stores});}catch(e){console.warn(`IndexedDB snapshot skipped for ${name}:`,e);}finally{try{db&&db.close();}catch(_){}}}return out;}
 async function restoreIndexedDB(snapshot){
   const result={restored:0,errors:[],databases:0};
@@ -9232,7 +9458,7 @@ async function restoreIndexedDB(snapshot){
       if(exists&&needsUpgrade)targetVersion=Math.max(currentVersion+1,Number(spec.version)||1);
 
       await new Promise((resolve,reject)=>{
-        const r=indexedDB.open(dbName,targetVersion);
+        const r=guardedIndexedDBOpen(dbName,targetVersion);
         r.onupgradeneeded=e=>{
           const db=e.target.result;
           for(const st of stores){
@@ -9517,6 +9743,7 @@ async function handleIndexedDbDeletionAnswer(isYes) {
         dbInstance = null;
       }
       if (window.indexedDB) {
+        closeAllIndexedDBConnections();
         await idbDeleteDatabase('AirplaneGamesDB_v3');
       }
       memoryStore.scores = [];
