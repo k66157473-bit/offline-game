@@ -1189,6 +1189,7 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
 #customNumericKeyboard.custom-kbd-shrink-buttons .custom-kbd-btn.btn-action { font-size:clamp(9px, calc(var(--custom-kbd-width,420px) / 32), 14px); }
 
 
+
 /* カクトビックのキーボードボタンにも埋め込み専用フォントを適用する。 */
 #customNumericKeyboard.kaktovik-mode .custom-kbd-btn:not(.btn-action) {
   font-family: 'KaktovikNumeralsEmbedded', 'Segoe UI Symbol', 'Segoe UI Historic', sans-serif !important;
@@ -1257,6 +1258,53 @@ html[dir="rtl"] #customNumericKeyboard .custom-kbd-settings { direction: rtl; }
 #customNumericKeyboard.custom-kbd-positioned .custom-kbd-header {
   cursor: move;
 }
+/* 数字キーボード移動マーク：PCは上部の棒線、スマホは左下の✚ */
+.custom-kbd-move-bar {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:18px;
+  min-height:18px;
+  cursor:move;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  color:rgba(255,255,255,.72);
+  font-size:18px;
+  line-height:1;
+  letter-spacing:2px;
+}
+.custom-kbd-move-plus {
+  display:none;
+  position:absolute;
+  left:5px;
+  bottom:5px;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.55);
+  background:rgba(0,0,0,.42);
+  color:#fff;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  line-height:1;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  z-index:5;
+}
+@media (max-width:600px){
+  .custom-kbd-move-bar{display:none;}
+  .custom-kbd-move-plus{display:flex;}
+}
+@media (min-width:601px){
+  .custom-kbd-move-bar{display:flex;}
+  .custom-kbd-move-plus{display:none;}
+}
+
 .custom-kbd-resize-handle {
   position: absolute;
   right: 3px;
@@ -2005,6 +2053,14 @@ html[data-script-mode="cuneiform"] #customNumericKeyboard .custom-kbd-mapping-ta
         </div>
       </div>
 
+      <div class="config-item">
+        <label>💾 自動バックアップ通知</label>
+        <label style="display:flex;gap:8px;align-items:center;font-size:13px;">
+          <input type="checkbox" id="cfgAutoBackupPrompt" checked>
+          <span id="cfgAutoBackupPromptLabel">データ更新後に差分バックアップを保存する通知を表示</span>
+        </label>
+      </div>
+
       <!-- 13. ショートカットキー無制限追加 -->
       <div class="config-item" style="grid-column: 1 / -1;">
         <label data-i18n="cfg_shortcuts">13. ショートカットキー無制限設定</label>
@@ -2044,6 +2100,22 @@ html[data-script-mode="cuneiform"] #customNumericKeyboard .custom-kbd-mapping-ta
         <button type="button" class="btn btn-outline" onclick="downloadEntryCustomsDraft()" data-i18n="entry_customs_download">下書きを保存</button>
         <button type="button" class="btn btn-secondary" onclick="clearEntryCustomsDraft()" data-i18n="entry_customs_clear">クリア</button>
       </div>
+    </div>
+    <div class="config-item" style="grid-column:1 / -1;">
+      <label id="tipCalcTitle">🧾 チップ計算機</label>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:end;">
+        <label><span id="tipCalcCountryLabel">目的国</span><input id="tipCalcCountry" type="text" placeholder="例：USA" style="width:100%;box-sizing:border-box;"></label>
+        <label><span id="tipCalcBillLabel">会計金額</span><input id="tipCalcBill" type="number" min="0" step="0.01" value="0" style="width:100%;box-sizing:border-box;"></label>
+        <label><span id="tipCalcRateLabel">チップ相場 (%)</span><input id="tipCalcRate" type="number" min="0" max="100" step="0.1" value="15" style="width:100%;box-sizing:border-box;"></label>
+        <label><span id="tipCalcPeopleLabel">人数</span><input id="tipCalcPeople" type="number" min="1" step="1" value="1" style="width:100%;box-sizing:border-box;"></label>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <button type="button" class="btn btn-outline" onclick="setTipRate(15)">15%</button>
+        <button type="button" class="btn btn-outline" onclick="setTipRate(18)">18%</button>
+        <button type="button" class="btn btn-outline" onclick="setTipRate(20)">20%</button>
+        <button type="button" class="btn btn-primary" onclick="calculateTip()" id="tipCalcButton">計算</button>
+      </div>
+      <div id="tipCalcResult" style="margin-top:10px;padding:10px;border-radius:10px;background:rgba(255,255,255,.06);line-height:1.7;">チップ額: 0 / 合計: 0 / 1人あたり: 0</div>
     </div>
     <div class="config-item" style="grid-column:1 / -1;">
       <label data-i18n="jetlag_guide_title">🕐 時差ボケ防止（メラトニンリズム・体内時計）ガイド</label>
@@ -2892,6 +2964,11 @@ const AUTHOR_NAMES = {
 
 
 const KOUSHIN_DATA = [
+  { pinned:false, date:'2026/10/03 06:20', desc:{
+    ja:'数字キーボードの移動マークを追加し、スマホでは左下の✚を長押し、パソコンでは上部の棒線からキーボードを移動できるようにしました。チップ計算機を追加し、目的国・会計金額・チップ相場・人数から割り勘額を素早く算出できるようにしました。データ更新後に差分バックアップの保存を促す自動バックアップ通知を追加し、設定からON/OFFできるようにしました。',
+    en:'Added dedicated numeric-keyboard move marks: long-press the lower-left ✚ on smartphones, and drag the top bar on PCs. Added a tip calculator for destination, bill amount, tip rate, and number of people to quickly calculate the per-person share. Added an automatic backup notification that prompts for a differential backup after data changes, with an ON/OFF setting.',
+    hira:'すうじ きーぼーどの いどう まーくを ついかし、すまほでは ひだりしたの ✚を なが おし、ぱそこんでは じょうぶの ぼうせんから きーぼーどを いどうできるようにしました。ちっぷ けいさんきを ついかし、もくてきこく・かいけい きんがく・ちっぷ そうば・にんずうから わりかんがくを すばやく さんしゅつできるようにしました。でーた こうしんごに さぶん ばっくあっぷの ほぞんを うながす じどう ばっくあっぷ つうちを ついかし、せっていから おん・おふできるようにしました。'
+  } },
   { pinned:false, date:'2026/10/02 20:43', desc:{
     ja:'数字形式を標準へ戻したときに日付・時刻などの区切りが崩れる不具合を修正し、モールス信号入力では押した長さに応じてピー音の長さが変わるようにしました。点字入力音を削除し、楔形数字を追加しました。メモタブに入国カード・税関申告書の下書き帳と、目的地の現在時刻を使った時差ボケ防止（メラトニンリズム・体内時計）ガイドを追加しました。',
     en:'Fixed an issue where date and time separators could break when returning to the standard numeral format, and made Morse input beep duration follow the press length. Removed the Braille input sound and added Cuneiform numerals. Added an entry-card/customs draft pad and a jet-lag prevention body-clock rhythm guide using the destination’s current local time to the Memo tab.',
@@ -4026,6 +4103,7 @@ function saveAllConfig() {
   } catch (err) {
     console.warn('[saveAllConfig] 保存エラーをスキップ:', err);
   }
+  scheduleAutoBackupPrompt();
 }
 function getCoinBalanceAddAmount() {
   const el = document.getElementById('coinBalanceAddAmount');
@@ -4663,6 +4741,7 @@ function resetAllConfigToDefault() {
   document.getElementById('cfgFlightHours').value = '6';
   document.getElementById('cfgFlightMinutes').value = '30';
   document.getElementById('cfgTimezoneDiff').value = '-7';
+  document.getElementById('cfgAutoBackupPrompt').checked = true;
 
   shortcutData = [
     { key: 'Space', action: 'jump' },
@@ -4727,7 +4806,10 @@ function relocateGameSettings(){
 }
 
 const RESETTABLE_CONFIG_IDS = [
-  'cfgGameEnabled','cfgSaveScore','cfgUseIndexedDB','cfgMouseStalkerType','cfgStalkerCustomText','cfgGcSimulation','cfgBgColor','cfgBgColorText','cfgTextColor','cfgTextColorText','cfgFontFamily','cfgFontSizeNum','cfgFontSizeUnit','cfgShowSearchGame','cfgShowSearchOther','cfgShowHeader','cfgColorTheme','stickMaxHeight','stickMaxPillars','cfgJumpForce','cfgNightFlight','cfgReducedMotion','cfgBatterySaver','cfgMasterVolume','cfgMuteAudio','cfgDpadPosition','cfgDpadSize','cfgDpadOpacity','cfgVibrate','cfgGameSpeed','cfgInvincible','cfgKonjacMaterial','cfgKonjacKnife','cfgFlagRegion','cfgFlightHours','cfgFlightMinutes','cfgTimezoneDiff'
+  'cfgGameEnabled','cfgSaveScore','cfgUseIndexedDB','cfgMouseStalkerType','cfgStalkerCustomText','cfgGcSimulation','cfgBgColor','cfgBgColorText','cfgTextColor','cfgTextColorText','cfgFontFamily','cfgFontSizeNum','cfgFontSizeUnit','cfgShowSearchGame','cfgShowSearchOther','cfgShowHeader','cfgColorTheme','stickMaxHeight','stickMaxPillars','cfgJumpForce','cfgNightFlight','cfgReducedMotion','cfgBatterySaver','cfgMasterVolume','cfgMuteAudio','cfgDpadPosition','cfgDpadSize','cfgDpadOpacity','cfgVibrate','cfgGameSpeed','cfgInvincible','cfgKonjacMaterial','cfgKonjacKnife','cfgFlagRegion','cfgFlightHours','cfgFlightMinutes','cfgTimezoneDiff','cfgAutoBackupPrompt'
+];
+const RESETTABLE_EXTRA_SETTINGS = [
+  { id:'numericKeyboardSettings', label:{ja:'数字キーボード設定', en:'Numeric Keyboard Settings', hira:'すうじ きーぼーど せってい'} }
 ];
 function captureConfigControls(){
   const state={};
@@ -4739,16 +4821,25 @@ function restoreConfigControls(state, keepIds){
 }
 function openResetSettingsModal(){
   const items=RESETTABLE_CONFIG_IDS.map(id=>{const el=document.getElementById(id);const label=el?.closest('.config-item')?.querySelector('label')?.textContent?.trim()||id;return `<label style="display:flex;gap:7px;align-items:center;margin:5px 0;"><input type="checkbox" class="reset-setting-choice" value="${id}" checked> ${escapeHtml(label)}</label>`;}).join('');
-  showModal(t('reset_select_title'),`<div style="max-height:55vh;overflow:auto">${items}</div><label style="display:flex;gap:7px;margin-top:10px"><input type="checkbox" id="resetAllChoice"> ${escapeHtml(t('reset_all'))}</label>`,`<button class="btn" onclick="applySelectedConfigReset()">${escapeHtml(t('reset_apply'))}</button>`);
+  const extraItems=RESETTABLE_EXTRA_SETTINGS.map(item=>{const label=item.label[currentLang]||item.label.ja||item.id;return `<label style="display:flex;gap:7px;align-items:center;margin:5px 0;"><input type="checkbox" class="reset-extra-setting-choice" value="${item.id}" checked> ${escapeHtml(label)}</label>`;}).join('');
+  showModal(t('reset_select_title'),`<div style="max-height:55vh;overflow:auto">${items}${extraItems}</div><label style="display:flex;gap:7px;margin-top:10px"><input type="checkbox" id="resetAllChoice" onchange="document.querySelectorAll('.reset-setting-choice,.reset-extra-setting-choice').forEach(e=>e.checked=this.checked)"> ${escapeHtml(t('reset_all'))}</label>`,`<button class="btn" onclick="applySelectedConfigReset()">${escapeHtml(t('reset_apply'))}</button>`);
 }
 function applySelectedConfigReset(){
   const state=captureConfigControls();
   const all=document.getElementById('resetAllChoice')?.checked;
   const selected=all?RESETTABLE_CONFIG_IDS:Array.from(document.querySelectorAll('.reset-setting-choice:checked')).map(e=>e.value);
   const selectedSet=new Set(selected);
+  const selectedExtra=new Set(all?RESETTABLE_EXTRA_SETTINGS.map(item=>item.id):Array.from(document.querySelectorAll('.reset-extra-setting-choice:checked')).map(e=>e.value));
   resetAllConfigToDefault();
   const keep=RESETTABLE_CONFIG_IDS.filter(id=>!selectedSet.has(id));
   restoreConfigControls(state,keep);
+  if(selectedExtra.has('numericKeyboardSettings')){
+    localStorage.removeItem('airplane_game_numeric_keyboard_settings');
+    if(typeof applyNumericKeyboardSettings==='function' && typeof NUMERIC_KBD_DEFAULTS!=='undefined'){
+      const kbd=document.getElementById('customNumericKeyboard');
+      if(kbd) applyNumericKeyboardSettings(kbd,{...NUMERIC_KBD_DEFAULTS});
+    }
+  }
   if(!selectedSet.has('cfgBgColor')||!selectedSet.has('cfgTextColor')) applyColors();
   applyFontSettings();
   applyColorTheme(document.getElementById('cfgColorTheme').value);
@@ -5355,21 +5446,72 @@ function showNumericKeyboardSettings(){
   applyNumericKeyboardSettings(kbd,st);
   attachNumericKeyboardResizeHandle(kbd);
 }
+function ensureNumericKeyboardMoveHandles(kbd, header){
+  if(!kbd || !header) return;
+  const oldBar=kbd.querySelector('.custom-kbd-move-bar');
+  const oldPlus=kbd.querySelector('.custom-kbd-move-plus');
+  if(oldBar) oldBar.remove();
+  if(oldPlus) oldPlus.remove();
+  const bar=document.createElement('div');
+  bar.className='custom-kbd-move-bar';
+  bar.textContent='━';
+  bar.title='キーボードを移動';
+  const plus=document.createElement('div');
+  plus.className='custom-kbd-move-plus';
+  plus.textContent='✚';
+  plus.title='長押ししてキーボードを移動';
+  kbd.insertBefore(bar, header);
+  kbd.appendChild(plus);
+
+  const beginDrag=(handle,e,immediate)=>{
+    if(!e || (e.pointerType==='mouse' && e.button!==0)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const startX=e.clientX,startY=e.clientY;
+    const rect=kbd.getBoundingClientRect();
+    const st=loadNumericKeyboardSettings();
+    let dragging=!!immediate;
+    let timer=null;
+    // タッチ端末では長押し完了前に pointercancel されないよう、最初からこのマークを捕捉する。
+    try{handle.setPointerCapture?.(e.pointerId);}catch(_){}
+    const start=()=>{
+      dragging=true;
+      try{handle.setPointerCapture?.(e.pointerId);}catch(_){}
+    };
+    if(!immediate){ timer=setTimeout(start,350); }
+    const move=ev=>{
+      if(!dragging){
+        ev.preventDefault();
+        // 長押し中は少し指が動いても長押しをキャンセルしない。
+        return;
+      }
+      ev.preventDefault();
+      ev.stopPropagation();
+      const pos=clampNumericKeyboardPosition(rect.left+(ev.clientX-startX),rect.top+(ev.clientY-startY),rect.width,rect.height);
+      applyNumericKeyboardSettings(kbd,{...st,x:pos.x,y:pos.y});
+    };
+    const end=()=>{
+      if(timer) clearTimeout(timer);
+      timer=null;
+      if(dragging) saveNumericKeyboardSettings(loadNumericKeyboardSettings());
+      try{handle.releasePointerCapture?.(e.pointerId);}catch(_){}
+      handle.removeEventListener('pointermove',move);
+      handle.removeEventListener('pointerup',end);
+      handle.removeEventListener('pointercancel',end);
+    };
+    handle.addEventListener('pointermove',move,{passive:false});
+    handle.addEventListener('pointerup',end,{passive:false});
+    handle.addEventListener('pointercancel',end,{passive:false});
+  };
+  bar.onpointerdown=e=>beginDrag(bar,e,true);
+  plus.onpointerdown=e=>beginDrag(plus,e,false);
+}
+
 function attachNumericKeyboardResizeHandle(kbd){
   let h=kbd.querySelector('.custom-kbd-resize-handle'); if(!h){h=document.createElement('div');h.className='custom-kbd-resize-handle';h.title=numericKbdText('freeResize');kbd.appendChild(h);}
   h.onpointerdown=(e)=>{ e.preventDefault(); h.setPointerCapture?.(e.pointerId); const startX=e.clientX,startY=e.clientY,st=loadNumericKeyboardSettings(); const move=ev=>{ const next={...st,width:st.width+(startX-ev.clientX)*2,height:st.height+(startY-ev.clientY)}; applyNumericKeyboardSettings(kbd,next); }; const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); h.removeEventListener('pointercancel',up); }; h.addEventListener('pointermove',move);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up); };
   const header=kbd.querySelector('.custom-kbd-header');
-  if(header){
-    header.onpointerdown=(e)=>{
-      if(e.target.closest('button')) return;
-      e.preventDefault();
-      const rect=kbd.getBoundingClientRect();
-      const startX=e.clientX,startY=e.clientY,startLeft=rect.left,startTop=rect.top,st=loadNumericKeyboardSettings();
-      const move=ev=>{ const pos=clampNumericKeyboardPosition(startLeft+(ev.clientX-startX),startTop+(ev.clientY-startY),rect.width,rect.height); applyNumericKeyboardSettings(kbd,{...st,x:pos.x,y:pos.y}); };
-      const up=()=>{ saveNumericKeyboardSettings(loadNumericKeyboardSettings()); header.releasePointerCapture?.(e.pointerId); header.removeEventListener('pointermove',move); header.removeEventListener('pointerup',up); header.removeEventListener('pointercancel',up); };
-      header.setPointerCapture?.(e.pointerId); header.addEventListener('pointermove',move); header.addEventListener('pointerup',up); header.addEventListener('pointercancel',up);
-    };
-  }
+  if(header){ header.style.cursor='default'; }
 }
 
 let activeCustomInput = null;
@@ -5580,6 +5722,7 @@ function openCustomNumericKeyboard(input) {
   header.className = 'custom-kbd-header';
   header.innerHTML = `<span>⌨️ ${numericKbdText('title')} — ${numericKbdModeText(mode)}</span><span style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="showNumericKeyboardMapping()">📊 ${numericKbdText('mappingTab')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="showNumericKeyboardSettings()">⚙️ ${numericKbdText('settings')}</button><button type="button" class="btn btn-outline" style="padding:2px 10px;" onclick="closeCustomNumericKeyboard()">✕ ${numericKbdText('close')}</button></span>`;
   kbd.appendChild(header);
+  ensureNumericKeyboardMoveHandles(kbd, header);
 
   const mappingTabBar = document.createElement('div');
   mappingTabBar.className = 'custom-kbd-visible-tabbar';
@@ -5999,6 +6142,8 @@ function changeLanguage(lang) {
   if (typeof updateGameInstructionText === 'function') updateGameInstructionText();
   if (typeof renderHistoryTable === 'function') renderHistoryTable();
   if (typeof renderRegisteredCustomFonts === 'function') renderRegisteredCustomFonts();
+  if (typeof updateTipCalculatorLanguage === 'function') updateTipCalculatorLanguage();
+  if (typeof updateAutoBackupSettingLabel === 'function') updateAutoBackupSettingLabel();
   if (typeof renderScoreTable === 'function') renderScoreTable();
   if (typeof renderShortcuts === 'function') renderShortcuts();
   if (typeof updateQuestionsResetButton === 'function') updateQuestionsResetButton();
@@ -6084,6 +6229,7 @@ function saveScoreRecord(gameKey, timeLimit, score) {
     try { dbInstance.transaction('scores', 'readwrite').objectStore('scores').add(record); } catch (e) {}
   }
   renderScoreTable();
+  scheduleAutoBackupPrompt();
 }
 
 /* ==========================================================================
@@ -8298,15 +8444,45 @@ let flightTimerInterval = null;
 
 
 
-function saveEntryCustomsDraft(){const ids=['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'];const data={};ids.forEach(id=>{const el=document.getElementById(id);if(el)data[id]=el.value;});try{localStorage.setItem('airplane_game_entry_customs_draft',JSON.stringify(data));}catch(_){} }
+function saveEntryCustomsDraft(){const ids=['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'];const data={};ids.forEach(id=>{const el=document.getElementById(id);if(el)data[id]=el.value;});try{localStorage.setItem('airplane_game_entry_customs_draft',JSON.stringify(data));}catch(_){} scheduleAutoBackupPrompt(); }
 function loadEntryCustomsDraft(){try{const data=JSON.parse(localStorage.getItem('airplane_game_entry_customs_draft')||'{}');Object.keys(data).forEach(id=>{const el=document.getElementById(id);if(el&&typeof data[id]==='string')el.value=data[id];});}catch(_){} }
 function clearEntryCustomsDraft(){['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});saveEntryCustomsDraft();}
 function downloadEntryCustomsDraft(){saveEntryCustomsDraft();const labels=[['パスポート番号','entryPassportNumber'],['便名','entryFlightNumber'],['滞在先ホテル','entryHotel'],['滞在先住所','entryAddress'],['渡航目的','entryPurpose']];const lines=labels.map(([label,id])=>`${label}: ${document.getElementById(id)?.value||''}`);lines.push('','その他:',document.getElementById('entryCustomsDraft')?.value||'');downloadBlob(new Blob(['\uFEFF'+lines.join('\n')],{type:'text/plain;charset=utf-8'}),'entry-customs-draft.txt');}
 function updateJetlagGuide(){const offset=Number(document.getElementById('jetlagOffset')?.value||0);const now=new Date();const japanFormatter=new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',hour12:false});const parts=japanFormatter.formatToParts(now);let baseH=Number(parts.find(p=>p.type==='hour')?.value||0);const baseM=Number(parts.find(p=>p.type==='minute')?.value||0);const totalMinutes=((baseH*60+baseM)+(offset*60))%(24*60);const normalized=totalMinutes<0?totalMinutes+24*60:totalMinutes;const h=Math.floor(normalized/60);const mm=String(Math.floor(normalized%60)).padStart(2,'0');let title,advice;if(h<6){title='今は睡眠時間帯';advice='目的地では深夜〜早朝です。睡眠を優先する時間帯です。';}else if(h<9){title='起床・朝の時間帯';advice='目的地では朝です。起きて光を浴び、現地の朝へ切り替える時間帯です。';}else if(h<18){title='活動時間帯';advice='目的地では日中です。通常の活動時間として過ごす時間帯です。';}else if(h<22){title='就寝準備の時間帯';advice='目的地では夜です。強い光や画面を控えめにし、就寝へ向けて落ち着く時間帯です。';}else{title='夜の時間帯';advice='目的地では夜遅めです。眠気があれば睡眠を優先し、現地時間へ合わせていく時間帯です。';}const el=document.getElementById('jetlagGuideResult');if(el)el.textContent=`${title}（日本時間 ${String(baseH).padStart(2,'0')}:${String(baseM).padStart(2,'0')} → 目的地 ${String(h).padStart(2,'0')}:${mm}） — ${advice}`;}
 
-function saveCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) { try{ localStorage.setItem('airplane_game_cabin_announcement_memo',el.value); }catch(_){} } }
+const TIP_CALC_TEXTS={
+  ja:{title:'🧾 チップ計算機',country:'目的国',bill:'会計金額',rate:'チップ相場 (%)',people:'人数',calc:'計算',result:(tip,total,per,people)=>`チップ額: ${tip} / 合計: ${total} / ${people}人で1人あたり: ${per}`},
+  en:{title:'🧾 Tip Calculator',country:'Destination',bill:'Bill amount',rate:'Tip rate (%)',people:'People',calc:'Calculate',result:(tip,total,per,people)=>`Tip: ${tip} / Total: ${total} / Per person (${people}): ${per}`},
+  hira:{title:'🧾 ちっぷ けいさんき',country:'もくてきこく',bill:'かいけい きんがく',rate:'ちっぷ そうば (%)',people:'にんずう',calc:'けいさん',result:(tip,total,per,people)=>`ちっぷがく: ${tip} / ごうけい: ${total} / ${people}にんで ひとりあたり: ${per}`},
+  ko:{title:'🧾 팁 계산기',country:'목적지',bill:'계산 금액',rate:'팁 비율 (%)',people:'인원',calc:'계산',result:(tip,total,per,people)=>`팁: ${tip} / 합계: ${total} / ${people}명 1인당: ${per}`},
+  'zh-CN':{title:'🧾 小费计算器',country:'目的地',bill:'账单金额',rate:'小费比例 (%)',people:'人数',calc:'计算',result:(tip,total,per,people)=>`小费: ${tip} / 合计: ${total} / ${people}人均: ${per}`},
+  'zh-TW':{title:'🧾 小費計算機',country:'目的地',bill:'帳單金額',rate:'小費比例 (%)',people:'人數',calc:'計算',result:(tip,total,per,people)=>`小費: ${tip} / 合計: ${total} / ${people}人均: ${per}`},
+  ar:{title:'🧾 حاسبة الإكرامية',country:'الوجهة',bill:'قيمة الحساب',rate:'نسبة الإكرامية (%)',people:'عدد الأشخاص',calc:'احسب',result:(tip,total,per,people)=>`الإكرامية: ${tip} / الإجمالي: ${total} / لكل شخص (${people}): ${per}`},
+  es:{title:'🧾 Calculadora de propinas',country:'Destino',bill:'Importe',rate:'Propina (%)',people:'Personas',calc:'Calcular',result:(tip,total,per,people)=>`Propina: ${tip} / Total: ${total} / Por persona (${people}): ${per}`}
+};
+function tipCalcText(key){const m=TIP_CALC_TEXTS[currentLang]||TIP_CALC_TEXTS.en;return m[key]||TIP_CALC_TEXTS.en[key]||key;}
+function saveTipCalculator(){try{localStorage.setItem('airplane_game_tip_calculator',JSON.stringify({country:document.getElementById('tipCalcCountry')?.value||'',bill:document.getElementById('tipCalcBill')?.value||'0',rate:document.getElementById('tipCalcRate')?.value||'15',people:document.getElementById('tipCalcPeople')?.value||'1'}));}catch(_){} }
+function loadTipCalculator(){try{const d=JSON.parse(localStorage.getItem('airplane_game_tip_calculator')||'{}');for(const [id,key] of [['tipCalcCountry','country'],['tipCalcBill','bill'],['tipCalcRate','rate'],['tipCalcPeople','people']]){const el=document.getElementById(id);if(el&&d[key]!==undefined)el.value=d[key];}}catch(_){} calculateTip(false);}
+function setTipRate(rate){const el=document.getElementById('tipCalcRate');if(el)el.value=rate;calculateTip();}
+function calculateTip(save=true){const bill=Math.max(0,Number(document.getElementById('tipCalcBill')?.value||0));const rate=Math.max(0,Number(document.getElementById('tipCalcRate')?.value||0));const people=Math.max(1,Math.floor(Number(document.getElementById('tipCalcPeople')?.value||1)));const tip=bill*rate/100,total=bill+tip,per=total/people;const fmt=n=>Number.isFinite(n)?n.toLocaleString(undefined,{maximumFractionDigits:2}):'0';const el=document.getElementById('tipCalcResult');if(el)el.textContent=tipCalcText('result')(fmt(tip),fmt(total),fmt(per),people);if(save)saveTipCalculator();}
+function updateTipCalculatorLanguage(){const m=TIP_CALC_TEXTS[currentLang]||TIP_CALC_TEXTS.en;const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};set('tipCalcTitle',m.title);set('tipCalcCountryLabel',m.country);set('tipCalcBillLabel',m.bill);set('tipCalcRateLabel',m.rate);set('tipCalcPeopleLabel',m.people);set('tipCalcButton',m.calc);calculateTip(false);}
+
+const AUTO_BACKUP_ENABLED_KEY='airplane_game_auto_backup_prompt_enabled';
+let autoBackupBaseline=null,autoBackupTimer=null,autoBackupPendingPayload=null;
+function isAutoBackupPromptEnabled(){return localStorage.getItem(AUTO_BACKUP_ENABLED_KEY)!=='0';}
+function setAutoBackupPromptEnabled(enabled){try{localStorage.setItem(AUTO_BACKUP_ENABLED_KEY,enabled?'1':'0');}catch(_){} updateAutoBackupSettingLabel();}
+function updateAutoBackupSettingLabel(){const e=document.getElementById('cfgAutoBackupPromptLabel');if(e)e.textContent=(currentLang==='en')?'Show a prompt to save a differential backup after data changes':(currentLang==='hira'?'でーた こうしんごに さぶん ばっくあっぷを ほぞんする おしらせを ひょうじ':'データ更新後に差分バックアップを保存する通知を表示');const c=document.getElementById('cfgAutoBackupPrompt');if(c)c.checked=isAutoBackupPromptEnabled();}
+function autoBackupText(key){const m={ja:{title:'💾 差分バックアップ',body:'データが更新されました。差分バックアップをダウンロードしますか？',save:'差分を保存',later:'あとで',off:'設定でOFF'},en:{title:'💾 Differential backup',body:'Data was updated. Save a differential backup now?',save:'Save diff',later:'Later',off:'Disable in Settings'},hira:{title:'💾 さぶん ばっくあっぷ',body:'でーたが こうしんされました。さぶん ばっくあっぷを ほぞんしますか？',save:'さぶんを ほぞん',later:'あとで',off:'せっていで おふ'}};return (m[currentLang]||m.en)[key]||m.en[key];}
+function makeAutoBackupDiff(previous,current){const a=previous?.data||{},b=current?.data||{};const changes={};const keys=new Set([...Object.keys(a),...Object.keys(b)]);for(const k of keys){let sa,sb;try{sa=JSON.stringify(a[k]);sb=JSON.stringify(b[k]);}catch(_){sa=String(a[k]);sb=String(b[k]);}if(sa!==sb)changes[k]={before:a[k],after:b[k]};}return changes;}
+async function initializeAutoBackupBaseline(){if(!isAutoBackupPromptEnabled()||typeof buildCompleteBackupPayload!=='function')return;try{autoBackupBaseline=await buildCompleteBackupPayload();}catch(_){} }
+function hideAutoBackupBanner(){const e=document.getElementById('autoBackupPromptBanner');if(e)e.remove();}
+function downloadAutoBackupDiff(){if(!autoBackupPendingPayload)return;const out={app:autoBackupPendingPayload.app,type:autoBackupPendingPayload.type,createdAt:autoBackupPendingPayload.createdAt,changes:autoBackupPendingPayload.changes};const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json;charset=utf-8'});downloadBlob(blob,`AirplaneGames-diff-backup-${new Date().toISOString().replace(/[:.]/g,'-')}.json`);autoBackupBaseline=autoBackupPendingPayload.current;autoBackupPendingPayload=null;hideAutoBackupBanner();}
+function showAutoBackupBanner(){let e=document.getElementById('autoBackupPromptBanner');if(!e){e=document.createElement('div');e.id='autoBackupPromptBanner';e.style.cssText='position:fixed;left:10px;right:10px;bottom:10px;z-index:1000000;padding:10px 12px;border-radius:12px;background:var(--panel-bg,#fff);color:var(--text-color,#222);border:2px solid var(--accent-pink,#ff4081);box-shadow:0 6px 22px rgba(0,0,0,.22);display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:13px;';document.body.appendChild(e);}e.innerHTML=`<strong>${autoBackupText('title')}</strong><span>${autoBackupText('body')}</span><button type="button" class="btn btn-primary" onclick="downloadAutoBackupDiff()">${autoBackupText('save')}</button><button type="button" class="btn btn-outline" onclick="hideAutoBackupBanner()">${autoBackupText('later')}</button>`;}
+function scheduleAutoBackupPrompt(){if(!isAutoBackupPromptEnabled()||window.__dataDeletionInProgress||window.__itsmeRestoreInProgress)return;clearTimeout(autoBackupTimer);autoBackupTimer=setTimeout(async()=>{try{const current=await buildCompleteBackupPayload();if(!autoBackupBaseline){autoBackupBaseline=current;return;}const changes=makeAutoBackupDiff(autoBackupBaseline,current);if(!Object.keys(changes).length)return;autoBackupPendingPayload={app:'AirplaneGames',type:'differential-backup',createdAt:new Date().toISOString(),changes,current};showAutoBackupBanner();}catch(_){}} ,1200);}
+
+function saveCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) { try{ localStorage.setItem('airplane_game_cabin_announcement_memo',el.value); }catch(_){} scheduleAutoBackupPrompt(); } }
 function loadCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el) { try{ el.value=localStorage.getItem('airplane_game_cabin_announcement_memo')||''; }catch(_){} } }
-function saveMemoDrafts(){ saveCabinAnnouncementMemo(); saveEntryCustomsDraft(); }
+function saveMemoDrafts(){ saveCabinAnnouncementMemo(); saveEntryCustomsDraft(); scheduleAutoBackupPrompt(); }
 function loadMemoDrafts(){ loadCabinAnnouncementMemo(); loadEntryCustomsDraft(); }
 function clearCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(el){el.value=''; saveCabinAnnouncementMemo(); el.focus();} }
 function downloadCabinAnnouncementMemo(){ const el=document.getElementById('cabinAnnouncementMemo'); if(!el) return; downloadBlob(new Blob(['\uFEFF'+el.value],{type:'text/plain;charset=utf-8'}),'in-flight-announcement-memo.txt'); }
@@ -8364,11 +8540,14 @@ function updateWorldClock() {
   }
 }
 setInterval(updateWorldClock, 1000);
-window.__airplaneSafeAddEventListener(window, 'load', () => { loadMemoDrafts();
+window.__airplaneSafeAddEventListener(window, 'load', () => { loadMemoDrafts(); loadTipCalculator(); updateTipCalculatorLanguage(); updateAutoBackupSettingLabel();
   ['entryPassportNumber','entryFlightNumber','entryHotel','entryAddress','entryPurpose','entryCustomsDraft'].forEach(id=>document.getElementById(id)?.addEventListener('input',saveEntryCustomsDraft));
   document.getElementById('cabinAnnouncementMemo')?.addEventListener('change',saveCabinAnnouncementMemo);
+  ['tipCalcCountry','tipCalcBill','tipCalcRate','tipCalcPeople'].forEach(id=>document.getElementById(id)?.addEventListener('input',()=>calculateTip()));
+  document.getElementById('cfgAutoBackupPrompt')?.addEventListener('change',e=>setAutoBackupPromptEnabled(e.target.checked));
   window.__airplaneSafeAddEventListener(window,'pagehide',saveMemoDrafts);
-  window.__airplaneSafeAddEventListener(window,'beforeunload',saveMemoDrafts); });
+  window.__airplaneSafeAddEventListener(window,'beforeunload',saveMemoDrafts);
+  setTimeout(initializeAutoBackupBaseline,1800); });
 
 /* ==========================================================================
    5. プロフィール & 経過時間 & 動画録画
@@ -9609,6 +9788,7 @@ async function buildCompleteBackupPayload(){
       flightHours: document.getElementById('cfgFlightHours')?.value,
       flightMinutes: document.getElementById('cfgFlightMinutes')?.value,
       timezoneDiff: document.getElementById('cfgTimezoneDiff')?.value,
+      autoBackupPrompt: isAutoBackupPromptEnabled(),
       coinBalanceAddAmount: getCoinBalanceAddAmount()
     },
     storage: {
@@ -10057,6 +10237,7 @@ async function handleRestoreFile(e) {
         set('cfgFlightHours', c.flightHours);
         set('cfgFlightMinutes', c.flightMinutes);
         set('cfgTimezoneDiff', c.timezoneDiff);
+        if (c.autoBackupPrompt !== undefined) setAutoBackupPromptEnabled(!!c.autoBackupPrompt);
         set('coinBalanceAddAmount', c.coinBalanceAddAmount);
       }
 
