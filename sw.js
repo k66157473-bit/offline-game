@@ -1,4 +1,4 @@
-const CACHE_NAME = 'airplane-games-v3.0.1';
+const CACHE_NAME = 'airplane-games-v3.0.0';
 
 const ASSETS_TO_CACHE = [
   '/offline-game/',
